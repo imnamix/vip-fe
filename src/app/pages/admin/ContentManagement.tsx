@@ -11,7 +11,7 @@ import FaqsSection from './content/FaqsSection';
 import SeoSection from './content/SeoSection';
 
 import type {
-  BrandState, HomeAboutState, AboutInfoState,
+  HomeAboutState, AboutInfoState,
   Slide, ServiceItem, FaqItem, TestimonialItem, SeoPage,
 } from './content/types';
 
@@ -29,12 +29,6 @@ const modules = [
 export default function ContentManagement() {
   const [activeModule, setActiveModule] = useState('brand');
   const [saved, setSaved] = useState(false);
-
-  const [brand, setBrand] = useState<BrandState>({
-    logo: '', favicon: '', companyName: '', tagline: '',
-    phone: '', email: '', address: '', gst: '',
-    metaTitle: '', metaDesc: '', ogImage: '', keywords: '',
-  });
 
   const [homeSlides, setHomeSlides] = useState<Slide[]>([]);
   const [homeAbout, setHomeAbout] = useState<HomeAboutState>({ title: '', desc: '' });
@@ -58,7 +52,10 @@ export default function ContentManagement() {
     { page: 'Services', title: '', desc: '', keywords: '' },
   ]);
 
-  const handleSave = () => { setSaved(true); setTimeout(() => setSaved(false), 2500); };
+  const handleSave = () => {
+    setSaved(true);
+    setTimeout(() => setSaved(false), 2500);
+  };
 
   const mod = modules.find(m => m.key === activeModule)!;
   const Icon = mod.icon;
@@ -102,15 +99,15 @@ export default function ContentManagement() {
               </div>
               <h2 className="font-bold text-[#212121] text-lg" style={{ fontFamily: 'Poppins, sans-serif' }}>{mod.label}</h2>
             </div>
-            <button onClick={handleSave}
-              className="flex items-center gap-1.5 px-4 py-2 bg-[#D32F2F] text-white rounded-xl text-sm font-semibold hover:bg-[#B71C1C] transition-colors">
-              <Save size={13} /> Save Changes
-            </button>
+            {activeModule !== 'brand' && (
+              <button onClick={handleSave}
+                className="flex items-center gap-1.5 px-4 py-2 bg-[#D32F2F] text-white rounded-xl text-sm font-semibold hover:bg-[#B71C1C] transition-colors">
+                <Save size={13} /> Save Changes
+              </button>
+            )}
           </div>
 
-          {activeModule === 'brand' && (
-            <BrandInfoSection brand={brand} setBrand={setBrand} />
-          )}
+          {activeModule === 'brand' && <BrandInfoSection />}
           {activeModule === 'homepage' && (
             <HomepageSection homeSlides={homeSlides} setHomeSlides={setHomeSlides} homeAbout={homeAbout} setHomeAbout={setHomeAbout} />
           )}
