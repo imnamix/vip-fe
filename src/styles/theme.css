@@ -1,0 +1,242 @@
+@custom-variant dark (&:is(.dark *));
+
+:root {
+  --font-size: 16px;
+  --background: #ffffff;
+  --foreground: #212121;
+  --card: #ffffff;
+  --card-foreground: #212121;
+  --popover: #ffffff;
+  --popover-foreground: #212121;
+  --primary: #D32F2F;
+  --primary-foreground: #ffffff;
+  --secondary: #FBC02D;
+  --secondary-foreground: #212121;
+  --muted: #FFF8E1;
+  --muted-foreground: #616161;
+  --accent: #FBC02D;
+  --accent-foreground: #212121;
+  --destructive: #F44336;
+  --destructive-foreground: #ffffff;
+  --border: rgba(0, 0, 0, 0.1);
+  --input: transparent;
+  --input-background: #f8f8f8;
+  --switch-background: #cbced4;
+  --font-weight-medium: 600;
+  --font-weight-normal: 400;
+  --ring: #D32F2F;
+  --chart-1: #D32F2F;
+  --chart-2: #FBC02D;
+  --chart-3: #4CAF50;
+  --chart-4: #FF9800;
+  --chart-5: #9C27B0;
+  --radius: 0.75rem;
+  --sidebar: #ffffff;
+  --sidebar-foreground: #212121;
+  --sidebar-primary: #D32F2F;
+  --sidebar-primary-foreground: #ffffff;
+  --sidebar-accent: #FFF8E1;
+  --sidebar-accent-foreground: #D32F2F;
+  --sidebar-border: rgba(0,0,0,0.08);
+  --sidebar-ring: #D32F2F;
+  --gold: #FBC02D;
+  --red: #D32F2F;
+  --dark-red: #B71C1C;
+}
+
+.dark {
+  --background: #0f1115;
+  --foreground: #e8eaf0;
+  --card: #1a1d26;
+  --card-foreground: #e8eaf0;
+  --popover: #1e2133;
+  --popover-foreground: #e8eaf0;
+  --primary: #D32F2F;
+  --primary-foreground: #ffffff;
+  --secondary: #FBC02D;
+  --secondary-foreground: #111111;
+  --muted: #1e2133;
+  --muted-foreground: #7a7d8f;
+  --accent: #252836;
+  --accent-foreground: #e8eaf0;
+  --destructive: #ef4444;
+  --destructive-foreground: #ffffff;
+  --border: rgba(255,255,255,0.07);
+  --input: #1e2133;
+  --input-background: #1e2133;
+  --switch-background: #3a3d4e;
+  --ring: #D32F2F;
+  --font-weight-medium: 500;
+  --font-weight-normal: 400;
+  --chart-1: #D32F2F;
+  --chart-2: #FBC02D;
+  --chart-3: #4CAF50;
+  --chart-4: #FF9800;
+  --chart-5: #9C27B0;
+  --sidebar: #13151e;
+  --sidebar-foreground: #e8eaf0;
+  --sidebar-primary: #D32F2F;
+  --sidebar-primary-foreground: #ffffff;
+  --sidebar-accent: rgba(211,47,47,0.15);
+  --sidebar-accent-foreground: #D32F2F;
+  --sidebar-border: rgba(255,255,255,0.05);
+  --sidebar-ring: #D32F2F;
+}
+
+/* ── Admin dark mode CSS overrides ──────────────────────────────────
+   These cover hardcoded Tailwind utility classes used across admin pages
+   so individual page components don't need dark: variants added manually.
+   ──────────────────────────────────────────────────────────────────── */
+
+/* Backgrounds */
+.dark .bg-white          { background-color: #1a1d26 !important; }
+.dark .bg-gray-50        { background-color: #0f1115 !important; }
+.dark .bg-gray-100       { background-color: #1e2133 !important; }
+.dark .bg-gray-200       { background-color: #252836 !important; }
+
+/* Borders */
+.dark .border-gray-100   { border-color: rgba(255,255,255,0.06) !important; }
+.dark .border-gray-200   { border-color: rgba(255,255,255,0.10) !important; }
+.dark .border-gray-300   { border-color: rgba(255,255,255,0.15) !important; }
+.dark .border-dashed     { border-color: rgba(255,255,255,0.12) !important; }
+
+/* Text — hardcoded hex overrides via attribute selector */
+.dark [class*="text-[#212"] { color: #e8eaf0 !important; }
+.dark [class*="text-[#616"] { color: #7a7d8f !important; }
+.dark [class*="text-[#414"] { color: #9ca3af !important; }
+
+/* Hover backgrounds */
+.dark .hover\:bg-gray-50:hover  { background-color: #1e2133 !important; }
+.dark .hover\:bg-gray-100:hover { background-color: #252836 !important; }
+.dark .hover\:shadow-md:hover   { box-shadow: 0 4px 24px rgba(0,0,0,0.4) !important; }
+
+/* Inputs & textareas */
+.dark input:not([type="file"]),
+.dark textarea,
+.dark select {
+  background-color: #1e2133 !important;
+  border-color: rgba(255,255,255,0.1) !important;
+  color: #e8eaf0 !important;
+}
+.dark input::placeholder,
+.dark textarea::placeholder { color: #4a4d5e !important; }
+.dark input:focus,
+.dark textarea:focus,
+.dark select:focus { border-color: #D32F2F !important; outline: none !important; }
+
+/* Tables */
+.dark table       { color: #e8eaf0 !important; }
+.dark thead tr    { background-color: #1e2133 !important; border-color: rgba(255,255,255,0.06) !important; }
+.dark tbody tr    { border-color: rgba(255,255,255,0.05) !important; }
+.dark tbody tr:hover { background-color: #1e2133 !important; }
+.dark th          { color: #7a7d8f !important; }
+.dark td          { color: #c8cadb !important; }
+
+/* Shadows on cards */
+.dark .shadow-sm  { box-shadow: 0 1px 8px rgba(0,0,0,0.4) !important; }
+.dark .shadow-md  { box-shadow: 0 4px 20px rgba(0,0,0,0.5) !important; }
+.dark .shadow-lg  { box-shadow: 0 8px 32px rgba(0,0,0,0.6) !important; }
+.dark .shadow-xl  { box-shadow: 0 12px 48px rgba(0,0,0,0.7) !important; }
+.dark .shadow-2xl { box-shadow: 0 20px 64px rgba(0,0,0,0.8) !important; }
+
+@theme inline {
+  --color-background: var(--background);
+  --color-foreground: var(--foreground);
+  --color-card: var(--card);
+  --color-card-foreground: var(--card-foreground);
+  --color-popover: var(--popover);
+  --color-popover-foreground: var(--popover-foreground);
+  --color-primary: var(--primary);
+  --color-primary-foreground: var(--primary-foreground);
+  --color-secondary: var(--secondary);
+  --color-secondary-foreground: var(--secondary-foreground);
+  --color-muted: var(--muted);
+  --color-muted-foreground: var(--muted-foreground);
+  --color-accent: var(--accent);
+  --color-accent-foreground: var(--accent-foreground);
+  --color-destructive: var(--destructive);
+  --color-destructive-foreground: var(--destructive-foreground);
+  --color-border: var(--border);
+  --color-input: var(--input);
+  --color-input-background: var(--input-background);
+  --color-switch-background: var(--switch-background);
+  --color-ring: var(--ring);
+  --color-chart-1: var(--chart-1);
+  --color-chart-2: var(--chart-2);
+  --color-chart-3: var(--chart-3);
+  --color-chart-4: var(--chart-4);
+  --color-chart-5: var(--chart-5);
+  --radius-sm: calc(var(--radius) - 4px);
+  --radius-md: calc(var(--radius) - 2px);
+  --radius-lg: var(--radius);
+  --radius-xl: calc(var(--radius) + 4px);
+  --color-sidebar: var(--sidebar);
+  --color-sidebar-foreground: var(--sidebar-foreground);
+  --color-sidebar-primary: var(--sidebar-primary);
+  --color-sidebar-primary-foreground: var(--sidebar-primary-foreground);
+  --color-sidebar-accent: var(--sidebar-accent);
+  --color-sidebar-accent-foreground: var(--sidebar-accent-foreground);
+  --color-sidebar-border: var(--sidebar-border);
+  --color-sidebar-ring: var(--sidebar-ring);
+}
+
+@layer base {
+  * {
+    @apply border-border outline-ring/50;
+  }
+
+  body {
+    @apply bg-background text-foreground;
+  }
+
+  /**
+  * Default typography styles for HTML elements (h1-h4, p, label, button, input).
+  * These are in @layer base, so Tailwind utility classes (like text-sm, text-lg) automatically override them.
+  */
+
+  html {
+    font-size: var(--font-size);
+  }
+
+  h1 {
+    font-size: var(--text-2xl);
+    font-weight: var(--font-weight-medium);
+    line-height: 1.5;
+  }
+
+  h2 {
+    font-size: var(--text-xl);
+    font-weight: var(--font-weight-medium);
+    line-height: 1.5;
+  }
+
+  h3 {
+    font-size: var(--text-lg);
+    font-weight: var(--font-weight-medium);
+    line-height: 1.5;
+  }
+
+  h4 {
+    font-size: var(--text-base);
+    font-weight: var(--font-weight-medium);
+    line-height: 1.5;
+  }
+
+  label {
+    font-size: var(--text-base);
+    font-weight: var(--font-weight-medium);
+    line-height: 1.5;
+  }
+
+  button {
+    font-size: var(--text-base);
+    font-weight: var(--font-weight-medium);
+    line-height: 1.5;
+  }
+
+  input {
+    font-size: var(--text-base);
+    font-weight: var(--font-weight-normal);
+    line-height: 1.5;
+  }
+}
