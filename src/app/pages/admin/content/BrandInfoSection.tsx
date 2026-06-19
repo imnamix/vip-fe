@@ -1,6 +1,6 @@
 import { useEffect, useState } from "react";
 import { useDispatch, useSelector } from "react-redux";
-import { Upload, Trash2, Save, CheckCircle, AlertCircle, Loader2 } from "lucide-react";
+import { Image, Trash2, Save, CheckCircle, AlertCircle, Loader2 } from "lucide-react";
 import { fetchBrandInfo, saveBrandInfo, setBrandField, clearSaved } from "../../../store/slice/BrandInfoSlice";
 import type { RootState, AppDispatch } from "../../../store/Store";
 import type { BrandState } from "./types";
@@ -149,52 +149,28 @@ export default function BrandInfoSection() {
           <label className="block text-xs font-semibold text-[#616161] uppercase tracking-wider mb-3">
             Brand Logo
           </label>
-
-          <div className="flex items-center gap-3">
-            {brand.logo ? (
-              <>
-                <img
-                  src={brand.logo}
-                  alt="Brand Logo"
-                  className="w-16 h-16 object-contain border rounded-lg p-1 bg-white cursor-pointer hover:opacity-80 transition-opacity"
-                  onClick={() => setPreview({ url: brand.logo, title: "Brand Logo" })}
-                />
-
-                <button
-                  type="button"
-                  onClick={() => set("logo", "")}
-                  className="flex items-center gap-1 px-3 py-2 text-xs text-red-600 border border-red-200 rounded-lg hover:bg-red-50"
-                >
-                  <Trash2 size={12} />
-                  Remove
-                </button>
-              </>
-            ) : (
-              <label
-                className={`flex items-center gap-2 px-3 py-2 text-xs text-[#D32F2F] border border-dashed border-[#D32F2F] rounded-lg cursor-pointer hover:bg-red-50 ${
-                  uploadingKey === "logo"
-                    ? "opacity-60 pointer-events-none"
-                    : ""
-                }`}
+          {brand.logo ? (
+            <div>
+              <div
+                className="relative group cursor-pointer"
+                onClick={() => setPreview({ url: brand.logo, title: "Brand Logo" })}
               >
-                {uploadingKey === "logo" ? (
-                  <Loader2 size={12} className="animate-spin" />
-                ) : (
-                  <Upload size={12} />
-                )}
-
-                {uploadingKey === "logo" ? "Uploading..." : "Upload Logo"}
-
-                <input
-                  type="file"
-                  accept="image/*"
-                  className="hidden"
-                  onChange={handleImageUpload("logo")}
-                  disabled={uploadingKey === "logo"}
-                />
-              </label>
-            )}
-          </div>
+                <img src={brand.logo} alt="Brand Logo" className="w-full h-32 object-contain rounded-lg bg-gray-50" />
+                <div className="absolute inset-0 bg-black/30 opacity-0 group-hover:opacity-100 transition-opacity rounded-lg flex items-center justify-center">
+                  <span className="text-white text-xs font-medium bg-black/50 px-3 py-1.5 rounded-full">Click to preview</span>
+                </div>
+              </div>
+              <button type="button" onClick={() => set("logo", "")} className="mt-2 flex items-center gap-1 px-3 py-1.5 text-xs text-red-600 border border-red-200 rounded-lg hover:bg-red-50 transition-colors">
+                <Trash2 size={12} /> Remove
+              </button>
+            </div>
+          ) : (
+            <label className={`flex flex-col items-center gap-2 py-8 border-2 border-dashed rounded-xl cursor-pointer transition-colors ${uploadingKey === "logo" ? "opacity-60 pointer-events-none border-gray-200" : "border-[#D32F2F]/40 hover:border-[#D32F2F] hover:bg-red-50"}`}>
+              {uploadingKey === "logo" ? <Loader2 size={20} className="animate-spin text-[#D32F2F]" /> : <Image size={20} className="text-[#D32F2F]" />}
+              <span className="text-xs text-[#D32F2F] font-medium">{uploadingKey === "logo" ? "Uploading…" : "Upload Logo"}</span>
+              <input type="file" accept="image/*" className="hidden" onChange={handleImageUpload("logo")} disabled={uploadingKey === "logo"} />
+            </label>
+          )}
         </div>
 
         {/* Favicon */}
@@ -202,52 +178,28 @@ export default function BrandInfoSection() {
           <label className="block text-xs font-semibold text-[#616161] uppercase tracking-wider mb-3">
             Favicon
           </label>
-
-          <div className="flex items-center gap-3">
-            {brand.favicon ? (
-              <>
-                <img
-                  src={brand.favicon}
-                  alt="Favicon"
-                  className="w-16 h-16 object-contain border rounded-lg p-1 bg-white cursor-pointer hover:opacity-80 transition-opacity"
-                  onClick={() => setPreview({ url: brand.favicon, title: "Favicon" })}
-                />
-
-                <button
-                  type="button"
-                  onClick={() => set("favicon", "")}
-                  className="flex items-center gap-1 px-3 py-2 text-xs text-red-600 border border-red-200 rounded-lg hover:bg-red-50"
-                >
-                  <Trash2 size={12} />
-                  Remove
-                </button>
-              </>
-            ) : (
-              <label
-                className={`flex items-center gap-2 px-3 py-2 text-xs text-[#D32F2F] border border-dashed border-[#D32F2F] rounded-lg cursor-pointer hover:bg-red-50 ${
-                  uploadingKey === "favicon"
-                    ? "opacity-60 pointer-events-none"
-                    : ""
-                }`}
+          {brand.favicon ? (
+            <div>
+              <div
+                className="relative group cursor-pointer"
+                onClick={() => setPreview({ url: brand.favicon, title: "Favicon" })}
               >
-                {uploadingKey === "favicon" ? (
-                  <Loader2 size={12} className="animate-spin" />
-                ) : (
-                  <Upload size={12} />
-                )}
-
-                {uploadingKey === "favicon" ? "Uploading..." : "Upload Favicon"}
-
-                <input
-                  type="file"
-                  accept="image/*"
-                  className="hidden"
-                  onChange={handleImageUpload("favicon")}
-                  disabled={uploadingKey === "favicon"}
-                />
-              </label>
-            )}
-          </div>
+                <img src={brand.favicon} alt="Favicon" className="w-full h-32 object-contain rounded-lg bg-gray-50" />
+                <div className="absolute inset-0 bg-black/30 opacity-0 group-hover:opacity-100 transition-opacity rounded-lg flex items-center justify-center">
+                  <span className="text-white text-xs font-medium bg-black/50 px-3 py-1.5 rounded-full">Click to preview</span>
+                </div>
+              </div>
+              <button type="button" onClick={() => set("favicon", "")} className="mt-2 flex items-center gap-1 px-3 py-1.5 text-xs text-red-600 border border-red-200 rounded-lg hover:bg-red-50 transition-colors">
+                <Trash2 size={12} /> Remove
+              </button>
+            </div>
+          ) : (
+            <label className={`flex flex-col items-center gap-2 py-8 border-2 border-dashed rounded-xl cursor-pointer transition-colors ${uploadingKey === "favicon" ? "opacity-60 pointer-events-none border-gray-200" : "border-[#D32F2F]/40 hover:border-[#D32F2F] hover:bg-red-50"}`}>
+              {uploadingKey === "favicon" ? <Loader2 size={20} className="animate-spin text-[#D32F2F]" /> : <Image size={20} className="text-[#D32F2F]" />}
+              <span className="text-xs text-[#D32F2F] font-medium">{uploadingKey === "favicon" ? "Uploading…" : "Upload Favicon"}</span>
+              <input type="file" accept="image/*" className="hidden" onChange={handleImageUpload("favicon")} disabled={uploadingKey === "favicon"} />
+            </label>
+          )}
         </div>
       </div>
 
@@ -376,56 +328,35 @@ export default function BrandInfoSection() {
           </div>
 
           {/* OG Image — 50% width on lg, left-aligned */}
-          <div className="w-full lg:w-1/2">
+          <div className="w-full">
             <label className="block text-xs font-semibold text-[#616161] mb-2">
               OG Image
             </label>
-            <div className="border border-gray-200 rounded-xl p-4">
+            <div>
               {brand.ogImage ? (
-                <div className="flex items-start gap-3">
-                  <img
-                    src={brand.ogImage}
-                    alt="OG Preview"
-                    className="w-40 h-24 object-cover rounded-lg border flex-shrink-0 cursor-pointer hover:opacity-80 transition-opacity"
+                <div className="border border-gray-200 rounded-xl p-3">
+                  <div
+                    className="relative group cursor-pointer"
                     onClick={() => setPreview({ url: brand.ogImage, title: "OG Image" })}
-                  />
-                  <div className="flex flex-col gap-2">
-                    <span className="text-xs text-[#616161]">
-                      Recommended: 1200×630px
-                    </span>
-                    <button
-                      type="button"
-                      onClick={() => set("ogImage", "")}
-                      className="flex items-center gap-1 px-3 py-2 text-xs text-red-600 border border-red-200 rounded-lg hover:bg-red-50 w-fit"
-                    >
+                  >
+                    <img src={brand.ogImage} alt="OG Preview" className="w-full h-40 object-cover rounded-lg" />
+                    <div className="absolute inset-0 bg-black/30 opacity-0 group-hover:opacity-100 transition-opacity rounded-lg flex items-center justify-center">
+                      <span className="text-white text-xs font-medium bg-black/50 px-3 py-1.5 rounded-full">Click to preview</span>
+                    </div>
+                  </div>
+                  <div className="mt-2 flex items-center justify-between">
+                    {/* <span className="text-xs text-[#9E9E9E]">Recommended: 1200×630px</span> */}
+                    <button type="button" onClick={() => set("ogImage", "")} className="flex items-center gap-1 px-3 py-1.5 text-xs text-red-600 border border-red-200 rounded-lg hover:bg-red-50 transition-colors">
                       <Trash2 size={12} /> Remove
                     </button>
                   </div>
                 </div>
               ) : (
-                <label
-                  className={`flex flex-col items-center gap-2 py-6 text-xs text-[#D32F2F] border border-dashed border-[#D32F2F] rounded-lg cursor-pointer hover:bg-red-50 ${uploadingKey === "ogImage" ? "opacity-60 pointer-events-none" : ""}`}
-                >
-                  {uploadingKey === "ogImage" ? (
-                    <Loader2 size={18} className="animate-spin" />
-                  ) : (
-                    <Upload size={18} />
-                  )}
-                  <span>
-                    {uploadingKey === "ogImage"
-                      ? "Uploading…"
-                      : "Upload OG Image"}
-                  </span>
-                  <span className="text-[#9E9E9E]">
-                    Recommended: 1200×630px
-                  </span>
-                  <input
-                    type="file"
-                    accept="image/*"
-                    className="hidden"
-                    onChange={handleImageUpload("ogImage")}
-                    disabled={uploadingKey === "ogImage"}
-                  />
+                <label className={`flex flex-col items-center gap-2 py-8 border-2 border-dashed rounded-xl cursor-pointer transition-colors ${uploadingKey === "ogImage" ? "opacity-60 pointer-events-none border-gray-200" : "border-[#D32F2F]/40 hover:border-[#D32F2F] hover:bg-red-50"}`}>
+                  {uploadingKey === "ogImage" ? <Loader2 size={20} className="animate-spin text-[#D32F2F]" /> : <Image size={20} className="text-[#D32F2F]" />}
+                  <span className="text-xs text-[#D32F2F] font-medium">{uploadingKey === "ogImage" ? "Uploading…" : "Upload OG Image"}</span>
+                  <span className="text-xs text-[#9E9E9E]">Recommended: 1200×630px</span>
+                  <input type="file" accept="image/*" className="hidden" onChange={handleImageUpload("ogImage")} disabled={uploadingKey === "ogImage"} />
                 </label>
               )}
             </div>

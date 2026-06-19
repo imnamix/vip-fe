@@ -1,6 +1,6 @@
 import { useEffect, useRef, useState } from 'react';
 import {
-  Save, CheckCircle, AlertCircle, Loader2, Plus, Trash2, Upload,
+  Save, CheckCircle, AlertCircle, Loader2, Plus, Trash2, Image,
   TrendingUp, Users, Building2, Award, Star, Target, BarChart2, Clock, Globe,
   Shield, Zap, Heart, ThumbsUp, Lightbulb, Trophy, Gem, Rocket, Wrench,
   DollarSign, ChevronDown,
@@ -105,7 +105,7 @@ function IconPicker({ value, onChange }: { value: string; onChange: (name: strin
 
 function SingleImageUpload({ value, onChange, label }: { value: string; onChange: (url: string) => void; label: string }) {
   const [uploading, setUploading] = useState(false);
-  const [preview, setPreview] = useState<{ url: string; title: string } | null>(null);
+  const [imgPreview, setImgPreview] = useState(false);
 
   const handleUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
@@ -121,36 +121,37 @@ function SingleImageUpload({ value, onChange, label }: { value: string; onChange
       console.error('Upload failed:', err);
     } finally {
       setUploading(false);
+      e.target.value = '';
     }
   };
 
-  return (
-    <div className="border border-gray-200 rounded-xl p-4">
-      {value ? (
-        <div className="flex items-start gap-3">
-          <img
-            src={value}
-            alt={label}
-            className="w-40 h-24 object-cover rounded-lg border flex-shrink-0 cursor-pointer"
-            onClick={() => setPreview({ url: value, title: label })}
-          />
-          <button
-            type="button"
-            onClick={() => onChange('')}
-            className="flex items-center gap-1 px-3 py-2 text-xs text-red-600 border border-red-200 rounded-lg hover:bg-red-50 w-fit"
-          >
-            <Trash2 size={12} /> Remove
-          </button>
+  if (value) {
+    return (
+      <div className="border border-gray-200 rounded-xl p-3">
+        <div className="relative group cursor-pointer" onClick={() => setImgPreview(true)}>
+          <img src={value} alt={label} className="w-full h-40 object-cover rounded-lg" />
+          <div className="absolute inset-0 bg-black/30 opacity-0 group-hover:opacity-100 transition-opacity rounded-lg flex items-center justify-center">
+            <span className="text-white text-xs font-medium bg-black/50 px-3 py-1.5 rounded-full">Click to preview</span>
+          </div>
         </div>
-      ) : (
-        <label className={`flex flex-col items-center gap-2 py-6 text-xs text-[#D32F2F] border border-dashed border-[#D32F2F] rounded-lg cursor-pointer hover:bg-red-50 ${uploading ? 'opacity-60 pointer-events-none' : ''}`}>
-          {uploading ? <Loader2 size={18} className="animate-spin" /> : <Upload size={18} />}
-          <span>{uploading ? 'Uploading…' : `Upload ${label}`}</span>
-          <input type="file" accept="image/*" className="hidden" onChange={handleUpload} disabled={uploading} />
-        </label>
-      )}
-      <ImagePreviewPopup open={!!preview} onClose={() => setPreview(null)} imageUrl={preview?.url ?? ''} title={preview?.title} />
-    </div>
+        <button
+          type="button"
+          onClick={() => onChange('')}
+          className="mt-2 flex items-center gap-1 px-3 py-1.5 text-xs text-red-600 border border-red-200 rounded-lg hover:bg-red-50 transition-colors"
+        >
+          <Trash2 size={12} /> Remove
+        </button>
+        <ImagePreviewPopup open={imgPreview} onClose={() => setImgPreview(false)} imageUrl={value} title={label} />
+      </div>
+    );
+  }
+
+  return (
+    <label className={`flex flex-col items-center gap-2 py-8 border-2 border-dashed rounded-xl cursor-pointer transition-colors ${uploading ? 'opacity-60 pointer-events-none border-gray-200' : 'border-[#D32F2F]/40 hover:border-[#D32F2F] hover:bg-red-50'}`}>
+      {uploading ? <Loader2 size={20} className="animate-spin text-[#D32F2F]" /> : <Image size={20} className="text-[#D32F2F]" />}
+      <span className="text-xs text-[#D32F2F] font-medium">{uploading ? 'Uploading…' : `Upload ${label}`}</span>
+      <input type="file" accept="image/*" className="hidden" onChange={handleUpload} disabled={uploading} />
+    </label>
   );
 }
 

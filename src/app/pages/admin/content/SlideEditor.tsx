@@ -1,5 +1,5 @@
 import { useState } from 'react';
-import { Plus, Trash2, Upload, Loader2 } from 'lucide-react';
+import { Plus, Trash2, Image, Loader2 } from 'lucide-react';
 import type { Slide } from './types';
 import { uploadFiles } from '../../../services/MediaService';
 import ImagePreviewPopup from '../../../components/ImagePreviewPopup';
@@ -61,44 +61,44 @@ export default function SlideEditor({ slides, setSlides, label = 'Slide' }: Prop
           </div>
           <div className="p-4 space-y-3">
             {/* Background Image */}
-            <div className="w-full lg:w-1/2">
+            <div className="w-full">
               <label className="block text-xs font-semibold text-[#616161] uppercase tracking-wider mb-1.5">
                 Background Image
               </label>
-              <div className="border border-gray-200 rounded-xl p-4">
+              <div>
                 {slide.image ? (
-                  <div className="flex items-start gap-3">
-                    <img
-                      src={slide.image}
-                      alt="Slide preview"
-                      className="w-40 h-24 object-cover rounded-lg border flex-shrink-0"
-                      onClick={() =>
-                        setPreview({ url: slide.image, title: "Slide Image" })
-                      }
-                    />
-                    <div className="flex flex-col gap-2">
-                      <button
-                        type="button"
-                        onClick={() => update(slide.id, "image", "")}
-                        className="flex items-center gap-1 px-3 py-2 text-xs text-red-600 border border-red-200 rounded-lg hover:bg-red-50 w-fit"
-                      >
-                        <Trash2 size={12} /> Remove
-                      </button>
+                  <div className="border border-gray-200 rounded-xl p-3">
+                    <div
+                      className="relative group cursor-pointer"
+                      onClick={() => setPreview({ url: slide.image, title: "Slide Image" })}
+                    >
+                      <img
+                        src={slide.image}
+                        alt="Slide preview"
+                        className="w-full h-40 object-cover rounded-lg"
+                      />
+                      <div className="absolute inset-0 bg-black/30 opacity-0 group-hover:opacity-100 transition-opacity rounded-lg flex items-center justify-center">
+                        <span className="text-white text-xs font-medium bg-black/50 px-3 py-1.5 rounded-full">Click to preview</span>
+                      </div>
                     </div>
+                    <button
+                      type="button"
+                      onClick={() => update(slide.id, "image", "")}
+                      className="mt-2 flex items-center gap-1 px-3 py-1.5 text-xs text-red-600 border border-red-200 rounded-lg hover:bg-red-50 transition-colors"
+                    >
+                      <Trash2 size={12} /> Remove
+                    </button>
                   </div>
                 ) : (
                   <label
-                    className={`flex flex-col items-center gap-2 py-6 text-xs text-[#D32F2F] border border-dashed border-[#D32F2F] rounded-lg cursor-pointer hover:bg-red-50 ${uploadingId === slide.id ? "opacity-60 pointer-events-none" : ""}`}
+                    className={`flex flex-col items-center gap-2 py-8 border-2 border-dashed rounded-xl cursor-pointer transition-colors ${uploadingId === slide.id ? "opacity-60 pointer-events-none border-gray-200" : "border-[#D32F2F]/40 hover:border-[#D32F2F] hover:bg-red-50"}`}
                   >
-                    {uploadingId === slide.id ? (
-                      <Loader2 size={18} className="animate-spin" />
-                    ) : (
-                      <Upload size={18} />
-                    )}
-                    <span>
-                      {uploadingId === slide.id
-                        ? "Uploading…"
-                        : "Upload Background Image"}
+                    {uploadingId === slide.id
+                      ? <Loader2 size={20} className="animate-spin text-[#D32F2F]" />
+                      : <Image size={20} className="text-[#D32F2F]" />
+                    }
+                    <span className="text-xs text-[#D32F2F] font-medium">
+                      {uploadingId === slide.id ? "Uploading…" : "Upload Background Image"}
                     </span>
                     <input
                       type="file"
