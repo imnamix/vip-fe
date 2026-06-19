@@ -1,4 +1,5 @@
 import { useState } from 'react';
+import { useSearchParams } from 'react-router';
 import { Home, Info, Wrench, Image, Star, HelpCircle, Search, Save, CheckCircle, Settings } from 'lucide-react';
 
 import BrandInfoSection from './content/BrandInfoSection';
@@ -11,7 +12,7 @@ import FaqsSection from './content/FaqsSection';
 import SeoSection from './content/SeoSection';
 
 import type {
-  HomeAboutState, AboutInfoState,
+  AboutInfoState,
   Slide, ServiceItem, FaqItem, TestimonialItem, SeoPage,
 } from './content/types';
 
@@ -27,11 +28,10 @@ const modules = [
 ];
 
 export default function ContentManagement() {
-  const [activeModule, setActiveModule] = useState('brand');
+  const [searchParams, setSearchParams] = useSearchParams();
+  const activeModule = searchParams.get('tab') || 'brand';
+  const setActiveModule = (key: string) => setSearchParams({ tab: key }, { replace: true });
   const [saved, setSaved] = useState(false);
-
-  const [homeSlides, setHomeSlides] = useState<Slide[]>([]);
-  const [homeAbout, setHomeAbout] = useState<HomeAboutState>({ title: '', desc: '' });
 
   const [aboutSlides, setAboutSlides] = useState<Slide[]>([]);
   const [aboutInfo, setAboutInfo] = useState<AboutInfoState>({ title: '', intro: '' });
@@ -99,7 +99,7 @@ export default function ContentManagement() {
               </div>
               <h2 className="font-bold text-[#212121] text-lg" style={{ fontFamily: 'Poppins, sans-serif' }}>{mod.label}</h2>
             </div>
-            {activeModule !== 'brand' && (
+            {activeModule !== 'brand' && activeModule !== 'homepage' && (
               <button onClick={handleSave}
                 className="flex items-center gap-1.5 px-4 py-2 bg-[#D32F2F] text-white rounded-xl text-sm font-semibold hover:bg-[#B71C1C] transition-colors">
                 <Save size={13} /> Save Changes
@@ -108,9 +108,7 @@ export default function ContentManagement() {
           </div>
 
           {activeModule === 'brand' && <BrandInfoSection />}
-          {activeModule === 'homepage' && (
-            <HomepageSection homeSlides={homeSlides} setHomeSlides={setHomeSlides} homeAbout={homeAbout} setHomeAbout={setHomeAbout} />
-          )}
+          {activeModule === 'homepage' && <HomepageSection />}
           {activeModule === 'about' && (
             <AboutUsSection aboutSlides={aboutSlides} setAboutSlides={setAboutSlides} aboutInfo={aboutInfo} setAboutInfo={setAboutInfo} whyChoose={whyChoose} setWhyChoose={setWhyChoose} />
           )}
