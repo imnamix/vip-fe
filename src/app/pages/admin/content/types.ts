@@ -12,4 +12,7 @@ export interface BrandState {
 export interface HomeAboutState { title: string; desc: string }
 export interface AboutInfoState { title: string; intro: string }
 
+export interface AboutStatItem { id: number; key: string; value: string; icon: string }
+export interface AboutWhyItem { id: number; key: string; value: string; icon: string }
+
 export interface SeoPage { page: string; title: string; desc: string; keywords: string }

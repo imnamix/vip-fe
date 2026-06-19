@@ -12,7 +12,6 @@ import FaqsSection from './content/FaqsSection';
 import SeoSection from './content/SeoSection';
 
 import type {
-  AboutInfoState,
   Slide, ServiceItem, FaqItem, TestimonialItem, SeoPage,
 } from './content/types';
 
@@ -32,10 +31,6 @@ export default function ContentManagement() {
   const activeModule = searchParams.get('tab') || 'brand';
   const setActiveModule = (key: string) => setSearchParams({ tab: key }, { replace: true });
   const [saved, setSaved] = useState(false);
-
-  const [aboutSlides, setAboutSlides] = useState<Slide[]>([]);
-  const [aboutInfo, setAboutInfo] = useState<AboutInfoState>({ title: '', intro: '' });
-  const [whyChoose, setWhyChoose] = useState('');
 
   const [serviceSlides, setServiceSlides] = useState<Slide[]>([]);
   const [services, setServices] = useState<ServiceItem[]>([]);
@@ -99,7 +94,7 @@ export default function ContentManagement() {
               </div>
               <h2 className="font-bold text-[#212121] text-lg" style={{ fontFamily: 'Poppins, sans-serif' }}>{mod.label}</h2>
             </div>
-            {activeModule !== 'brand' && activeModule !== 'homepage' && (
+            {activeModule !== 'brand' && activeModule !== 'homepage' && activeModule !== 'about' && (
               <button onClick={handleSave}
                 className="flex items-center gap-1.5 px-4 py-2 bg-[#D32F2F] text-white rounded-xl text-sm font-semibold hover:bg-[#B71C1C] transition-colors">
                 <Save size={13} /> Save Changes
@@ -109,9 +104,7 @@ export default function ContentManagement() {
 
           {activeModule === 'brand' && <BrandInfoSection />}
           {activeModule === 'homepage' && <HomepageSection />}
-          {activeModule === 'about' && (
-            <AboutUsSection aboutSlides={aboutSlides} setAboutSlides={setAboutSlides} aboutInfo={aboutInfo} setAboutInfo={setAboutInfo} whyChoose={whyChoose} setWhyChoose={setWhyChoose} />
-          )}
+          {activeModule === 'about' && <AboutUsSection />}
           {activeModule === 'services' && (
             <ServicesSection serviceSlides={serviceSlides} setServiceSlides={setServiceSlides} services={services} setServices={setServices} />
           )}
