@@ -13,6 +13,7 @@ export default function HomepageSection() {
   const [saving, setSaving] = useState(false);
   const [saved, setSaved] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  const [slideShowErrors, setSlideShowErrors] = useState(false);
 
   useEffect(() => {
     const load = async () => {
@@ -62,6 +63,11 @@ export default function HomepageSection() {
   }, [saved]);
 
   const handleSave = async () => {
+    if (slides.some(s => !s.image)) {
+      setSlideShowErrors(true);
+      return;
+    }
+    setSlideShowErrors(false);
     setSaving(true);
     setError(null);
     try {
@@ -103,7 +109,7 @@ export default function HomepageSection() {
         >
           Hero Banner Slides
         </h3>
-        <SlideEditor slides={slides} setSlides={setSlides} label="Slide" />
+        <SlideEditor slides={slides} setSlides={setSlides} label="Slide" showErrors={slideShowErrors} />
       </div>
 
       <div className="flex items-center justify-end gap-3 pt-2">

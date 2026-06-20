@@ -2,7 +2,7 @@ import { useState } from 'react';
 import { useSearchParams } from 'react-router';
 import {
   Home, Info, Wrench, Image, Star, HelpCircle, Video,
-  Save, CheckCircle, Settings, Menu, X,
+  Save, CheckCircle, Settings, Menu, X, Phone,
 } from 'lucide-react';
 
 import BrandInfoSection from './content/BrandInfoSection';
@@ -13,6 +13,7 @@ import GallerySection from './content/GallerySection';
 import TestimonialsSection from './content/TestimonialsSection';
 import VideoTestimonialsSection from './content/VideoTestimonialsSection';
 import FaqsSection from './content/FaqsSection';
+import ContactSection from './content/ContactSection';
 
 
 const modules = [
@@ -24,9 +25,10 @@ const modules = [
   { key: "testimonials", label: "Reviews", icon: Star },
   { key: "video-testimonials", label: "Video Reviews", icon: Video },
   { key: "faqs", label: "FAQs", icon: HelpCircle },
+  { key: "contact", label: "Contact", icon: Phone },
 ];
 
-const SELF_SAVING = new Set(['brand', 'homepage', 'about', 'services', 'gallery', 'testimonials', 'video-testimonials', 'faqs']);
+const SELF_SAVING = new Set(['brand', 'homepage', 'about', 'services', 'gallery', 'testimonials', 'video-testimonials', 'faqs', 'contact']);
 
 export default function ContentManagement() {
   const [searchParams, setSearchParams] = useSearchParams();
@@ -185,6 +187,7 @@ export default function ContentManagement() {
           {activeModule === 'testimonials' && <TestimonialsSection />}
           {activeModule === 'video-testimonials' && <VideoTestimonialsSection />}
           {activeModule === 'faqs' && <FaqsSection />}
+          {activeModule === 'contact' && <ContactSection />}
         </div>
       </div>
     </div>

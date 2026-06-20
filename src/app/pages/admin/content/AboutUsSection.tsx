@@ -176,6 +176,7 @@ export default function AboutUsSection() {
   const [savingBanner, setSavingBanner] = useState(false);
   const [savedBanner, setSavedBanner] = useState(false);
   const [bannerError, setBannerError] = useState<string | null>(null);
+  const [slideShowErrors, setSlideShowErrors] = useState(false);
 
   // Banner slides
   const [slides, setSlides] = useState<Slide[]>([
@@ -283,6 +284,11 @@ export default function AboutUsSection() {
   // ── Save banner slides only ───────────────────────────────────────────────
 
   const handleSaveBanner = async () => {
+    if (slides.some(s => !s.image)) {
+      setSlideShowErrors(true);
+      return;
+    }
+    setSlideShowErrors(false);
     setSavingBanner(true);
     setBannerError(null);
     try {
@@ -305,6 +311,11 @@ export default function AboutUsSection() {
   // ── Save all ──────────────────────────────────────────────────────────────
 
   const handleSave = async () => {
+    if (slides.some(s => !s.image)) {
+      setSlideShowErrors(true);
+      return;
+    }
+    setSlideShowErrors(false);
     setSaving(true);
     setError(null);
     try {
@@ -384,7 +395,7 @@ export default function AboutUsSection() {
             <AlertCircle size={14} /> {bannerError}
           </div>
         )}
-        <SlideEditor slides={slides} setSlides={setSlides} label="Slide" />
+        <SlideEditor slides={slides} setSlides={setSlides} label="Slide" showErrors={slideShowErrors} />
         <div className="flex items-center justify-end gap-3 pt-3 mt-3 border-t border-gray-100">
           {savedBanner && (
             <div className="flex items-center gap-1.5 text-green-600 text-sm font-medium">

@@ -1,12 +1,12 @@
 import { useState } from 'react';
-import { Plus, Trash2, Image, Loader2 } from 'lucide-react';
+import { Plus, Trash2, Image, Loader2, AlertCircle } from 'lucide-react';
 import type { Slide } from './types';
 import { uploadFiles } from '../../../services/MediaService';
 import ImagePreviewPopup from '../../../components/ImagePreviewPopup';
 
-interface Props { slides: Slide[]; setSlides: (s: Slide[]) => void; label?: string }
+interface Props { slides: Slide[]; setSlides: (s: Slide[]) => void; label?: string; showErrors?: boolean }
 
-export default function SlideEditor({ slides, setSlides, label = 'Slide' }: Props) {
+export default function SlideEditor({ slides, setSlides, label = 'Slide', showErrors = false }: Props) {
   const [uploadingId, setUploadingId] = useState<number | null>(null);
     const [preview, setPreview] = useState<{
       url: string;
@@ -63,7 +63,7 @@ export default function SlideEditor({ slides, setSlides, label = 'Slide' }: Prop
             {/* Background Image */}
             <div className="w-full">
               <label className="block text-xs font-semibold text-[#616161] uppercase tracking-wider mb-1.5">
-                Banner Image
+                Banner Image <span className="text-red-500">*</span>
               </label>
               <div>
                 {slide.image ? (
@@ -90,24 +90,35 @@ export default function SlideEditor({ slides, setSlides, label = 'Slide' }: Prop
                     </button>
                   </div>
                 ) : (
-                  <label
-                    className={`flex flex-col items-center gap-2 py-8 border-2 border-dashed rounded-xl cursor-pointer transition-colors ${uploadingId === slide.id ? "opacity-60 pointer-events-none border-gray-200" : "border-[#D32F2F]/40 hover:border-[#D32F2F] hover:bg-red-50"}`}
-                  >
-                    {uploadingId === slide.id
-                      ? <Loader2 size={20} className="animate-spin text-[#D32F2F]" />
-                      : <Image size={20} className="text-[#D32F2F]" />
-                    }
-                    <span className="text-xs text-[#D32F2F] font-medium">
-                      {uploadingId === slide.id ? "Uploading…" : "Upload Background Image"}
-                    </span>
-                    <input
-                      type="file"
-                      accept="image/*"
-                      className="hidden"
-                      onChange={handleImageUpload(slide.id)}
-                      disabled={uploadingId === slide.id}
-                    />
-                  </label>
+                  <>
+                    <label className={`flex flex-col items-center gap-2 py-8 border-2 border-dashed rounded-xl cursor-pointer transition-colors ${
+                      uploadingId === slide.id
+                        ? "opacity-60 pointer-events-none border-gray-200"
+                        : showErrors
+                          ? "border-red-400 bg-red-50 hover:border-red-500"
+                          : "border-[#D32F2F]/40 hover:border-[#D32F2F] hover:bg-red-50"
+                    }`}>
+                      {uploadingId === slide.id
+                        ? <Loader2 size={20} className="animate-spin text-[#D32F2F]" />
+                        : <Image size={20} className={showErrors ? "text-red-500" : "text-[#D32F2F]"} />
+                      }
+                      <span className={`text-xs font-medium ${showErrors ? "text-red-500" : "text-[#D32F2F]"}`}>
+                        {uploadingId === slide.id ? "Uploading…" : "Upload Background Image"}
+                      </span>
+                      <input
+                        type="file"
+                        accept="image/*"
+                        className="hidden"
+                        onChange={handleImageUpload(slide.id)}
+                        disabled={uploadingId === slide.id}
+                      />
+                    </label>
+                    {showErrors && (
+                      <p className="mt-1.5 flex items-center gap-1 text-xs text-red-500 font-medium">
+                        <AlertCircle size={11} /> Banner image is required
+                      </p>
+                    )}
+                  </>
                 )}
               </div>
             </div>

@@ -173,6 +173,7 @@ export default function ServicesSection() {
   const [savingBanner, setSavingBanner] = useState(false);
   const [savedBanner, setSavedBanner] = useState(false);
   const [bannerError, setBannerError] = useState<string | null>(null);
+  const [bannerSlideShowErrors, setBannerSlideShowErrors] = useState(false);
 
   // ── Services state ────────────────────────────────────────────────────────
   const [items, setItems] = useState<ServiceFormItem[]>([]);
@@ -181,7 +182,7 @@ export default function ServicesSection() {
   const [saving, setSaving] = useState(false);
   const [saved, setSaved] = useState(false);
   const [error, setError] = useState<string | null>(null);
-  const [fieldErrors, setFieldErrors] = useState<Record<number, { title?: string; description?: string }>>({});
+  const [fieldErrors, setFieldErrors] = useState<Record<number, { title?: string; description?: string; image?: string }>>({});
   const [expandedIds, setExpandedIds] = useState<Set<number>>(new Set());
 
   // ── Load ─────────────────────────────────────────────────────────────────
@@ -247,6 +248,11 @@ export default function ServicesSection() {
   // ── Save banner ───────────────────────────────────────────────────────────
 
   const handleSaveBanner = async () => {
+    if (slides.some(s => !s.image)) {
+      setBannerSlideShowErrors(true);
+      return;
+    }
+    setBannerSlideShowErrors(false);
     setSavingBanner(true);
     setBannerError(null);
     try {
@@ -265,9 +271,10 @@ export default function ServicesSection() {
 
   const handleSave = async () => {
     // Validate required fields
-    const errors: Record<number, { title?: string; description?: string }> = {};
+    const errors: Record<number, { title?: string; description?: string; image?: string }> = {};
     items.forEach(item => {
-      const e: { title?: string; description?: string } = {};
+      const e: { title?: string; description?: string; image?: string } = {};
+      if (!item.image) e.image = 'Image is required';
       if (!item.title.trim()) e.title = 'Title is required';
       const descText = item.description.replace(/<[^>]*>/g, '').trim();
       if (!descText) e.description = 'Description is required';
@@ -370,7 +377,7 @@ export default function ServicesSection() {
             <AlertCircle size={14} /> {bannerError}
           </div>
         )}
-        <SlideEditor slides={slides} setSlides={setSlides} label="Slide" />
+        <SlideEditor slides={slides} setSlides={setSlides} label="Slide" showErrors={bannerSlideShowErrors} />
         <div className="flex items-center justify-end gap-3 pt-3 mt-3 border-t border-gray-100">
           {savedBanner && (
             <div className="flex items-center gap-1.5 text-green-600 text-sm font-medium">
@@ -420,7 +427,7 @@ export default function ServicesSection() {
                 <span className="font-semibold text-[#212121] text-sm truncate">
                   {svc.title || `Service ${idx + 1}`}
                 </span>
-                {(fieldErrors[svc.localId]?.title || fieldErrors[svc.localId]?.description) && (
+                {(fieldErrors[svc.localId]?.title || fieldErrors[svc.localId]?.description || fieldErrors[svc.localId]?.image) && (
                   <AlertCircle size={13} className="text-red-500 flex-shrink-0" />
                 )}
               </button>
@@ -445,12 +452,15 @@ export default function ServicesSection() {
             {expandedIds.has(svc.localId) && <div className="p-4 space-y-4">
               {/* Image */}
               <div>
-                <label className="block text-xs font-semibold text-[#616161] mb-1">Image</label>
+                <label className="block text-xs font-semibold text-[#616161] mb-1">Image <span className="text-red-500">*</span></label>
                 <SingleImageUpload
                   value={svc.image}
                   onChange={url => updateItem(svc.localId, 'image', url)}
                   label="Service Image"
                 />
+                {fieldErrors[svc.localId]?.image && (
+                  <p className="mt-1 text-xs text-red-500 flex items-center gap-1"><AlertCircle size={11} />{fieldErrors[svc.localId].image}</p>
+                )}
               </div>
 
               {/* Title + Icon */}
