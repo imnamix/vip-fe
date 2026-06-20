@@ -18,6 +18,7 @@ import NumerologistForm from './pages/admin/NumerologistForm';
 import AdminEvents from './pages/admin/AdminEvents';
 import EventForm from './pages/admin/EventForm';
 import EventView from './pages/admin/EventView';
+import EventBannerSlides from './pages/admin/EventBannerSlides';
 import ContentManagement from './pages/admin/ContentManagement';
 import UserRoles from './pages/admin/UserRoles';
 import DeliveryTracking from './pages/admin/DeliveryTracking';
@@ -52,6 +53,7 @@ export const router = createBrowserRouter([
       { path: 'numerologists/:id', Component: NumerologistDetail },
       { path: 'numerologists/:id/edit', Component: NumerologistForm },
       { path: 'events', Component: AdminEvents },
+      { path: 'events/banner', Component: EventBannerSlides },
       { path: 'events/new', Component: EventForm },
       { path: 'events/:id', Component: EventView },
       { path: 'events/:id/edit', Component: EventForm },

@@ -44,12 +44,12 @@ export const getAllEvents = async (
   page: number = 1,
   limit: number = 10,
   searchKeys?: string,
+  status?: string,
 ) => {
   try {
     let eventsUrl = `${URL.GET_ALL}?page=${page}&limit=${limit}`;
-    if (searchKeys) {
-      eventsUrl += `&search=${searchKeys}`;
-    }
+    if (searchKeys) eventsUrl += `&search=${encodeURIComponent(searchKeys)}`;
+    if (status && status !== "All") eventsUrl += `&status=${encodeURIComponent(status)}`;
     const response = await ApiRequest.get(eventsUrl);
     return response.data;
   } catch (error) {
