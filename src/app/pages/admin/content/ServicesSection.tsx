@@ -6,10 +6,13 @@ import {
   DollarSign, ChevronDown,
 } from 'lucide-react';
 import { getAllServices, createService, updateService, deleteService } from '../../../services/ServicesService';
+import { getServicePage, saveServicePage } from '../../../services/ServicePageService';
 import { uploadFiles } from '../../../services/MediaService';
 import ImagePreviewPopup from '../../../components/ImagePreviewPopup';
+import SlideEditor from './SlideEditor';
 import ReactQuill from "react-quill";
 import "react-quill/dist/quill.snow.css";
+import type { Slide } from './types';
 // ─── Types ───────────────────────────────────────────────────────────────────
 
 interface ServiceFormItem {
@@ -164,6 +167,14 @@ function SingleImageUpload({ value, onChange, label }: { value: string; onChange
 // ─── Main component ───────────────────────────────────────────────────────────
 
 export default function ServicesSection() {
+  // ── Banner slides state ───────────────────────────────────────────────────
+  const [slides, setSlides] = useState<Slide[]>([{ id: Date.now(), image: '', title: '', description: '' }]);
+  const [bannerPageId, setBannerPageId] = useState<number | null>(null);
+  const [savingBanner, setSavingBanner] = useState(false);
+  const [savedBanner, setSavedBanner] = useState(false);
+  const [bannerError, setBannerError] = useState<string | null>(null);
+
+  // ── Services state ────────────────────────────────────────────────────────
   const [items, setItems] = useState<ServiceFormItem[]>([]);
   const [deletedIds, setDeletedIds] = useState<number[]>([]);
   const [loading, setLoading] = useState(true);
@@ -179,8 +190,12 @@ export default function ServicesSection() {
     const load = async () => {
       setLoading(true);
       try {
-        const res = await getAllServices(0, 1000);
-        const services: any[] = res?.data ?? [];
+        const [svcRes, pageRes] = await Promise.all([
+          getAllServices(0, 1000),
+          getServicePage(),
+        ]);
+
+        const services: any[] = svcRes?.data ?? [];
         setItems(
           services.map((s, i) => ({
             localId: Date.now() + i,
@@ -191,6 +206,17 @@ export default function ServicesSection() {
             icon: s.icon ?? '',
           })),
         );
+
+        const page = pageRes?.data;
+        if (page) {
+          setBannerPageId(page.id);
+          const raw: { title: string; description: string; image?: string }[] = page.slides ?? [];
+          setSlides(
+            raw.length
+              ? raw.map((s, i) => ({ id: Date.now() + i, image: s.image ?? '', title: s.title, description: s.description }))
+              : [{ id: Date.now(), image: '', title: '', description: '' }],
+          );
+        }
       } catch {
         setError('Failed to load services');
       } finally {
@@ -208,8 +234,32 @@ export default function ServicesSection() {
   }, [saved]);
 
   useEffect(() => {
+    if (savedBanner) {
+      const t = setTimeout(() => setSavedBanner(false), 3500);
+      return () => clearTimeout(t);
+    }
+  }, [savedBanner]);
+
+  useEffect(() => {
     if (saved) window.scrollTo({ top: 0, behavior: 'smooth' });
   }, [saved]);
+
+  // ── Save banner ───────────────────────────────────────────────────────────
+
+  const handleSaveBanner = async () => {
+    setSavingBanner(true);
+    setBannerError(null);
+    try {
+      const payload = { slides: slides.map(({ id: _id, ...rest }) => rest) };
+      const res = await saveServicePage(payload);
+      if (!bannerPageId && res?.data?.id) setBannerPageId(res.data.id);
+      setSavedBanner(true);
+    } catch {
+      setBannerError('Failed to save banner slides');
+    } finally {
+      setSavingBanner(false);
+    }
+  };
 
   // ── Save ─────────────────────────────────────────────────────────────────
 
@@ -309,13 +359,46 @@ export default function ServicesSection() {
   }
 
   return (
-    <div className="space-y-6">
-      {error && (
-        <div className="flex items-center gap-2 px-4 py-3 bg-red-50 border border-red-200 rounded-xl text-sm text-red-600">
-          <AlertCircle size={14} /> {error}
+    <div className="space-y-8">
+      {/* ── Banner Slides ── */}
+      <div>
+        <h3 className="font-bold text-[#212121] mb-4 text-sm" style={{ fontFamily: 'Poppins, sans-serif' }}>
+          Banner Slides
+        </h3>
+        {bannerError && (
+          <div className="flex items-center gap-2 px-4 py-3 mb-3 bg-red-50 border border-red-200 rounded-xl text-sm text-red-600">
+            <AlertCircle size={14} /> {bannerError}
+          </div>
+        )}
+        <SlideEditor slides={slides} setSlides={setSlides} label="Slide" />
+        <div className="flex items-center justify-end gap-3 pt-3 mt-3 border-t border-gray-100">
+          {savedBanner && (
+            <div className="flex items-center gap-1.5 text-green-600 text-sm font-medium">
+              <CheckCircle size={14} /> Saved successfully
+            </div>
+          )}
+          <button
+            type="button"
+            onClick={handleSaveBanner}
+            disabled={savingBanner}
+            className="flex items-center gap-2 px-5 py-2.5 bg-[#D32F2F] text-white rounded-xl text-sm font-semibold hover:bg-[#B71C1C] transition-colors disabled:opacity-60 disabled:cursor-not-allowed"
+          >
+            <Save size={14} />
+            {savingBanner ? 'Saving…' : 'Save Slides'}
+          </button>
         </div>
-      )}
+      </div>
 
+      {/* ── Service Items ── */}
+      <div>
+        <h3 className="font-bold text-[#212121] mb-4 text-sm" style={{ fontFamily: 'Poppins, sans-serif' }}>
+          Service Items
+        </h3>
+        {error && (
+          <div className="flex items-center gap-2 px-4 py-3 mb-3 bg-red-50 border border-red-200 rounded-xl text-sm text-red-600">
+            <AlertCircle size={14} /> {error}
+          </div>
+        )}
       <div className="space-y-4">
         {items.map((svc, idx) => (
           <div key={svc.localId} className="border border-gray-200 rounded-xl">
@@ -430,7 +513,7 @@ export default function ServicesSection() {
         </button>
       </div>
 
-      {/* Save */}
+      {/* Save services */}
       <div className="flex items-center justify-end gap-3 pt-2 border-t border-gray-100">
         {saved && (
           <div className="flex items-center gap-1.5 text-green-600 text-sm font-medium">
@@ -447,6 +530,7 @@ export default function ServicesSection() {
           {saving ? 'Saving…' : 'Save Changes'}
         </button>
       </div>
+      </div>{/* end Service Items wrapper */}
     </div>
   );
 }

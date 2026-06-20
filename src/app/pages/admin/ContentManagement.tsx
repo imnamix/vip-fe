@@ -14,7 +14,6 @@ import TestimonialsSection from './content/TestimonialsSection';
 import VideoTestimonialsSection from './content/VideoTestimonialsSection';
 import FaqsSection from './content/FaqsSection';
 
-import type { FaqItem, TestimonialItem } from './content/types';
 
 const modules = [
   { key: "brand", label: "Brand Info", icon: Settings },
@@ -27,7 +26,7 @@ const modules = [
   { key: "faqs", label: "FAQs", icon: HelpCircle },
 ];
 
-const SELF_SAVING = new Set(['brand', 'homepage', 'about', 'services', 'gallery', 'video-testimonials']);
+const SELF_SAVING = new Set(['brand', 'homepage', 'about', 'services', 'gallery', 'testimonials', 'video-testimonials', 'faqs']);
 
 export default function ContentManagement() {
   const [searchParams, setSearchParams] = useSearchParams();
@@ -39,9 +38,6 @@ export default function ContentManagement() {
 
   const [saved, setSaved] = useState(false);
   const [sidebarOpen, setSidebarOpen] = useState(false);
-
-  const [testimonials, setTestimonials] = useState<TestimonialItem[]>([]);
-  const [faqs, setFaqs] = useState<FaqItem[]>([]);
 
   const handleSave = () => {
     setSaved(true);
@@ -186,13 +182,9 @@ export default function ContentManagement() {
           {activeModule === 'about' && <AboutUsSection />}
           {activeModule === 'services' && <ServicesSection />}
           {activeModule === 'gallery' && <GallerySection />}
-          {activeModule === 'testimonials' && (
-            <TestimonialsSection testimonials={testimonials} setTestimonials={setTestimonials} />
-          )}
+          {activeModule === 'testimonials' && <TestimonialsSection />}
           {activeModule === 'video-testimonials' && <VideoTestimonialsSection />}
-          {activeModule === 'faqs' && (
-            <FaqsSection faqs={faqs} setFaqs={setFaqs} />
-          )}
+          {activeModule === 'faqs' && <FaqsSection />}
         </div>
       </div>
     </div>

@@ -63,7 +63,7 @@ export default function SlideEditor({ slides, setSlides, label = 'Slide' }: Prop
             {/* Background Image */}
             <div className="w-full">
               <label className="block text-xs font-semibold text-[#616161] uppercase tracking-wider mb-1.5">
-                Background Image
+                Banner Image
               </label>
               <div>
                 {slide.image ? (

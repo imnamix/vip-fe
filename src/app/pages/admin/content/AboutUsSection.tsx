@@ -173,6 +173,9 @@ export default function AboutUsSection() {
   const [saving, setSaving] = useState(false);
   const [saved, setSaved] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  const [savingBanner, setSavingBanner] = useState(false);
+  const [savedBanner, setSavedBanner] = useState(false);
+  const [bannerError, setBannerError] = useState<string | null>(null);
 
   // Banner slides
   const [slides, setSlides] = useState<Slide[]>([
@@ -277,7 +280,29 @@ export default function AboutUsSection() {
     }
   }, [sameAsHp, hpTitle, hpDesc, hpImage]);
 
-  // ── Save ──────────────────────────────────────────────────────────────────
+  // ── Save banner slides only ───────────────────────────────────────────────
+
+  const handleSaveBanner = async () => {
+    setSavingBanner(true);
+    setBannerError(null);
+    try {
+      const payload = { slides: slides.map(({ id: _id, ...rest }) => rest) };
+      if (recordId) {
+        await updateAboutUs(payload, recordId);
+      } else {
+        const res = await addAboutUs(payload);
+        setRecordId(res?.data?.id ?? res?.id ?? null);
+      }
+      setSavedBanner(true);
+      setTimeout(() => setSavedBanner(false), 3500);
+    } catch {
+      setBannerError('Failed to save banner slides');
+    } finally {
+      setSavingBanner(false);
+    }
+  };
+
+  // ── Save all ──────────────────────────────────────────────────────────────
 
   const handleSave = async () => {
     setSaving(true);
@@ -354,7 +379,28 @@ export default function AboutUsSection() {
       {/* ── Page Banner Slides ── */}
       <div>
         <SectionTitle>Page Banner Slides</SectionTitle>
+        {bannerError && (
+          <div className="flex items-center gap-2 px-4 py-3 mb-3 bg-red-50 border border-red-200 rounded-xl text-sm text-red-600">
+            <AlertCircle size={14} /> {bannerError}
+          </div>
+        )}
         <SlideEditor slides={slides} setSlides={setSlides} label="Slide" />
+        <div className="flex items-center justify-end gap-3 pt-3 mt-3 border-t border-gray-100">
+          {savedBanner && (
+            <div className="flex items-center gap-1.5 text-green-600 text-sm font-medium">
+              <CheckCircle size={14} /> Saved successfully
+            </div>
+          )}
+          <button
+            type="button"
+            onClick={handleSaveBanner}
+            disabled={savingBanner}
+            className="flex items-center gap-2 px-5 py-2.5 bg-[#D32F2F] text-white rounded-xl text-sm font-semibold hover:bg-[#B71C1C] transition-colors disabled:opacity-60 disabled:cursor-not-allowed"
+          >
+            <Save size={14} />
+            {savingBanner ? 'Saving…' : 'Save Slides'}
+          </button>
+        </div>
       </div>
 
       {/* ── Homepage About Us ── */}
