@@ -30,6 +30,7 @@ interface VipNumberItem {
   category: string;
   description: string;
   price: number;
+  tag: string | null;
   status: number;
 }
 
@@ -129,8 +130,20 @@ export default function VipNumbers() {
 
       {/* Filters & Search */}
       <div className="bg-white rounded-2xl border border-gray-100 p-4">
-        <div className="flex items-center gap-3 flex-wrap">
-          <div className="flex flex-wrap gap-2">
+        <div className="flex items-center gap-4">
+          {/* Search — full width on left */}
+          <div className="relative flex-1">
+            <Search size={13} className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400 pointer-events-none" />
+            <input
+              type="text"
+              value={search}
+              onChange={e => handleSearchChange(e.target.value)}
+              placeholder="Search VIP number..."
+              className="w-full pl-8 pr-4 py-2 bg-gray-50 border border-gray-200 rounded-xl text-sm focus:outline-none focus:border-[#D32F2F] transition-colors text-[#212121] placeholder:text-gray-400"
+            />
+          </div>
+          {/* Category filters — right */}
+          <div className="flex flex-wrap gap-2 flex-shrink-0">
             {CATEGORIES.map(cat => (
               <button
                 key={cat}
@@ -144,16 +157,6 @@ export default function VipNumbers() {
                 {cat}
               </button>
             ))}
-          </div>
-          <div className="relative ml-auto min-w-[200px]">
-            <Search size={13} className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400 pointer-events-none" />
-            <input
-              type="text"
-              value={search}
-              onChange={e => handleSearchChange(e.target.value)}
-              placeholder="Search VIP number..."
-              className="w-full pl-8 pr-4 py-2 bg-gray-50 border border-gray-200 rounded-xl text-sm focus:outline-none focus:border-[#D32F2F] transition-colors text-[#212121] placeholder:text-gray-400"
-            />
           </div>
         </div>
       </div>
@@ -171,7 +174,7 @@ export default function VipNumbers() {
           <table className="w-full text-sm">
             <thead>
               <tr className="border-b border-gray-100 bg-gray-50">
-                {['Sr No', 'Icon', 'VIP Number', 'Category', 'Price', 'Status', 'Actions'].map(h => (
+                {['Sr No', 'Icon', 'VIP Number', 'Category', 'Tag', 'Price', 'Status', 'Actions'].map(h => (
                   <th key={h} className="text-left px-4 py-3 text-xs font-semibold text-[#9E9E9E] uppercase tracking-wide whitespace-nowrap">
                     {h}
                   </th>
@@ -181,7 +184,7 @@ export default function VipNumbers() {
             <tbody>
               {loading ? (
                 <tr>
-                  <td colSpan={7} className="px-4 py-12 text-center text-[#9E9E9E] text-sm">
+                  <td colSpan={8} className="px-4 py-12 text-center text-[#9E9E9E] text-sm">
                     <div className="flex items-center justify-center gap-2">
                       <Loader2 size={16} className="animate-spin" /> Loading…
                     </div>
@@ -189,7 +192,7 @@ export default function VipNumbers() {
                 </tr>
               ) : items.length === 0 ? (
                 <tr>
-                  <td colSpan={7} className="px-4 py-12 text-center text-[#9E9E9E] text-sm">
+                  <td colSpan={8} className="px-4 py-12 text-center text-[#9E9E9E] text-sm">
                     <div className="flex flex-col items-center gap-2">
                       <Hash size={28} className="text-gray-300" />
                       <span>No VIP numbers found</span>
@@ -216,6 +219,17 @@ export default function VipNumbers() {
                           {item.category}
                         </span>
                       ) : '—'}
+                    </td>
+                    <td className="px-4 py-3">
+                      {item.tag ? (
+                        <span className={`px-2.5 py-1 rounded-full text-xs font-bold ${
+                          item.tag === 'HOT' ? 'bg-[#D32F2F] text-white'
+                          : item.tag === 'NEW' ? 'bg-[#FBC02D] text-black'
+                          : 'bg-gray-200 text-gray-500'
+                        }`}>
+                          {item.tag}
+                        </span>
+                      ) : <span className="text-gray-300 text-xs">—</span>}
                     </td>
                     <td className="px-4 py-3 font-medium text-[#212121]">
                       {item.price != null ? `₹${Number(item.price).toLocaleString('en-IN')}` : '—'}

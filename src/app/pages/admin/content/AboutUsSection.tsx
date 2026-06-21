@@ -10,6 +10,8 @@ import { uploadFiles } from '../../../services/MediaService';
 import SlideEditor from './SlideEditor';
 import ImagePreviewPopup from '../../../components/ImagePreviewPopup';
 import type { Slide, AboutStatItem, AboutWhyItem } from './types';
+import ReactQuill from 'react-quill';
+import 'react-quill/dist/quill.snow.css';
 
 // ─── Icon catalogue (20 about-us-relevant icons) ────────────────────────────
 
@@ -428,14 +430,24 @@ export default function AboutUsSection() {
             />
           </div>
           <div>
-            <label className="block text-xs font-semibold text-[#616161] mb-1">Description</label>
-            <textarea
-              value={hpDesc}
-              onChange={e => setHpDesc(e.target.value)}
-              rows={3}
-              placeholder="Homepage about us description"
-              className="w-full px-3 py-2 border border-gray-200 rounded-xl text-sm focus:outline-none focus:border-[#D32F2F] resize-none"
-            />
+            <label className="block text-xs font-semibold text-[#616161] mb-2">Description</label>
+            <div className="rounded-xl overflow-hidden border border-gray-200 [&_.ql-toolbar]:rounded-t-xl [&_.ql-toolbar]:bg-gray-50 [&_.ql-toolbar]:border-gray-200 [&_.ql-container]:rounded-b-xl [&_.ql-container]:border-gray-200 [&_.ql-editor]:min-h-[150px] [&_.ql-editor]:text-sm">
+              <ReactQuill
+                theme="snow"
+                value={hpDesc}
+                onChange={(html: string) => setHpDesc(html)}
+                modules={{
+                  toolbar: [
+                    [{ header: [1, 2, 3, false] }],
+                    ['bold', 'italic', 'underline', 'strike'],
+                    [{ list: 'ordered' }, { list: 'bullet' }],
+                    [{ align: [] }],
+                    [{ color: [] }, { background: [] }],
+                    ['clean'],
+                  ],
+                }}
+              />
+            </div>
           </div>
           <div>
             <label className="block text-xs font-semibold text-[#616161] mb-1">Image</label>
@@ -468,14 +480,24 @@ export default function AboutUsSection() {
             />
           </div>
           <div>
-            <label className="block text-xs font-semibold text-[#616161] mb-1">Description</label>
-            <textarea
-              value={apDesc}
-              onChange={e => setApDesc(e.target.value)}
-              rows={3}
-              placeholder="About page description"
-              className="w-full px-3 py-2 border border-gray-200 rounded-xl text-sm focus:outline-none focus:border-[#D32F2F] resize-none"
-            />
+            <label className="block text-xs font-semibold text-[#616161] mb-2">Description</label>
+            <div className="rounded-xl overflow-hidden border border-gray-200 [&_.ql-toolbar]:rounded-t-xl [&_.ql-toolbar]:bg-gray-50 [&_.ql-toolbar]:border-gray-200 [&_.ql-container]:rounded-b-xl [&_.ql-container]:border-gray-200 [&_.ql-editor]:min-h-[150px] [&_.ql-editor]:text-sm">
+              <ReactQuill
+                theme="snow"
+                value={apDesc}
+                onChange={(html: string) => setApDesc(html)}
+                modules={{
+                  toolbar: [
+                    [{ header: [1, 2, 3, false] }],
+                    ['bold', 'italic', 'underline', 'strike'],
+                    [{ list: 'ordered' }, { list: 'bullet' }],
+                    [{ align: [] }],
+                    [{ color: [] }, { background: [] }],
+                    ['clean'],
+                  ],
+                }}
+              />
+            </div>
           </div>
           <div>
             <label className="block text-xs font-semibold text-[#616161] mb-1">Image</label>

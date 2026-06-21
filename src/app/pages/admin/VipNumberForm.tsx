@@ -106,12 +106,16 @@ function IconPicker({ value, onChange }: { value: string; onChange: (name: strin
 
 const CATEGORIES = ['Premium', 'Gold', 'Silver', 'Platinum', 'Diamond', 'Bronze'];
 
+const TAGS = ['', 'HOT', 'NEW', 'SOLD OUT'] as const;
+type Tag = typeof TAGS[number];
+
 interface FormState {
   icon: string;
   vipNumber: string;
   category: string;
   description: string;
   price: string;
+  tag: Tag;
   status: number;
 }
 
@@ -121,6 +125,7 @@ const EMPTY: FormState = {
   category: '',
   description: '',
   price: '',
+  tag: '',
   status: 1,
 };
 
@@ -149,6 +154,7 @@ export default function VipNumberForm() {
             category: d.category ?? '',
             description: d.description ?? '',
             price: d.price != null ? String(d.price) : '',
+            tag: (d.tag ?? '') as Tag,
             status: d.status ?? 1,
           });
         }
@@ -192,6 +198,7 @@ export default function VipNumberForm() {
         category: form.category,
         description: form.description || null,
         price: form.price ? Number(form.price) : null,
+        tag: form.tag || null,
         status: form.status,
       };
       if (isEdit) {
@@ -300,6 +307,31 @@ export default function VipNumberForm() {
               placeholder="e.g. 50000"
               className="w-full px-3 py-2.5 border border-gray-200 rounded-xl text-sm focus:outline-none focus:border-[#D32F2F] transition-colors text-[#212121] placeholder:text-gray-400"
             />
+          </div>
+
+          {/* Tag */}
+          <div>
+            <label className="block text-xs font-semibold text-[#212121] mb-1.5">Tag</label>
+            <div className="flex items-center gap-3 flex-wrap">
+              {TAGS.map(t => {
+                const label = t === '' ? 'None' : t;
+                const active = form.tag === t;
+                const color = t === 'HOT' ? 'bg-[#D32F2F] text-white border-[#D32F2F]'
+                  : t === 'NEW' ? 'bg-[#FBC02D] text-black border-[#FBC02D]'
+                  : t === 'SOLD OUT' ? 'bg-gray-200 text-gray-600 border-gray-300'
+                  : 'bg-white text-[#616161] border-gray-200';
+                return (
+                  <button
+                    key={t}
+                    type="button"
+                    onClick={() => set('tag', t)}
+                    className={`px-4 py-1.5 rounded-full text-xs font-bold border-2 transition-all ${active ? color : 'bg-white text-[#616161] border-gray-200 hover:border-gray-300'}`}
+                  >
+                    {label}
+                  </button>
+                );
+              })}
+            </div>
           </div>
 
           {/* Status */}

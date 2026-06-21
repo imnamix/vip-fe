@@ -1,37 +1,154 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useRef } from 'react';
 import { useNavigate, useOutletContext } from 'react-router';
-import { ChevronLeft, ChevronRight, Star, TrendingUp, Briefcase, Heart, Award, Zap, Users, CheckCircle, Hash, Sparkles, Quote } from 'lucide-react';
+import { ChevronLeft, ChevronRight, ChevronDown, Star, TrendingUp, Briefcase, Heart, Award, Zap, Users, CheckCircle, Hash, Sparkles, Quote, TrendingUp as TrendingUpIcon, Building2, BarChart2, Clock, Globe, Shield, ThumbsUp, Lightbulb, Trophy, Gem, Rocket, Wrench, DollarSign, Target, Crown, Phone, X } from 'lucide-react';
+
+const VIP_ICON_MAP: Record<string, React.ElementType> = {
+  Star, Crown, Gem, Trophy, Phone, Hash, DollarSign, Zap, Heart, Shield,
+  Award, Rocket, Target, TrendingUp: TrendingUpIcon, Globe, Users, Building2,
+  BarChart2, Clock, ThumbsUp, Lightbulb, Wrench,
+};
+function VipIcon({ name, size = 22 }: { name: string | null; size?: number }) {
+  const Comp = name ? VIP_ICON_MAP[name] : null;
+  return Comp ? <Comp size={size} className="text-white" /> : <Hash size={size} className="text-white" />;
+}
+
+function VipDescTooltip({ text }: { text: string }) {
+  const pRef = useRef<HTMLParagraphElement>(null);
+  const [clamped, setClamped] = useState(false);
+  useEffect(() => {
+    const el = pRef.current;
+    if (el) setClamped(el.scrollHeight > el.clientHeight);
+  }, [text]);
+  return (
+    <div className={`relative flex-1 mb-4 ${clamped ? 'group/desc' : ''}`}>
+      <p ref={pRef} className="text-[#616161] text-sm leading-relaxed line-clamp-3">{text}</p>
+      {clamped && (
+        <div className="pointer-events-none absolute bottom-full left-0 right-0 z-20 mb-2 hidden group-hover/desc:block">
+          <div className="bg-gray-900 text-white text-xs rounded-xl p-3 leading-relaxed shadow-xl">{text}</div>
+        </div>
+      )}
+    </div>
+  );
+}
+
 import { getAllHomepage } from '../services/HomepageService';
+import { getAllAboutUs } from '../services/AboutusService';
+import { getAllVipNumbers } from '../services/VipNumbersService';
+import { getAllServices } from '../services/ServicesService';
+import { getAllTestimonials } from '../services/TestimonialService';
+import { getAllFaqs } from '../services/FaqService';
+
+interface VipNumber {
+  id: number;
+  vipNumber: string;
+  category: string;
+  description: string;
+  price: number | null;
+  tag: string | null;
+  icon: string | null;
+  status: number;
+}
+
+interface FetchedService {
+  id: number;
+  title: string;
+  image: string;
+  description: string;
+  icon: string;
+}
+
+interface Testimonial {
+  id: number;
+  name: string;
+  role: string | null;
+  review: string;
+  rating: number;
+  image: string | null;
+}
+
+interface Faq {
+  id: number;
+  question: string;
+  answer: string;
+}
+
+interface AboutStatItem { key: string; value: string; icon: string }
+interface AboutUsData {
+  homepageAboutUsTitle?: string;
+  homepageAboutUsDescription?: string;
+  homepageAboutUsImage?: string;
+  yearsOfExperience?: number | null;
+  statistics?: AboutStatItem[];
+}
+
+const STAT_ICONS: Record<string, React.ElementType> = {
+  TrendingUp: TrendingUpIcon, Users, Building2, Award, Star, Target, BarChart2, Clock, Globe,
+  Shield, Zap, Heart, ThumbsUp, Lightbulb, Trophy, Gem, Rocket, Wrench, DollarSign, CheckCircle,
+};
+
+function StatIcon({ name, size = 18 }: { name: string; size?: number }) {
+  const Comp = STAT_ICONS[name];
+  return Comp ? <Comp size={size} /> : null;
+}
+
+function renderServiceDescription(html: string) {
+  const parts = html.split(/(<ul[\s\S]*?<\/ul>)/gi);
+  return parts.map((part, i) => {
+    if (/<ul/i.test(part)) {
+      const liMatches = part.match(/<li[^>]*>([\s\S]*?)<\/li>/gi) ?? [];
+      const items = liMatches.map(li => li.replace(/<li[^>]*>/i, '').replace(/<\/li>/i, '').trim());
+      return (
+        <ul key={i} className="space-y-3 my-3">
+          {items.map((item, j) => (
+            <li key={j} className="flex items-start gap-2">
+              <CheckCircle size={18} className="text-[#D32F2F] flex-shrink-0 mt-0.5" strokeWidth={2.5} />
+              <span className="text-[#616161] text-[15px]" dangerouslySetInnerHTML={{ __html: item }} />
+            </li>
+          ))}
+        </ul>
+      );
+    }
+    if (part.trim()) {
+      return <div key={i} className="text-[#616161] leading-relaxed prose prose-sm max-w-none" dangerouslySetInnerHTML={{ __html: part }} />;
+    }
+    return null;
+  });
+}
+
+function renderAboutDescription(html: string) {
+  const parts = html.split(/(<ul[\s\S]*?<\/ul>)/gi);
+  return parts.map((part, i) => {
+    if (/<ul/i.test(part)) {
+      const liMatches = part.match(/<li[^>]*>([\s\S]*?)<\/li>/gi) ?? [];
+      const items = liMatches.map(li => li.replace(/<li[^>]*>/i, '').replace(/<\/li>/i, '').trim());
+      return (
+        <ul key={i} className="space-y-3 my-3">
+          {items.map((item, j) => (
+            <li key={j} className="flex items-start gap-2">
+              <CheckCircle size={18} className="text-[#FBC02D] flex-shrink-0 mt-0.5" strokeWidth={2.5} />
+              <span className="text-[#616161] text-[15px]" dangerouslySetInnerHTML={{ __html: item }} />
+            </li>
+          ))}
+        </ul>
+      );
+    }
+    if (part.trim()) {
+      return <div key={i} className="text-[#616161] leading-relaxed prose prose-sm max-w-none" dangerouslySetInnerHTML={{ __html: part }} />;
+    }
+    return null;
+  });
+}
 
 interface OutletCtx { openBooking: () => void }
 
 interface ApiSlide { title: string; description: string; image?: string }
 
 const OVERLAYS = [
-  'from-black/75 via-black/40 to-transparent',
-  'from-[#D32F2F]/80 via-[#D32F2F]/30 to-transparent',
-  'from-black/75 via-black/35 to-transparent',
+  "from-black/75 via-black/40 to-transparent",
+  "from-black/75 via-black/40 to-transparent",
+  "from-black/75 via-black/35 to-transparent",
 ];
 
-const vipNumbers = [
-  { number: '9999999999', category: 'Supreme Luck', desc: 'The ultimate power number — attracts abundance and universal energy.', price: '₹4,99,000', badge: 'SOLD OUT' },
-  { number: '8888888888', category: 'Wealth Magnet', desc: 'Eight signifies infinite wealth and material prosperity.', price: '₹3,99,000', badge: 'HOT' },
-  { number: '7777777777', category: 'Spiritual Master', desc: 'Divine seven resonates with wisdom and enlightenment.', price: '₹2,99,000', badge: '' },
-  { number: '6666666666', category: 'Harmony & Love', desc: 'Perfect balance for relationships and family prosperity.', price: '₹1,99,000', badge: 'NEW' },
-  { number: '5555555555', category: 'Freedom & Change', desc: 'Dynamic five accelerates growth and new opportunities.', price: '₹1,49,000', badge: '' },
-  { number: '1111111111', category: 'Leadership', desc: 'The master leader number — ideal for entrepreneurs.', price: '₹2,49,000', badge: 'HOT' },
-  { number: '3333333333', category: 'Creative Power', desc: 'Creativity, expression, and joyful manifestation.', price: '₹99,000', badge: '' },
-  { number: '4444444444', category: 'Foundation', desc: 'Stability, trust, and unshakeable business foundation.', price: '₹1,24,000', badge: 'NEW' },
-];
-
-const services = [
-  { title: 'VIP Number Booking', desc: 'Reserve exclusive premium mobile numbers aligned with your numerology profile.', icon: Hash, img: 'https://images.unsplash.com/photo-1556742049-0cfed4f6a45d?w=400&h=250&fit=crop' },
-  { title: 'Mobile Numerology', desc: 'Analyse your existing mobile number and its impact on your life path.', icon: Sparkles, img: 'https://images.unsplash.com/photo-1512941937669-90a1b58e7e9c?w=400&h=250&fit=crop' },
-  { title: 'Business Numerology', desc: 'Align your business name, registration date, and brand with success vibrations.', icon: Briefcase, img: 'https://images.unsplash.com/photo-1507679799987-c73779587ccf?w=400&h=250&fit=crop' },
-  { title: 'Name Correction', desc: 'Optimise your name spelling for maximum positive energy and opportunities.', icon: Sparkles, img: 'https://images.unsplash.com/photo-1455390582262-044cdead277a?w=400&h=250&fit=crop' },
-  { title: 'Numerology Consultation', desc: 'Deep personal analysis by certified numerologists with 10+ years experience.', icon: Users, img: 'https://images.unsplash.com/photo-1573496359142-b8d87734a5a2?w=400&h=250&fit=crop' },
-  { title: 'Premium Suggestions', desc: 'Curated list of powerful numbers matching your birth date and life purpose.', icon: Award, img: 'https://images.unsplash.com/photo-1518655048521-f130df041f66?w=400&h=250&fit=crop' },
-];
 
 const benefits = [
   { icon: TrendingUp, title: 'Wealth Attraction', desc: 'Harness number vibrations that magnetically draw financial abundance.' },
@@ -42,27 +159,217 @@ const benefits = [
   { icon: Sparkles, title: 'Improved Confidence', desc: 'Numbers that resonate with your core identity build lasting confidence.' },
 ];
 
-const reviews = [
-  { name: 'Priya Sharma', city: 'Mumbai', rating: 5, review: 'Switched to a VIP number recommended by VIP Numerology and my business revenue doubled within 3 months!', img: 'https://images.unsplash.com/photo-1494790108377-be9c29b29330?w=80&h=80&fit=crop', tag: 'Business Owner' },
-  { name: 'Rajesh Patel', city: 'Ahmedabad', rating: 5, review: 'The name correction service changed my life completely. Got promoted twice in one year!', img: 'https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?w=80&h=80&fit=crop', tag: 'Corporate Executive' },
-  { name: 'Ananya Reddy', city: 'Hyderabad', rating: 5, review: 'Best investment I made. The 8888 series number brought incredible prosperity to my family.', img: 'https://images.unsplash.com/photo-1531746020798-e6953c6e8e04?w=80&h=80&fit=crop', tag: 'Entrepreneur' },
-  { name: 'Vikram Singh', city: 'Delhi', rating: 4, review: 'Professional, knowledgeable, and truly transformative. Highly recommend the business numerology package.', img: 'https://images.unsplash.com/photo-1500648767791-00dcc994a43e?w=80&h=80&fit=crop', tag: 'Real Estate Developer' },
-  { name: 'Meena Iyer', city: 'Chennai', rating: 5, review: "Changed my daughter's name spelling and she started excelling in school. Magic!", img: 'https://images.unsplash.com/photo-1438761681033-6461ffad8d80?w=80&h=80&fit=crop', tag: 'Parent' },
-  { name: 'Suresh Kumar', city: 'Bangalore', rating: 5, review: 'Got a 9999 series number for my startup. First funding round was a massive success!', img: 'https://images.unsplash.com/photo-1472099645785-5658abf4ff4e?w=80&h=80&fit=crop', tag: 'Startup Founder' },
-  { name: 'Deepa Nair', city: 'Kochi', rating: 5, review: 'The personal consultation was eye-opening. I now understand the role numbers play in our destiny.', img: 'https://images.unsplash.com/photo-1487412720507-e7ab37603c6f?w=80&h=80&fit=crop', tag: 'Teacher' },
-  { name: 'Karan Mehta', city: 'Pune', rating: 4, review: 'Highly professional team. The premium number suggestions were spot-on for my career transition.', img: 'https://images.unsplash.com/photo-1463453091185-61582044d556?w=80&h=80&fit=crop', tag: 'IT Professional' },
-  { name: 'Sunita Rao', city: 'Hyderabad', rating: 5, review: 'My marriage date was selected by VIP Numerology. We just completed our 5th anniversary with so much joy!', img: 'https://images.unsplash.com/photo-1438761681033-6461ffad8d80?w=80&h=80&fit=crop', tag: 'Homemaker' },
-  { name: 'Anil Bhatt', city: 'Surat', rating: 5, review: 'Business tripled after switching our company number. Incredible results within 6 months.', img: 'https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?w=80&h=80&fit=crop', tag: 'Textile Merchant' },
-  { name: 'Nisha Gupta', city: 'Jaipur', rating: 5, review: 'Name correction for my son brought remarkable improvements in his confidence and performance.', img: 'https://images.unsplash.com/photo-1494790108377-be9c29b29330?w=80&h=80&fit=crop', tag: 'Parent' },
-  { name: 'Rohit Kapoor', city: 'Chandigarh', rating: 4, review: "Excellent consultation service. Dr. Sharma's insights were accurate and his advice practical.", img: 'https://images.unsplash.com/photo-1472099645785-5658abf4ff4e?w=80&h=80&fit=crop', tag: 'Doctor' },
-];
+const CAROUSEL_GAP = 20;
 
-const REVIEWS_PER_PAGE = 8;
+function ReviewsCarousel({ reviews }: { reviews: Testimonial[] }) {
+  const containerRef = useRef<HTMLDivElement>(null);
+  const [idx, setIdx] = useState(0);
+  const [anim, setAnim] = useState(true);
+  const [cardW, setCardW] = useState(0);
+  const pausedRef = useRef(false);
+  const dragStartX = useRef<number | null>(null);
+
+  const extended = reviews.length > 0 ? [...reviews, ...reviews.slice(0, Math.min(3, reviews.length))] : [];
+
+  useEffect(() => {
+    const el = containerRef.current;
+    if (!el) return;
+    const calc = () => {
+      const w = el.clientWidth;
+      const v = w >= 768 ? 3 : w >= 480 ? 2 : 1;
+      setCardW((w - CAROUSEL_GAP * (v - 1)) / v);
+    };
+    calc();
+    const ro = new ResizeObserver(calc);
+    ro.observe(el);
+    return () => ro.disconnect();
+  // re-run when reviews load so cardW is set after the async fetch
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [reviews.length]);
+
+  useEffect(() => {
+    if (reviews.length === 0 || idx < reviews.length) return;
+    const t = setTimeout(() => {
+      setAnim(false);
+      setIdx(0);
+      requestAnimationFrame(() => requestAnimationFrame(() => setAnim(true)));
+    }, 680);
+    return () => clearTimeout(t);
+  }, [idx, reviews.length]);
+
+  useEffect(() => {
+    if (reviews.length === 0) return;
+    const t = setInterval(() => {
+      if (!pausedRef.current) { setAnim(true); setIdx(i => i + 1); }
+    }, 3500);
+    return () => clearInterval(t);
+  }, [reviews.length]);
+
+  const goNext = () => { setAnim(true); setIdx(i => (i + 1) % reviews.length); };
+  const goPrev = () => { setAnim(true); setIdx(i => (i - 1 + reviews.length) % reviews.length); };
+  const dotIdx = idx >= reviews.length ? 0 : idx;
+
+  const onPointerDown = (e: React.PointerEvent<HTMLDivElement>) => {
+    dragStartX.current = e.clientX;
+    (e.currentTarget as HTMLDivElement).setPointerCapture(e.pointerId);
+  };
+  const onPointerUp = (e: React.PointerEvent<HTMLDivElement>) => {
+    if (dragStartX.current === null) return;
+    const diff = e.clientX - dragStartX.current;
+    dragStartX.current = null;
+    if (Math.abs(diff) > 40) { diff < 0 ? goNext() : goPrev(); }
+    setTimeout(() => { pausedRef.current = false; }, 800);
+  };
+
+  return (
+    <div
+      className="relative group/carousel select-none"
+      onMouseEnter={() => {
+        pausedRef.current = true;
+      }}
+      onMouseLeave={() => {
+        pausedRef.current = false;
+        dragStartX.current = null;
+      }}
+    >
+      {/* Cards row — containerRef is always mounted so ResizeObserver measures on first render */}
+      <div className="relative overflow-visible">
+        {" "}
+        {reviews.length > 0 && (
+          <button
+            onClick={goPrev}
+            className="absolute -left-12 top-1/2 -translate-y-1/2 z-20 w-10 h-10 bg-white border border-gray-200 rounded-full shadow-lg flex items-center justify-center text-[#616161] hover:border-[#D32F2F] hover:text-[#D32F2F] transition-all opacity-0 group-hover/carousel:opacity-100 duration-300"
+          >
+            <ChevronLeft size={18} />
+          </button>
+        )}
+        <div
+          ref={containerRef}
+          className="overflow-hidden cursor-grab active:cursor-grabbing"
+          onPointerDown={onPointerDown}
+          onPointerUp={onPointerUp}
+        >
+          {reviews.length === 0 ? (
+            <div className="flex items-center justify-center py-16 text-[#9E9E9E] text-sm">
+              No reviews yet.
+            </div>
+          ) : (
+            cardW > 0 && (
+              <div
+                className="flex"
+                style={{
+                  gap: CAROUSEL_GAP,
+                  transform: `translateX(-${idx * (cardW + CAROUSEL_GAP)}px)`,
+                  transition: anim
+                    ? "transform 0.65s cubic-bezier(0.25, 0.46, 0.45, 0.94)"
+                    : "none",
+                  userSelect: "none",
+                }}
+              >
+                {extended.map((r, i) => (
+                  <article
+                    key={i}
+                    style={{ minWidth: cardW, maxWidth: cardW }}
+                    className="flex-shrink-0 bg-white border border-gray-100 rounded-2xl p-6 shadow-sm hover:shadow-lg transition-shadow relative overflow-hidden"
+                  >
+                    <div className="absolute top-0 left-0 w-1 h-full bg-gradient-to-b from-[#D32F2F] to-[#FBC02D] rounded-l-2xl" />
+                    <Quote
+                      size={40}
+                      className="text-[#D32F2F]/8 absolute top-4 right-4"
+                    />
+                    <div className="flex items-center gap-0.5 mb-4">
+                      {[...Array(r.rating)].map((_, j) => (
+                        <Star
+                          key={j}
+                          size={14}
+                          className="text-[#FBC02D] fill-current"
+                        />
+                      ))}
+                      {[...Array(Math.max(0, 5 - r.rating))].map((_, j) => (
+                        <Star
+                          key={j}
+                          size={14}
+                          className="text-gray-200 fill-current"
+                        />
+                      ))}
+                    </div>
+                    <p className="text-[#424242] text-sm leading-relaxed mb-5 italic line-clamp-4">
+                      "{r.review}"
+                    </p>
+                    <div className="border-t border-gray-100 pt-4 flex items-center gap-3">
+                      {r.image ? (
+                        <img
+                          src={r.image}
+                          alt={r.name}
+                          className="w-11 h-11 rounded-full object-cover border-2 border-[#D32F2F]/20 flex-shrink-0"
+                        />
+                      ) : (
+                        <div className="w-11 h-11 rounded-full bg-[#D32F2F]/10 flex items-center justify-center flex-shrink-0">
+                          <span className="text-[#D32F2F] font-bold text-lg">
+                            {r.name?.[0]?.toUpperCase()}
+                          </span>
+                        </div>
+                      )}
+                      <div className="min-w-0">
+                        <div className="font-semibold text-[#212121] text-sm truncate">
+                          {r.name}
+                        </div>
+                        {r.role && (
+                          <div className="text-[#9E9E9E] text-xs mt-0.5 truncate">
+                            {r.role}
+                          </div>
+                        )}
+                      </div>
+                    </div>
+                  </article>
+                ))}
+              </div>
+            )
+          )}
+        </div>
+        {reviews.length > 0 && (
+          <button
+            onClick={goNext}
+            className="absolute -right-12 top-1/2 -translate-y-1/2 z-20 w-10 h-10 bg-white border border-gray-200 rounded-full shadow-lg flex items-center justify-center text-[#616161] hover:border-[#D32F2F] hover:text-[#D32F2F] transition-all opacity-0 group-hover/carousel:opacity-100 duration-300"
+          >
+            <ChevronRight size={18} />
+          </button>
+        )}
+      </div>
+
+      {reviews.length > 0 && (
+        <div className="flex items-center justify-center gap-1.5 mt-8">
+          {reviews.map((_, i) => (
+            <button
+              key={i}
+              onClick={() => {
+                setAnim(true);
+                setIdx(i);
+              }}
+              className={`h-1.5 rounded-full transition-all duration-300 ${dotIdx === i ? "w-6 bg-[#D32F2F]" : "w-1.5 bg-gray-300 hover:bg-gray-400"}`}
+            />
+          ))}
+        </div>
+      )}
+    </div>
+  );
+}
 
 export default function Home() {
   const [slides, setSlides] = useState<ApiSlide[]>([]);
   const [currentSlide, setCurrentSlide] = useState(0);
-  const [reviewPage, setReviewPage] = useState(0);
+  const [aboutUs, setAboutUs] = useState<AboutUsData | null>(null);
+  const [vipNumbers, setVipNumbers] = useState<VipNumber[]>([]);
+  const [fetchedServices, setFetchedServices] = useState<FetchedService[]>([]);
+  const [selectedService, setSelectedService] = useState<FetchedService | null>(null);
+  const [testimonials, setTestimonials] = useState<Testimonial[]>([]);
+  const [avgRating, setAvgRating] = useState<number>(0);
+  const [faqs, setFaqs] = useState<Faq[]>([]);
+  const [faqPage, setFaqPage] = useState(1);
+  const [openFaqId, setOpenFaqId] = useState<number | null>(null);
+  const FAQ_PER_PAGE = 5;
+  const [aboutVisible, setAboutVisible] = useState(false);
+  const aboutRef = useRef<HTMLDivElement>(null);
   const { openBooking } = useOutletContext<OutletCtx>();
   const navigate = useNavigate();
 
@@ -71,6 +378,39 @@ export default function Home() {
       const record = res?.data?.[0];
       if (record?.slides?.length) setSlides(record.slides);
     }).catch(() => {});
+
+    getAllAboutUs(1, 1).then(res => {
+      const record = res?.data?.[0];
+      if (record) setAboutUs(record as AboutUsData);
+    }).catch(() => {});
+
+    getAllVipNumbers(1, 8).then(res => {
+      if (res?.data?.length) setVipNumbers(res.data);
+    }).catch(() => {});
+
+    getAllServices(0, 6).then(res => {
+      if (res?.data?.length) setFetchedServices(res.data);
+    }).catch(() => {});
+
+    getAllTestimonials(0, 100).then(res => {
+      if (res?.data?.length) setTestimonials(res.data);
+      if (res?.averageRating != null) setAvgRating(res.averageRating);
+    }).catch(() => {});
+
+    getAllFaqs(0, 1000).then(res => {
+      if (res?.data?.length) setFaqs(res.data);
+    }).catch(() => {});
+  }, []);
+
+  useEffect(() => {
+    const el = aboutRef.current;
+    if (!el) return;
+    const observer = new IntersectionObserver(
+      ([entry]) => { if (entry.isIntersecting) { setAboutVisible(true); observer.disconnect(); } },
+      { threshold: 0.15 }
+    );
+    observer.observe(el);
+    return () => observer.disconnect();
   }, []);
 
   useEffect(() => {
@@ -81,9 +421,6 @@ export default function Home() {
 
   const prevSlide = () => setCurrentSlide(s => (s - 1 + slides.length) % slides.length);
   const nextSlide = () => setCurrentSlide(s => (s + 1) % slides.length);
-
-  const totalReviewPages = Math.ceil(reviews.length / REVIEWS_PER_PAGE);
-  const visibleReviews = reviews.slice(reviewPage * REVIEWS_PER_PAGE, (reviewPage + 1) * REVIEWS_PER_PAGE);
 
   return (
     <div className="overflow-x-hidden">
@@ -175,36 +512,77 @@ export default function Home() {
       </section>
 
       {/* ─── About Preview ───────────────────── */}
-      <section className="py-20 bg-white">
+      <section ref={aboutRef} className="py-20 bg-white overflow-hidden">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
           <div className="grid grid-cols-1 lg:grid-cols-2 gap-16 items-center">
-            <div className="relative">
-              <img src="https://images.unsplash.com/photo-1573496359142-b8d87734a5a2?w=600&h=500&fit=crop" alt="Numerology Consultation" className="w-full rounded-2xl object-cover" />
-              <div className="absolute -bottom-6 -right-6 bg-[#D32F2F] text-white p-6 rounded-2xl shadow-xl">
-                <div className="text-3xl font-bold" style={{ fontFamily: 'Poppins, sans-serif' }}>15+</div>
-                <div className="text-sm opacity-90">Years of Excellence</div>
-              </div>
-              <div className="absolute -top-4 -left-4 bg-[#FBC02D] p-4 rounded-xl shadow-lg">
-                <CheckCircle size={26} className="text-white" />
-              </div>
+
+            {/* Left — image, slides in from left */}
+            <div className={`relative transition-all duration-700 ease-out ${aboutVisible ? 'opacity-100 translate-x-0' : 'opacity-0 -translate-x-12'}`}>
+              {aboutUs?.homepageAboutUsImage && (
+                <div className="relative rounded-2xl overflow-hidden">
+                  <img
+                    src={aboutUs.homepageAboutUsImage}
+                    alt="Numerology Consultation"
+                    className="w-full object-cover object-top"
+                  />
+                  {aboutUs.yearsOfExperience != null && (
+                    <div className="absolute bottom-4 right-4 bg-black/50 backdrop-blur-sm px-4 py-3 rounded-2xl flex items-center gap-3 shadow-lg">
+                      <div className="w-10 h-10 bg-[#D32F2F]/80 rounded-xl flex items-center justify-center flex-shrink-0">
+                        <CheckCircle size={20} className="text-white" />
+                      </div>
+                      <div>
+                        <div className="text-white font-bold text-xl leading-none" style={{ fontFamily: 'Poppins, sans-serif' }}>
+                          {aboutUs.yearsOfExperience}+
+                        </div>
+                        <div className="text-white/75 text-xs mt-0.5">Years of Excellence</div>
+                      </div>
+                    </div>
+                  )}
+                </div>
+              )}
+            
             </div>
-            <div>
+
+            {/* Right — text, slides in from right */}
+            <div className={`transition-all duration-700 ease-out delay-150 ${aboutVisible ? 'opacity-100 translate-x-0' : 'opacity-0 translate-x-12'}`}>
               <div className="text-[#D32F2F] font-semibold text-xs uppercase tracking-widest mb-3">About VIP Numerology</div>
-              <h2 className="text-4xl font-bold text-[#212121] leading-tight mb-5" style={{ fontFamily: 'Poppins, sans-serif' }}>India's Most Trusted<br />Numerology Authority</h2>
-              <p className="text-[#616161] leading-relaxed mb-4">Founded in Pune, Maharashtra, VIP Numerology has guided over 12,000 individuals and businesses to harness the ancient science of numbers. Our certified numerologists combine Vedic numerology with modern analytical methods.</p>
-              <p className="text-[#616161] leading-relaxed mb-8">From premium VIP mobile numbers to comprehensive life path consultations, we deliver transformative results backed by science and spirituality.</p>
-              <div className="grid grid-cols-2 gap-4 mb-8">
-                {[['12,450+', 'Customers Served'], ['240+', 'Certified Experts'], ['50+', 'Cities Covered'], ['98%', 'Success Rate']].map(([v, l]) => (
-                  <div key={l} className="bg-[#FFF8E1] rounded-xl p-4">
-                    <div className="text-[#D32F2F] text-2xl font-bold" style={{ fontFamily: 'Poppins, sans-serif' }}>{v}</div>
-                    <div className="text-[#616161] text-sm">{l}</div>
-                  </div>
-                ))}
-              </div>
+              {aboutUs?.homepageAboutUsTitle && (
+                <h2 className="text-4xl font-bold text-[#212121] leading-tight mb-5" style={{ fontFamily: 'Poppins, sans-serif' }}>
+                  {aboutUs.homepageAboutUsTitle}
+                </h2>
+              )}
+
+              {/* Full description — paragraphs + bullet lists with yellow icons */}
+              {aboutUs?.homepageAboutUsDescription && (
+                <div className="mb-6">
+                  {renderAboutDescription(aboutUs.homepageAboutUsDescription)}
+                </div>
+              )}
+
+              {/* Statistics from API only */}
+              {!!aboutUs?.statistics?.length && (
+                <div className="grid grid-cols-2 gap-4 mb-8">
+                  {aboutUs.statistics.map(s => (
+                    <div key={s.key} className="bg-[#FFF8E1] rounded-xl p-4 flex items-start gap-3">
+                      {s.icon && (
+                        <div className="w-8 h-8 bg-[#D32F2F]/10 rounded-lg flex items-center justify-center flex-shrink-0 mt-0.5">
+                          <StatIcon name={s.icon} size={16} />
+                        </div>
+                      )}
+                      <div>
+                        <div className="text-[#D32F2F] text-2xl font-bold" style={{ fontFamily: 'Poppins, sans-serif' }}>{s.value}</div>
+                        <div className="text-[#616161] text-sm">{s.key}</div>
+                      </div>
+                    </div>
+                  ))}
+                </div>
+              )}
+
               <button onClick={() => navigate('/about')} className="px-6 py-3 bg-[#D32F2F] text-white rounded-xl font-semibold hover:bg-[#B71C1C] transition-colors" style={{ fontFamily: 'Poppins, sans-serif' }}>
                 Read More About Us
               </button>
             </div>
+
           </div>
         </div>
       </section>
@@ -218,35 +596,52 @@ export default function Home() {
             <p className="text-[#616161] mt-3 max-w-lg mx-auto">Exclusive premium numbers curated for maximum positive vibrations and life-changing energy.</p>
           </div>
           <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6">
-            {vipNumbers.map((n, i) => (
-              <div key={i} className="bg-white rounded-2xl p-6 border border-gray-100 hover:border-[#D32F2F]/30 hover:shadow-lg transition-all group relative overflow-hidden">
-                {n.badge && (
-                  <div className={`absolute top-4 right-4 px-2 py-0.5 rounded-full text-xs font-bold ${n.badge === 'SOLD OUT' ? 'bg-gray-200 text-gray-500' : n.badge === 'HOT' ? 'bg-[#D32F2F] text-white' : 'bg-[#FBC02D] text-black'}`}>{n.badge}</div>
+            {vipNumbers.map(n => (
+              <div key={n.id} className="bg-white rounded-2xl p-6 border border-gray-100 hover:border-[#D32F2F]/30 hover:shadow-lg transition-all group relative flex flex-col overflow-hidden">
+                {/* Tag badge */}
+                {n.tag && (
+                  <div className={`absolute top-4 right-4 px-2 py-0.5 rounded-full text-xs font-bold ${n.tag === 'SOLD OUT' ? 'bg-gray-200 text-gray-500' : n.tag === 'HOT' ? 'bg-[#D32F2F] text-white' : 'bg-[#FBC02D] text-black'}`}>
+                    {n.tag}
+                  </div>
                 )}
-                <div className="w-12 h-12 bg-gradient-to-br from-[#D32F2F] to-[#B71C1C] rounded-xl flex items-center justify-center mb-4 group-hover:scale-110 transition-transform">
-                  <Hash size={22} className="text-white" />
+
+                {/* Icon */}
+                <div className="w-12 h-12 bg-gradient-to-br from-[#D32F2F] to-[#B71C1C] rounded-xl flex items-center justify-center mb-4 group-hover:scale-110 transition-transform flex-shrink-0">
+                  <VipIcon name={n.icon} size={22} />
                 </div>
-                <div className="font-bold text-lg text-[#212121] tracking-wider mb-1" style={{ fontFamily: 'Poppins, sans-serif' }}>{n.number.slice(0, 5) + ' ' + n.number.slice(5)}</div>
-                <div className="inline-block bg-[#FFF8E1] text-[#D32F2F] text-xs font-semibold px-2 py-0.5 rounded-full mb-2">{n.category}</div>
-                <p className="text-[#616161] text-sm mb-4 leading-relaxed">{n.desc}</p>
-                <div className="flex items-center justify-between">
-                  <span className="text-[#D32F2F] font-bold text-base" style={{ fontFamily: 'Poppins, sans-serif' }}>{n.price}</span>
+
+                {/* Number */}
+                <div className="font-bold text-lg text-[#212121] tracking-wider mb-1 pr-10" style={{ fontFamily: 'Poppins, sans-serif' }}>
+                  {n.vipNumber?.replace(/(\d{5})(\d{5})/, '$1 $2')}
+                </div>
+
+                {/* Category */}
+                <div className="inline-block bg-[#FFF8E1] text-[#D32F2F] text-xs font-semibold px-2 py-0.5 rounded-full mb-3 self-start">{n.category}</div>
+
+                {/* Description — tooltip only when text exceeds 3 lines */}
+                <VipDescTooltip text={n.description ?? ''} />
+
+                {/* Price + Button — always at bottom */}
+                <div className="flex items-center justify-between mt-auto">
+                  <span className="text-[#D32F2F] font-bold text-base" style={{ fontFamily: 'Poppins, sans-serif' }}>
+                    {n.price != null ? `₹${Number(n.price).toLocaleString('en-IN')}` : '—'}
+                  </span>
                   <button
                     onClick={openBooking}
-                    disabled={n.badge === 'SOLD OUT'}
-                    className={`px-4 py-1.5 rounded-xl text-sm font-semibold transition-colors ${n.badge === 'SOLD OUT' ? 'bg-gray-100 text-gray-400 cursor-not-allowed' : 'bg-[#D32F2F] text-white hover:bg-[#B71C1C]'}`}
+                    disabled={n.tag === 'SOLD OUT'}
+                    className={`px-4 py-1.5 rounded-xl text-sm font-semibold transition-colors ${n.tag === 'SOLD OUT' ? 'bg-gray-100 text-gray-400 cursor-not-allowed' : 'bg-[#D32F2F] text-white hover:bg-[#B71C1C]'}`}
                   >
-                    {n.badge === 'SOLD OUT' ? 'Sold Out' : 'Book Now'}
+                    {n.tag === 'SOLD OUT' ? 'Sold Out' : 'Book Now'}
                   </button>
                 </div>
               </div>
             ))}
           </div>
-          <div className="text-center mt-10">
+          {/* <div className="text-center mt-10">
             <button onClick={() => navigate('/services')} className="px-8 py-3 border-2 border-[#D32F2F] text-[#D32F2F] rounded-xl font-semibold hover:bg-[#D32F2F] hover:text-white transition-colors">
               View All Numbers
             </button>
-          </div>
+          </div> */}
         </div>
       </section>
 
@@ -259,30 +654,70 @@ export default function Home() {
             <p className="text-[#616161] mt-3 max-w-lg mx-auto">Comprehensive numerology solutions designed to transform every dimension of your life.</p>
           </div>
           <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-8">
-            {services.map((s, i) => {
-              const Icon = s.icon;
-              return (
-                <div key={i} className="group rounded-2xl overflow-hidden border border-gray-100 hover:shadow-xl transition-all">
-                  <div className="relative h-44 overflow-hidden">
-                    <img src={s.img} alt={s.title} className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500" loading="lazy" />
-                    <div className="absolute inset-0 bg-gradient-to-t from-black/60 to-transparent" />
-                    <div className="absolute bottom-3 left-3 w-8 h-8 bg-[#FBC02D] rounded-lg flex items-center justify-center">
-                      <Icon size={15} className="text-black" />
-                    </div>
-                  </div>
-                  <div className="p-6">
-                    <h3 className="font-bold text-[#212121] text-lg mb-2" style={{ fontFamily: 'Poppins, sans-serif' }}>{s.title}</h3>
-                    <p className="text-[#616161] text-sm leading-relaxed mb-4">{s.desc}</p>
-                    <button onClick={() => navigate('/services')} className="text-[#D32F2F] text-sm font-semibold hover:underline flex items-center gap-1">
-                      View Details <ChevronRight size={13} />
-                    </button>
+            {fetchedServices.slice(0, 6).map(s => (
+              <div key={s.id} className="group rounded-2xl overflow-hidden border border-gray-100 hover:shadow-xl transition-all">
+                <div className="relative h-44 overflow-hidden">
+                  {s.image ? (
+                    <img src={s.image} alt={s.title} className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500" loading="lazy" />
+                  ) : (
+                    <div className="w-full h-full bg-gradient-to-br from-[#D32F2F]/20 to-[#FBC02D]/20" />
+                  )}
+                  <div className="absolute inset-0 bg-gradient-to-t from-black/60 to-transparent" />
+                  <div className="absolute bottom-3 left-3 w-8 h-8 bg-[#FBC02D] rounded-lg flex items-center justify-center">
+                    <StatIcon name={s.icon} size={15} />
                   </div>
                 </div>
-              );
-            })}
+                <div className="p-6">
+                  <h3 className="font-bold text-[#212121] text-lg mb-2" style={{ fontFamily: 'Poppins, sans-serif' }}>{s.title}</h3>
+                  <div className="text-[#616161] text-sm leading-relaxed mb-4 line-clamp-2 prose prose-sm max-w-none" dangerouslySetInnerHTML={{ __html: s.description }} />
+                  <button onClick={() => setSelectedService(s)} className="text-[#D32F2F] text-sm font-semibold hover:underline flex items-center gap-1">
+                    View Details <ChevronRight size={13} />
+                  </button>
+                </div>
+              </div>
+            ))}
           </div>
         </div>
       </section>
+
+      {/* ─── Service Detail Popup ─────────────── */}
+      {selectedService && (
+        <div className="fixed inset-0 bg-black/60 z-50 flex items-center justify-center p-4" onClick={() => setSelectedService(null)}>
+          <div className="bg-white rounded-2xl max-w-2xl w-full max-h-[90vh] overflow-y-auto" onClick={e => e.stopPropagation()}>
+            <div className="relative h-72 flex-shrink-0">
+              {selectedService.image ? (
+                <img src={selectedService.image} alt={selectedService.title} className="w-full h-full object-cover" />
+              ) : (
+                <div className="w-full h-full bg-gradient-to-br from-[#D32F2F] to-[#B71C1C]" />
+              )}
+              <div className="absolute inset-0 bg-gradient-to-t from-black/60 to-transparent" />
+              <button onClick={() => setSelectedService(null)} className="absolute top-4 right-4 w-8 h-8 bg-white/20 border border-white/30 text-white rounded-full flex items-center justify-center hover:bg-white/40 transition-colors">
+                <X size={16} />
+              </button>
+              <div className="absolute bottom-4 left-4 flex items-center gap-3">
+                {selectedService.icon && (
+                  <div className="w-9 h-9 bg-[#FBC02D] rounded-xl flex items-center justify-center flex-shrink-0">
+                    <StatIcon name={selectedService.icon} size={18} />
+                  </div>
+                )}
+                <h2 className="text-2xl font-bold text-white" style={{ fontFamily: 'Poppins, sans-serif' }}>{selectedService.title}</h2>
+              </div>
+            </div>
+            <div className="p-6">
+              <div className="mb-6">
+                {renderServiceDescription(selectedService.description)}
+              </div>
+              <button
+                onClick={() => { setSelectedService(null); openBooking(); }}
+                className="w-full py-3.5 bg-[#D32F2F] text-white rounded-xl font-semibold hover:bg-[#B71C1C] transition-colors"
+                style={{ fontFamily: 'Poppins, sans-serif' }}
+              >
+                Book This Service
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
 
       {/* ─── Benefits ────────────────────────── */}
       <section className="py-20 bg-[#D32F2F]">
@@ -310,68 +745,124 @@ export default function Home() {
       </section>
 
       {/* ─── Social Proof / Testimonials ─────── */}
-      <section className="py-20 bg-white overflow-hidden">
+      <section className="py-20 bg-white">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
           <div className="text-center mb-14">
             <div className="text-[#D32F2F] font-semibold text-xs uppercase tracking-widest mb-3">Social Proof</div>
             <h2 className="text-4xl font-bold text-[#212121]" style={{ fontFamily: 'Poppins, sans-serif' }}>What Our Clients Say</h2>
-            <p className="text-[#616161] mt-3">Over 12,450 happy clients across India and abroad.</p>
-            <div className="flex items-center justify-center gap-6 mt-6">
-              <div className="text-center">
-                <div className="text-5xl font-bold text-[#D32F2F]" style={{ fontFamily: 'Poppins, sans-serif' }}>4.9</div>
-                <div className="flex justify-center gap-0.5 my-1">
-                  {[...Array(5)].map((_, i) => <Star key={i} size={16} className="text-[#FBC02D] fill-current" />)}
-                </div>
-                <div className="text-[#616161] text-sm">Average Rating</div>
-              </div>
-              <div className="h-14 w-px bg-gray-200" />
-              {[['12K+', 'Happy Clients'], ['98%', 'Satisfaction'], ['4.9★', 'Google Rating']].map(([v, l]) => (
-                <div key={l} className="text-center hidden sm:block">
-                  <div className="text-2xl font-bold text-[#212121]" style={{ fontFamily: 'Poppins, sans-serif' }}>{v}</div>
-                  <div className="text-[#616161] text-xs mt-1">{l}</div>
-                </div>
-              ))}
-            </div>
-          </div>
-
-          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-5 mb-8">
-            {visibleReviews.map((r, i) => (
-              <article key={i} className="bg-[#FFF8E1] rounded-2xl p-5 hover:shadow-md transition-shadow relative">
-                <Quote size={28} className="text-[#D32F2F]/15 absolute top-4 right-4" />
-                <div className="flex items-center gap-1 mb-3">
-                  {[...Array(r.rating)].map((_, j) => <Star key={j} size={13} className="text-[#FBC02D] fill-current" />)}
-                  {[...Array(5 - r.rating)].map((_, j) => <Star key={j} size={13} className="text-gray-300" />)}
-                </div>
-                <p className="text-[#616161] text-sm leading-relaxed mb-4 italic">"{r.review}"</p>
-                <div className="flex items-center gap-3">
-                  <img src={r.img} alt={r.name} className="w-10 h-10 rounded-full object-cover border-2 border-[#D32F2F]/20" />
-                  <div>
-                    <div className="font-semibold text-[#212121] text-sm">{r.name}</div>
-                    <div className="text-[#616161] text-xs">{r.tag} · {r.city}</div>
+            <p className="text-[#616161] mt-3">Trusted by clients across Pan India.</p>
+            {avgRating > 0 && (
+              <div className="flex items-center justify-center gap-6 mt-6">
+                <div className="text-center">
+                  <div className="text-5xl font-bold text-[#D32F2F]" style={{ fontFamily: 'Poppins, sans-serif' }}>{avgRating.toFixed(1)}</div>
+                  <div className="flex justify-center gap-0.5 my-1">
+                    {[1, 2, 3, 4, 5].map(s => (
+                      <Star key={s} size={16} className={s <= Math.round(avgRating) ? 'text-[#FBC02D] fill-current' : 'text-gray-300'} />
+                    ))}
                   </div>
+                  <div className="text-[#616161] text-sm">Average Rating</div>
                 </div>
-              </article>
-            ))}
+                <div className="h-14 w-px bg-gray-200" />
+                <div className="text-center hidden sm:block">
+                  <div className="text-2xl font-bold text-[#212121]" style={{ fontFamily: 'Poppins, sans-serif' }}>97%</div>
+                  <div className="text-[#616161] text-xs mt-1">Client Satisfaction</div>
+                </div>
+                <div className="h-14 w-px bg-gray-200 hidden sm:block" />
+                <div className="text-center hidden sm:block">
+                  <div className="text-2xl font-bold text-[#212121]" style={{ fontFamily: 'Poppins, sans-serif' }}>10K+</div>
+                  <div className="text-[#616161] text-xs mt-1">Numbers Delivered</div>
+                </div>
+              </div>
+            )}
           </div>
 
-          <div className="flex items-center justify-center gap-3">
-            <button onClick={() => setReviewPage(p => Math.max(0, p - 1))} disabled={reviewPage === 0}
-              className="w-9 h-9 rounded-full border border-gray-200 flex items-center justify-center text-[#616161] disabled:opacity-40 hover:border-[#D32F2F] hover:text-[#D32F2F] transition-colors">
-              <ChevronLeft size={15} />
-            </button>
-            {Array.from({ length: totalReviewPages }, (_, i) => (
-              <button key={i} onClick={() => setReviewPage(i)}
-                className={`w-9 h-9 rounded-full text-sm font-medium transition-colors ${reviewPage === i ? 'bg-[#D32F2F] text-white' : 'border border-gray-200 text-[#616161] hover:border-[#D32F2F]'}`}>
-                {i + 1}
-              </button>
-            ))}
-            <button onClick={() => setReviewPage(p => Math.min(totalReviewPages - 1, p + 1))} disabled={reviewPage === totalReviewPages - 1}
-              className="w-9 h-9 rounded-full border border-gray-200 flex items-center justify-center text-[#616161] disabled:opacity-40 hover:border-[#D32F2F] hover:text-[#D32F2F] transition-colors">
-              <ChevronRight size={15} />
-            </button>
-          </div>
+          <ReviewsCarousel reviews={testimonials} />
         </div>
       </section>
+
+      {/* ─── FAQ ─────────────────────────────── */}
+      {faqs.length > 0 && (() => {
+        const totalPages = Math.ceil(faqs.length / FAQ_PER_PAGE);
+        const pageFaqs = faqs.slice((faqPage - 1) * FAQ_PER_PAGE, faqPage * FAQ_PER_PAGE);
+        const goPage = (p: number) => { setFaqPage(p); setOpenFaqId(null); };
+        return (
+          <section className="py-20 bg-[#F5F5F5]">
+            <div className="max-w-3xl mx-auto px-4 sm:px-6 lg:px-8">
+              <div className="text-center mb-12">
+                <div className="text-[#D32F2F] font-semibold text-xs uppercase tracking-widest mb-3">Got Questions?</div>
+                <h2 className="text-4xl font-bold text-[#212121]" style={{ fontFamily: 'Poppins, sans-serif' }}>Frequently Asked Questions</h2>
+                <p className="text-[#616161] mt-3">Everything you need to know about VIP numerology and our services.</p>
+              </div>
+
+              {/* Accordion */}
+              <div className="space-y-3">
+                {pageFaqs.map((faq) => {
+                  const isOpen = openFaqId === faq.id;
+                  return (
+                    <div key={faq.id} className="bg-white rounded-2xl shadow-sm border border-gray-100 overflow-hidden">
+                      <button
+                        className="w-full flex items-center justify-between gap-4 px-6 py-5 text-left hover:bg-gray-50 transition-colors"
+                        onClick={() => setOpenFaqId(isOpen ? null : faq.id)}
+                      >
+                        <span className="font-semibold text-[#212121] text-sm sm:text-base leading-snug" style={{ fontFamily: 'Poppins, sans-serif' }}>
+                          {faq.question}
+                        </span>
+                        <ChevronDown
+                          size={20}
+                          className={`flex-shrink-0 text-[#D32F2F] transition-transform duration-300 ${isOpen ? 'rotate-180' : ''}`}
+                        />
+                      </button>
+                      <div
+                        className="overflow-hidden transition-all duration-300 ease-in-out"
+                        style={{ maxHeight: isOpen ? '600px' : '0px' }}
+                      >
+                        <div className="px-6 pb-5 text-[#616161] text-sm leading-relaxed border-t border-gray-100 pt-4">
+                          {faq.answer}
+                        </div>
+                      </div>
+                    </div>
+                  );
+                })}
+              </div>
+
+              {/* Pagination */}
+              {totalPages > 1 && (
+                <div className="flex items-center justify-center gap-2 mt-10">
+                  <button
+                    onClick={() => goPage(faqPage - 1)}
+                    disabled={faqPage === 1}
+                    className="w-9 h-9 rounded-full border border-gray-200 bg-white flex items-center justify-center text-[#616161] hover:border-[#D32F2F] hover:text-[#D32F2F] disabled:opacity-40 disabled:pointer-events-none transition-colors shadow-sm"
+                  >
+                    <ChevronLeft size={16} />
+                  </button>
+
+                  {Array.from({ length: totalPages }, (_, i) => i + 1).map(p => (
+                    <button
+                      key={p}
+                      onClick={() => goPage(p)}
+                      className={`w-9 h-9 rounded-full border text-sm font-semibold transition-colors shadow-sm ${
+                        p === faqPage
+                          ? 'bg-[#D32F2F] border-[#D32F2F] text-white'
+                          : 'bg-white border-gray-200 text-[#616161] hover:border-[#D32F2F] hover:text-[#D32F2F]'
+                      }`}
+                    >
+                      {p}
+                    </button>
+                  ))}
+
+                  <button
+                    onClick={() => goPage(faqPage + 1)}
+                    disabled={faqPage === totalPages}
+                    className="w-9 h-9 rounded-full border border-gray-200 bg-white flex items-center justify-center text-[#616161] hover:border-[#D32F2F] hover:text-[#D32F2F] disabled:opacity-40 disabled:pointer-events-none transition-colors shadow-sm"
+                  >
+                    <ChevronRight size={16} />
+                  </button>
+                </div>
+              )}
+            </div>
+          </section>
+        );
+      })()}
 
       {/* ─── CTA Banner ──────────────────────── */}
       <section className="py-20 bg-gradient-to-r from-[#212121] to-[#B71C1C]">

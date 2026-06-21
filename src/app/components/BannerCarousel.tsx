@@ -32,7 +32,7 @@ export default function BannerCarousel({ slides, pageName, breadcrumb, height = 
           className={`absolute inset-0 transition-opacity duration-1000 ${i === current ? 'opacity-100' : 'opacity-0'}`}
         >
           <img src={slide.img} alt={slide.title || pageName} className="w-full h-full object-cover" loading="lazy" />
-          <div className="absolute inset-0 bg-gradient-to-r from-[#D32F2F]/85 via-[#D32F2F]/50 to-black/40" />
+          <div className="absolute inset-0 bg-gradient-to-r from-[#D32F2F]/65 via-[#D32F2F]/10 to-black/40" />
         </div>
       ))}
 
