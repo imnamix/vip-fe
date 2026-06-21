@@ -1,31 +1,16 @@
 import { useState, useEffect } from 'react';
 import { useNavigate, useOutletContext } from 'react-router';
-import { ChevronLeft, ChevronRight, Star, ChevronDown, TrendingUp, Briefcase, Heart, Award, Zap, Users, CheckCircle, Hash, Sparkles, Quote } from 'lucide-react';
+import { ChevronLeft, ChevronRight, Star, TrendingUp, Briefcase, Heart, Award, Zap, Users, CheckCircle, Hash, Sparkles, Quote } from 'lucide-react';
+import { getAllHomepage } from '../services/HomepageService';
 
 interface OutletCtx { openBooking: () => void }
 
-const heroSlides = [
-  {
-    title: 'Discover Your VIP Numerology Numbers',
-    desc: 'Unlock the hidden power of premium numbers that attract wealth, health, and success into your life.',
-    cta: 'Explore VIP Numbers',
-    bg: 'https://images.unsplash.com/photo-1518655048521-f130df041f66?w=1440&h=700&fit=crop&auto=format',
-    overlay: 'from-black/75 via-black/40 to-transparent',
-  },
-  {
-    title: 'Personal Numerology Consultation',
-    desc: "Get a one-on-one session with India's top numerologists. Align your mobile, name & business with cosmic energy.",
-    cta: 'Book Consultation',
-    bg: 'https://images.unsplash.com/photo-1499750310107-5fef28a66643?w=1440&h=700&fit=crop&auto=format',
-    overlay: 'from-[#D32F2F]/80 via-[#D32F2F]/30 to-transparent',
-  },
-  {
-    title: 'Business Numerology Solutions',
-    desc: 'Transform your business with numerologically optimised company names, launch dates, and lucky numbers.',
-    cta: 'Grow Your Business',
-    bg: 'https://images.unsplash.com/photo-1507679799987-c73779587ccf?w=1440&h=700&fit=crop&auto=format',
-    overlay: 'from-black/75 via-black/35 to-transparent',
-  },
+interface ApiSlide { title: string; description: string; image?: string }
+
+const OVERLAYS = [
+  'from-black/75 via-black/40 to-transparent',
+  'from-[#D32F2F]/80 via-[#D32F2F]/30 to-transparent',
+  'from-black/75 via-black/35 to-transparent',
 ];
 
 const vipNumbers = [
@@ -62,28 +47,40 @@ const reviews = [
   { name: 'Rajesh Patel', city: 'Ahmedabad', rating: 5, review: 'The name correction service changed my life completely. Got promoted twice in one year!', img: 'https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?w=80&h=80&fit=crop', tag: 'Corporate Executive' },
   { name: 'Ananya Reddy', city: 'Hyderabad', rating: 5, review: 'Best investment I made. The 8888 series number brought incredible prosperity to my family.', img: 'https://images.unsplash.com/photo-1531746020798-e6953c6e8e04?w=80&h=80&fit=crop', tag: 'Entrepreneur' },
   { name: 'Vikram Singh', city: 'Delhi', rating: 4, review: 'Professional, knowledgeable, and truly transformative. Highly recommend the business numerology package.', img: 'https://images.unsplash.com/photo-1500648767791-00dcc994a43e?w=80&h=80&fit=crop', tag: 'Real Estate Developer' },
-  { name: 'Meena Iyer', city: 'Chennai', rating: 5, review: 'Changed my daughter\'s name spelling and she started excelling in school. Magic!', img: 'https://images.unsplash.com/photo-1438761681033-6461ffad8d80?w=80&h=80&fit=crop', tag: 'Parent' },
+  { name: 'Meena Iyer', city: 'Chennai', rating: 5, review: "Changed my daughter's name spelling and she started excelling in school. Magic!", img: 'https://images.unsplash.com/photo-1438761681033-6461ffad8d80?w=80&h=80&fit=crop', tag: 'Parent' },
   { name: 'Suresh Kumar', city: 'Bangalore', rating: 5, review: 'Got a 9999 series number for my startup. First funding round was a massive success!', img: 'https://images.unsplash.com/photo-1472099645785-5658abf4ff4e?w=80&h=80&fit=crop', tag: 'Startup Founder' },
   { name: 'Deepa Nair', city: 'Kochi', rating: 5, review: 'The personal consultation was eye-opening. I now understand the role numbers play in our destiny.', img: 'https://images.unsplash.com/photo-1487412720507-e7ab37603c6f?w=80&h=80&fit=crop', tag: 'Teacher' },
   { name: 'Karan Mehta', city: 'Pune', rating: 4, review: 'Highly professional team. The premium number suggestions were spot-on for my career transition.', img: 'https://images.unsplash.com/photo-1463453091185-61582044d556?w=80&h=80&fit=crop', tag: 'IT Professional' },
   { name: 'Sunita Rao', city: 'Hyderabad', rating: 5, review: 'My marriage date was selected by VIP Numerology. We just completed our 5th anniversary with so much joy!', img: 'https://images.unsplash.com/photo-1438761681033-6461ffad8d80?w=80&h=80&fit=crop', tag: 'Homemaker' },
   { name: 'Anil Bhatt', city: 'Surat', rating: 5, review: 'Business tripled after switching our company number. Incredible results within 6 months.', img: 'https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?w=80&h=80&fit=crop', tag: 'Textile Merchant' },
   { name: 'Nisha Gupta', city: 'Jaipur', rating: 5, review: 'Name correction for my son brought remarkable improvements in his confidence and performance.', img: 'https://images.unsplash.com/photo-1494790108377-be9c29b29330?w=80&h=80&fit=crop', tag: 'Parent' },
-  { name: 'Rohit Kapoor', city: 'Chandigarh', rating: 4, review: 'Excellent consultation service. Dr. Sharma\'s insights were accurate and his advice practical.', img: 'https://images.unsplash.com/photo-1472099645785-5658abf4ff4e?w=80&h=80&fit=crop', tag: 'Doctor' },
+  { name: 'Rohit Kapoor', city: 'Chandigarh', rating: 4, review: "Excellent consultation service. Dr. Sharma's insights were accurate and his advice practical.", img: 'https://images.unsplash.com/photo-1472099645785-5658abf4ff4e?w=80&h=80&fit=crop', tag: 'Doctor' },
 ];
 
 const REVIEWS_PER_PAGE = 8;
 
 export default function Home() {
+  const [slides, setSlides] = useState<ApiSlide[]>([]);
   const [currentSlide, setCurrentSlide] = useState(0);
   const [reviewPage, setReviewPage] = useState(0);
   const { openBooking } = useOutletContext<OutletCtx>();
   const navigate = useNavigate();
 
   useEffect(() => {
-    const t = setInterval(() => setCurrentSlide(s => (s + 1) % heroSlides.length), 5000);
-    return () => clearInterval(t);
+    getAllHomepage(1, 1).then(res => {
+      const record = res?.data?.[0];
+      if (record?.slides?.length) setSlides(record.slides);
+    }).catch(() => {});
   }, []);
+
+  useEffect(() => {
+    if (slides.length < 2) return;
+    const t = setInterval(() => setCurrentSlide(s => (s + 1) % slides.length), 5000);
+    return () => clearInterval(t);
+  }, [slides.length]);
+
+  const prevSlide = () => setCurrentSlide(s => (s - 1 + slides.length) % slides.length);
+  const nextSlide = () => setCurrentSlide(s => (s + 1) % slides.length);
 
   const totalReviewPages = Math.ceil(reviews.length / REVIEWS_PER_PAGE);
   const visibleReviews = reviews.slice(reviewPage * REVIEWS_PER_PAGE, (reviewPage + 1) * REVIEWS_PER_PAGE);
@@ -91,55 +88,90 @@ export default function Home() {
   return (
     <div className="overflow-x-hidden">
       {/* ─── Hero Slider ─────────────────────── */}
-      <section className="relative h-[85vh] min-h-[520px] overflow-hidden">
-        {heroSlides.map((slide, i) => (
-          <div key={i} className={`absolute inset-0 transition-opacity duration-1000 ${i === currentSlide ? 'opacity-100' : 'opacity-0'}`}>
-            <img src={slide.bg} alt={slide.title} className="w-full h-full object-cover" />
-            <div className={`absolute inset-0 bg-gradient-to-r ${slide.overlay}`} />
-            <div className="absolute inset-0 flex items-center">
-              <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 w-full">
-                <div className="max-w-2xl">
-                  <div className="inline-flex items-center gap-2 bg-[#FBC02D]/20 border border-[#FBC02D]/40 text-[#FBC02D] px-4 py-1.5 rounded-full text-sm font-medium mb-5">
-                    <Sparkles size={13} /> India's #1 Numerology Platform
-                  </div>
-                  <h1 className="text-4xl lg:text-6xl font-bold text-white leading-tight mb-5" style={{ fontFamily: 'Poppins, sans-serif' }}>
-                    {slide.title}
-                  </h1>
-                  <p className="text-lg text-white/85 mb-8 leading-relaxed">{slide.desc}</p>
-                  <div className="flex flex-wrap gap-3">
-                    <button
-                      onClick={openBooking}
-                      className="px-8 py-3.5 bg-[#D32F2F] text-white rounded-xl font-semibold hover:bg-[#B71C1C] transition-colors shadow-lg"
-                      style={{ fontFamily: 'Poppins, sans-serif' }}
-                    >
-                      {slide.cta}
-                    </button>
-                    <button
-                      onClick={() => navigate('/about')}
-                      className="px-8 py-3.5 bg-white/10 backdrop-blur-sm border border-white/30 text-white rounded-xl font-semibold hover:bg-white/20 transition-colors"
-                    >
-                      Learn More
-                    </button>
+      <section className="group relative h-[85vh] min-h-[520px] overflow-hidden bg-[#1a1a1a]">
+        {slides.length === 0 ? (
+          /* Loading / empty state — dark bg so layout doesn't jump */
+          <div className="absolute inset-0 flex items-center justify-center">
+            <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 w-full">
+              <div className="max-w-2xl animate-pulse space-y-4">
+                <div className="h-6 w-48 bg-white/10 rounded-full" />
+                <div className="h-14 w-3/4 bg-white/10 rounded-xl" />
+                <div className="h-5 w-2/3 bg-white/10 rounded-lg" />
+              </div>
+            </div>
+          </div>
+        ) : (
+          slides.map((slide, i) => (
+            <div
+              key={i}
+              className={`absolute inset-0 transition-opacity duration-1000 ${i === currentSlide ? 'opacity-100' : 'opacity-0'}`}
+            >
+              {slide.image ? (
+                <img src={slide.image} alt={slide.title} className="w-full h-full object-cover" />
+              ) : (
+                <div className="w-full h-full bg-gradient-to-br from-[#212121] to-[#B71C1C]" />
+              )}
+              <div className={`absolute inset-0 bg-gradient-to-r ${OVERLAYS[i % OVERLAYS.length]}`} />
+              <div className="absolute inset-0 flex items-center">
+                <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 w-full">
+                  <div className="max-w-2xl">
+                    <div className="inline-flex items-center gap-2 bg-[#FBC02D]/20 border border-[#FBC02D]/40 text-[#FBC02D] px-4 py-1.5 rounded-full text-sm font-medium mb-5">
+                      <Sparkles size={13} /> India's #1 Numerology Platform
+                    </div>
+                    <h1 className="text-4xl lg:text-6xl font-bold text-white leading-tight mb-5" style={{ fontFamily: 'Poppins, sans-serif' }}>
+                      {slide.title}
+                    </h1>
+                    <p className="text-lg text-white/85 mb-8 leading-relaxed">{slide.description}</p>
+                    <div className="flex flex-wrap gap-3">
+                      <button
+                        onClick={openBooking}
+                        className="px-8 py-3.5 bg-[#D32F2F] text-white rounded-xl font-semibold hover:bg-[#B71C1C] transition-colors shadow-lg"
+                        style={{ fontFamily: 'Poppins, sans-serif' }}
+                      >
+                        Book Consultation
+                      </button>
+                      <button
+                        onClick={() => navigate('/about')}
+                        className="px-8 py-3.5 bg-white/10 backdrop-blur-sm border border-white/30 text-white rounded-xl font-semibold hover:bg-white/20 transition-colors"
+                      >
+                        Learn More
+                      </button>
+                    </div>
                   </div>
                 </div>
               </div>
             </div>
-          </div>
-        ))}
+          ))
+        )}
 
-        <button onClick={() => setCurrentSlide(s => (s - 1 + heroSlides.length) % heroSlides.length)}
-          className="absolute left-4 top-1/2 -translate-y-1/2 w-10 h-10 bg-white/20 backdrop-blur-sm border border-white/30 text-white rounded-full flex items-center justify-center hover:bg-white/30">
-          <ChevronLeft size={20} />
-        </button>
-        <button onClick={() => setCurrentSlide(s => (s + 1) % heroSlides.length)}
-          className="absolute right-4 top-1/2 -translate-y-1/2 w-10 h-10 bg-white/20 backdrop-blur-sm border border-white/30 text-white rounded-full flex items-center justify-center hover:bg-white/30">
-          <ChevronRight size={20} />
-        </button>
-        <div className="absolute bottom-8 left-1/2 -translate-x-1/2 flex gap-2">
-          {heroSlides.map((_, i) => (
-            <button key={i} onClick={() => setCurrentSlide(i)} className={`h-1.5 rounded-full transition-all ${i === currentSlide ? 'bg-[#FBC02D] w-8' : 'bg-white/50 w-3'}`} />
-          ))}
-        </div>
+        {/* Arrows — hidden by default, visible on section hover */}
+        {slides.length > 1 && (
+          <>
+            <button
+              onClick={prevSlide}
+              className="absolute left-4 top-1/2 -translate-y-1/2 w-10 h-10 bg-white/20 backdrop-blur-sm border border-white/30 text-white rounded-full flex items-center justify-center hover:bg-white/40 transition-all opacity-0 group-hover:opacity-100 duration-300"
+            >
+              <ChevronLeft size={20} />
+            </button>
+            <button
+              onClick={nextSlide}
+              className="absolute right-4 top-1/2 -translate-y-1/2 w-10 h-10 bg-white/20 backdrop-blur-sm border border-white/30 text-white rounded-full flex items-center justify-center hover:bg-white/40 transition-all opacity-0 group-hover:opacity-100 duration-300"
+            >
+              <ChevronRight size={20} />
+            </button>
+
+            {/* Dot indicators */}
+            <div className="absolute bottom-8 left-1/2 -translate-x-1/2 flex gap-2">
+              {slides.map((_, i) => (
+                <button
+                  key={i}
+                  onClick={() => setCurrentSlide(i)}
+                  className={`h-1.5 rounded-full transition-all ${i === currentSlide ? 'bg-[#FBC02D] w-8' : 'bg-white/50 w-3'}`}
+                />
+              ))}
+            </div>
+          </>
+        )}
       </section>
 
       {/* ─── About Preview ───────────────────── */}
@@ -284,8 +316,6 @@ export default function Home() {
             <div className="text-[#D32F2F] font-semibold text-xs uppercase tracking-widest mb-3">Social Proof</div>
             <h2 className="text-4xl font-bold text-[#212121]" style={{ fontFamily: 'Poppins, sans-serif' }}>What Our Clients Say</h2>
             <p className="text-[#616161] mt-3">Over 12,450 happy clients across India and abroad.</p>
-
-            {/* Rating summary */}
             <div className="flex items-center justify-center gap-6 mt-6">
               <div className="text-center">
                 <div className="text-5xl font-bold text-[#D32F2F]" style={{ fontFamily: 'Poppins, sans-serif' }}>4.9</div>
@@ -304,7 +334,6 @@ export default function Home() {
             </div>
           </div>
 
-          {/* Review cards */}
           <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-5 mb-8">
             {visibleReviews.map((r, i) => (
               <article key={i} className="bg-[#FFF8E1] rounded-2xl p-5 hover:shadow-md transition-shadow relative">
@@ -325,7 +354,6 @@ export default function Home() {
             ))}
           </div>
 
-          {/* Pagination for reviews */}
           <div className="flex items-center justify-center gap-3">
             <button onClick={() => setReviewPage(p => Math.max(0, p - 1))} disabled={reviewPage === 0}
               className="w-9 h-9 rounded-full border border-gray-200 flex items-center justify-center text-[#616161] disabled:opacity-40 hover:border-[#D32F2F] hover:text-[#D32F2F] transition-colors">

@@ -19,6 +19,9 @@ import AdminEvents from './pages/admin/AdminEvents';
 import EventForm from './pages/admin/EventForm';
 import EventView from './pages/admin/EventView';
 import EventBannerSlides from './pages/admin/EventBannerSlides';
+import VipNumbers from './pages/admin/VipNumbers';
+import VipNumberForm from './pages/admin/VipNumberForm';
+import VipNumberView from './pages/admin/VipNumberView';
 import ContentManagement from './pages/admin/ContentManagement';
 import UserRoles from './pages/admin/UserRoles';
 import DeliveryTracking from './pages/admin/DeliveryTracking';
@@ -57,6 +60,10 @@ export const router = createBrowserRouter([
       { path: 'events/new', Component: EventForm },
       { path: 'events/:id', Component: EventView },
       { path: 'events/:id/edit', Component: EventForm },
+      { path: 'vip-numbers', Component: VipNumbers },
+      { path: 'vip-numbers/new', Component: VipNumberForm },
+      { path: 'vip-numbers/:id', Component: VipNumberView },
+      { path: 'vip-numbers/:id/edit', Component: VipNumberForm },
       { path: 'content', Component: ContentManagement },
       { path: 'roles', Component: UserRoles },
       { path: 'delivery', Component: DeliveryTracking },

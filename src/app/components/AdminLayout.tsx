@@ -4,19 +4,20 @@ import { AdminThemeContext } from '../context/AdminThemeContext';
 import {
   LayoutDashboard, Users, MessageSquare, UserCheck, Calendar,
   FileText, Shield, Truck, Bell, ChevronLeft, Menu, Search,
-  LogOut, ChevronDown, User, X, Sun, Moon
+  LogOut, ChevronDown, User, X, Sun, Moon, Hash,
 } from 'lucide-react';
 
 const menuItems = [
-  { label: 'Dashboard',    path: '/admin',               icon: LayoutDashboard },
-  { label: 'Customers',    path: '/admin/customers',     icon: Users           },
-  { label: 'Inquiries',    path: '/admin/inquiries',     icon: MessageSquare   },
-  { label: 'Numerologists',path: '/admin/numerologists', icon: UserCheck       },
-  { label: 'Events',       path: '/admin/events',        icon: Calendar        },
-  { label: 'Content',      path: '/admin/content',       icon: FileText        },
-  { label: 'User & Roles', path: '/admin/roles',         icon: Shield          },
-  { label: 'Delivery',     path: '/admin/delivery',      icon: Truck           },
-  { label: 'Notifications',path: '/admin/notifications', icon: Bell            },
+  { label: 'Dashboard',       path: '/admin',               icon: LayoutDashboard },
+  { label: 'Customers',       path: '/admin/customers',     icon: Users           },
+  { label: 'Inquiries',       path: '/admin/inquiries',     icon: MessageSquare   },
+  { label: 'Numerologists',   path: '/admin/numerologists', icon: UserCheck       },
+  { label: 'Events',          path: '/admin/events',        icon: Calendar        },
+  { label: 'Top VIP Numbers', path: '/admin/vip-numbers',   icon: Hash            },
+  { label: 'Content',         path: '/admin/content',       icon: FileText        },
+  { label: 'User & Roles',    path: '/admin/roles',         icon: Shield          },
+  { label: 'Delivery',        path: '/admin/delivery',      icon: Truck           },
+  { label: 'Notifications',   path: '/admin/notifications', icon: Bell            },
 ];
 
 export default function AdminLayout() {
