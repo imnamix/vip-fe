@@ -1,11 +1,13 @@
 import { configureStore } from '@reduxjs/toolkit';
 import loaderReducer from './slice/Loader';
 import brandInfoReducer from './slice/BrandInfoSlice';
+import contactReducer from './slice/ContactSlice';
 
 const store = configureStore({
   reducer: {
     loader: loaderReducer,
     brandInfo: brandInfoReducer,
+    contact: contactReducer,
   },
 });
 

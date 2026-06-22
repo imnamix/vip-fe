@@ -1,23 +1,19 @@
 import { useEffect, useState } from 'react';
+import { useDispatch, useSelector } from 'react-redux';
 import {
   Save, CheckCircle, AlertCircle, Loader2, Plus, Trash2,
   Phone, Mail, MapPin, Clock, Facebook, Instagram, Youtube, Twitter, Linkedin,
   Link, Hash, Image, Loader, Share2,
 } from 'lucide-react';
-import { getAllContacts, createContact, updateContact } from '../../../services/ContactService';
+import {
+  fetchContact, saveContact, saveContactSlides,
+  setSlides, setContactField, setAddressField, setSocialLinkField,
+  clearContactSaved, clearSlidesSaved,
+} from '../../../store/slice/ContactSlice';
+import type { RootState, AppDispatch } from '../../../store/Store';
+import type { BannerSlide, Address, SocialLinks } from '../../../store/slice/ContactSlice';
 import { uploadFiles } from '../../../services/MediaService';
 import ImagePreviewPopup from '../../../components/ImagePreviewPopup';
-
-// ─── Types ────────────────────────────────────────────────────────────────────
-
-interface BannerSlide { id: number; image: string; title: string; description: string }
-
-interface Address {
-  officeNumber: string; building: string; landmark: string; street: string;
-  city: string; state: string; pincode: string; country: string;
-}
-
-interface SocialLinks { facebook: string; instagram: string; youtube: string; x: string; linkedin: string }
 
 // ─── Shared UI helpers ────────────────────────────────────────────────────────
 
@@ -82,16 +78,16 @@ function SaveBar({ saving, saved, onSave, label = 'Save Changes' }: {
 
 // ─── Banner Slide Editor ──────────────────────────────────────────────────────
 
-function BannerSlideEditor({ slides, setSlides, showErrors = false }: {
+function BannerSlideEditor({ slides, setSlidesFn, showErrors = false }: {
   slides: BannerSlide[];
-  setSlides: (s: BannerSlide[]) => void;
+  setSlidesFn: (s: BannerSlide[]) => void;
   showErrors?: boolean;
 }) {
   const [uploadingId, setUploadingId] = useState<number | null>(null);
   const [preview, setPreview] = useState<{ url: string; title: string } | null>(null);
 
   const update = (id: number, field: keyof BannerSlide, value: string) =>
-    setSlides(slides.map(s => s.id === id ? { ...s, [field]: value } : s));
+    setSlidesFn(slides.map(s => s.id === id ? { ...s, [field]: value } : s));
 
   const handleImageUpload = (id: number) => async (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
@@ -119,7 +115,7 @@ function BannerSlideEditor({ slides, setSlides, showErrors = false }: {
             <span className="font-semibold text-[#212121] text-sm">Slide {idx + 1}</span>
             <button
               type="button"
-              onClick={() => setSlides(slides.filter(s => s.id !== slide.id))}
+              onClick={() => setSlidesFn(slides.filter(s => s.id !== slide.id))}
               className="p-1.5 text-[#D32F2F] hover:bg-red-50 rounded-lg transition-colors"
             >
               <Trash2 size={13} />
@@ -183,7 +179,7 @@ function BannerSlideEditor({ slides, setSlides, showErrors = false }: {
       ))}
       <button
         type="button"
-        onClick={() => setSlides([...slides, { id: Date.now(), image: '', title: '', description: '' }])}
+        onClick={() => setSlidesFn([...slides, { id: Date.now(), image: '', title: '', description: '' }])}
         className="w-full py-3 border-2 border-dashed border-[#D32F2F]/40 text-[#D32F2F] rounded-xl text-sm font-medium hover:border-[#D32F2F] hover:bg-red-50 transition-colors flex items-center justify-center gap-2"
       >
         <Plus size={14} /> Add Slide
@@ -195,128 +191,60 @@ function BannerSlideEditor({ slides, setSlides, showErrors = false }: {
 
 // ─── Main Component ───────────────────────────────────────────────────────────
 
-const defaultAddress: Address = { officeNumber: '', building: '', landmark: '', street: '', city: '', state: '', pincode: '', country: '' };
-const defaultSocialLinks: SocialLinks = { facebook: '', instagram: '', youtube: '', x: '', linkedin: '' };
-
 export default function ContactSection() {
-  const [recordId, setRecordId] = useState<number | null>(null);
-  const [loading, setLoading] = useState(true);
-  const [saving, setSaving] = useState(false);
-  const [saved, setSaved] = useState(false);
-  const [error, setError] = useState<string | null>(null);
+  const dispatch = useDispatch<AppDispatch>();
+  const {
+    data,
+    loading,
+    saving,
+    saved,
+    savingSlides,
+    savedSlides,
+    error,
+    slidesError,
+  } = useSelector((state: RootState) => state.contact);
 
-  // Separate slide-save state
-  const [savingSlides, setSavingSlides] = useState(false);
-  const [savedSlides, setSavedSlides] = useState(false);
-  const [slidesError, setSlidesError] = useState<string | null>(null);
   const [slideShowErrors, setSlideShowErrors] = useState(false);
 
-  const [slides, setSlides] = useState<BannerSlide[]>([{ id: Date.now(), image: '', title: '', description: '' }]);
-  const [contactNumber, setContactNumber] = useState('');
-  const [whatsappNumber, setWhatsappNumber] = useState('');
-  const [officeEmail, setOfficeEmail] = useState('');
-  const [alternateOfficeEmail, setAlternateOfficeEmail] = useState('');
-  const [address, setAddress] = useState<Address>(defaultAddress);
-  const [workingHours, setWorkingHours] = useState('');
-  const [gstNumber, setGstNumber] = useState('');
-  const [googleMapLink, setGoogleMapLink] = useState('');
-  const [socialLinks, setSocialLinks] = useState<SocialLinks>(defaultSocialLinks);
+  useEffect(() => {
+    dispatch(fetchContact());
+  }, [dispatch]);
 
   useEffect(() => {
-    const load = async () => {
-      setLoading(true);
-      try {
-        const res = await getAllContacts(1, 1);
-        const record = res?.data?.[0];
-        if (record) {
-          setRecordId(record.id);
-          setSlides(
-            record.bannerSlides?.length
-              ? record.bannerSlides.map((s: any, i: number) => ({ id: Date.now() + i, image: s.image ?? '', title: s.title ?? '', description: s.description ?? '' }))
-              : [{ id: Date.now(), image: '', title: '', description: '' }],
-          );
-          setContactNumber(record.contactNumber ?? '');
-          setWhatsappNumber(record.whatsappNumber ?? '');
-          setOfficeEmail(record.officeEmail ?? '');
-          setAlternateOfficeEmail(record.alternateOfficeEmail ?? '');
-          setAddress({ ...defaultAddress, ...(record.address ?? {}) });
-          setWorkingHours(typeof record.workingHours === 'string' ? record.workingHours : '');
-          setGstNumber(record.gstNumber ?? '');
-          setGoogleMapLink(record.googleMapLink ?? '');
-          setSocialLinks({ ...defaultSocialLinks, ...(record.socialLinks ?? {}) });
-        }
-      } catch {
-        setError('Failed to load contact data');
-      } finally {
-        setLoading(false);
-      }
-    };
-    load();
-  }, []);
-
-  useEffect(() => {
-    if (saved) { const t = setTimeout(() => setSaved(false), 3500); return () => clearTimeout(t); }
-  }, [saved]);
-
-  useEffect(() => {
-    if (savedSlides) { const t = setTimeout(() => setSavedSlides(false), 3500); return () => clearTimeout(t); }
-  }, [savedSlides]);
-
-  const buildPayload = () => ({
-    bannerSlides: slides.map(({ id: _id, ...rest }) => rest),
-    contactNumber, whatsappNumber, officeEmail, alternateOfficeEmail,
-    address, workingHours, gstNumber, googleMapLink, socialLinks,
-  });
-
-  const saveRecord = async (payload: object) => {
-    if (recordId) {
-      await updateContact(payload, recordId);
-      return recordId;
-    } else {
-      const res = await createContact(payload);
-      const newId = res?.data?.id ?? null;
-      setRecordId(newId);
-      return newId;
+    if (saved) {
+      const t = setTimeout(() => dispatch(clearContactSaved()), 3500);
+      return () => clearTimeout(t);
     }
-  };
+  }, [saved, dispatch]);
 
-  const handleSaveSlides = async () => {
-    if (slides.some(s => !s.image)) {
+  useEffect(() => {
+    if (savedSlides) {
+      const t = setTimeout(() => dispatch(clearSlidesSaved()), 3500);
+      return () => clearTimeout(t);
+    }
+  }, [savedSlides, dispatch]);
+
+  const setAddr = (key: keyof Address, value: string) => dispatch(setAddressField({ key, value }));
+  const setSocial = (key: keyof SocialLinks, value: string) => dispatch(setSocialLinkField({ key, value }));
+  const setField = (key: keyof Omit<typeof data, 'recordId' | 'slides' | 'address' | 'socialLinks'>, value: string) =>
+    dispatch(setContactField({ key, value }));
+
+  const handleSaveSlides = () => {
+    if (data.slides.some(s => !s.image)) {
       setSlideShowErrors(true);
       return;
     }
     setSlideShowErrors(false);
-    setSavingSlides(true);
-    setSlidesError(null);
-    try {
-      await saveRecord({ bannerSlides: slides.map(({ id: _id, ...rest }) => rest) });
-      setSavedSlides(true);
-    } catch {
-      setSlidesError('Failed to save banner slides');
-    } finally {
-      setSavingSlides(false);
-    }
+    dispatch(saveContactSlides({ slides: data.slides, recordId: data.recordId }));
   };
 
-  const handleSave = async () => {
-    if (slides.some(s => !s.image)) {
-      setError('All banner slides must have an image.');
+  const handleSave = () => {
+    if (data.slides.some(s => !s.image)) {
+      setSlideShowErrors(true);
       return;
     }
-    setSaving(true);
-    setError(null);
-    try {
-      await saveRecord(buildPayload());
-      setSaved(true);
-    } catch {
-      setError('Failed to save contact data');
-    } finally {
-      setSaving(false);
-    }
+    dispatch(saveContact({ data }));
   };
-
-  const setAddr = (field: keyof Address, val: string) => setAddress(prev => ({ ...prev, [field]: val }));
-  const setSocial = (field: keyof SocialLinks, val: string) => setSocialLinks(prev => ({ ...prev, [field]: val }));
 
   if (loading) {
     return (
@@ -342,7 +270,11 @@ export default function ContactSection() {
             <AlertCircle size={14} /> {slidesError}
           </div>
         )}
-        <BannerSlideEditor slides={slides} setSlides={setSlides} showErrors={slideShowErrors} />
+        <BannerSlideEditor
+          slides={data.slides}
+          setSlidesFn={s => dispatch(setSlides(s))}
+          showErrors={slideShowErrors}
+        />
         <SaveBar saving={savingSlides} saved={savedSlides} onSave={handleSaveSlides} label="Save Slides" />
       </div>
 
@@ -351,10 +283,10 @@ export default function ContactSection() {
         <SectionHeader icon={Phone}>Contact Numbers</SectionHeader>
         <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
           <Field label="Contact Number">
-            <TextInput value={contactNumber} onChange={setContactNumber} placeholder="+91 98765 43210" type="tel" />
+            <TextInput value={data.contactNumber} onChange={v => setField('contactNumber', v)} placeholder="+91 98765 43210" type="tel" />
           </Field>
           <Field label="WhatsApp Number">
-            <TextInput value={whatsappNumber} onChange={setWhatsappNumber} placeholder="+91 98765 43210" type="tel" />
+            <TextInput value={data.whatsappNumber} onChange={v => setField('whatsappNumber', v)} placeholder="+91 98765 43210" type="tel" />
           </Field>
         </div>
       </div>
@@ -364,10 +296,10 @@ export default function ContactSection() {
         <SectionHeader icon={Mail}>Email Addresses</SectionHeader>
         <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
           <Field label="Office Email">
-            <TextInput value={officeEmail} onChange={setOfficeEmail} placeholder="info@company.com" type="email" />
+            <TextInput value={data.officeEmail} onChange={v => setField('officeEmail', v)} placeholder="info@company.com" type="email" />
           </Field>
           <Field label="Alternate Office Email">
-            <TextInput value={alternateOfficeEmail} onChange={setAlternateOfficeEmail} placeholder="support@company.com" type="email" />
+            <TextInput value={data.alternateOfficeEmail} onChange={v => setField('alternateOfficeEmail', v)} placeholder="support@company.com" type="email" />
           </Field>
         </div>
       </div>
@@ -377,28 +309,28 @@ export default function ContactSection() {
         <SectionHeader icon={MapPin}>Office Address</SectionHeader>
         <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
           <Field label="Office Number">
-            <TextInput value={address.officeNumber} onChange={v => setAddr('officeNumber', v)} placeholder="e.g. 301, 3rd Floor" />
+            <TextInput value={data.address.officeNumber} onChange={v => setAddr('officeNumber', v)} placeholder="e.g. 301, 3rd Floor" />
           </Field>
           <Field label="Building / Complex">
-            <TextInput value={address.building} onChange={v => setAddr('building', v)} placeholder="e.g. Skyline Tower" />
+            <TextInput value={data.address.building} onChange={v => setAddr('building', v)} placeholder="e.g. Skyline Tower" />
           </Field>
           <Field label="Landmark">
-            <TextInput value={address.landmark} onChange={v => setAddr('landmark', v)} placeholder="e.g. Near City Mall" />
+            <TextInput value={data.address.landmark} onChange={v => setAddr('landmark', v)} placeholder="e.g. Near City Mall" />
           </Field>
           <Field label="Street / Area">
-            <TextInput value={address.street} onChange={v => setAddr('street', v)} placeholder="e.g. MG Road" />
+            <TextInput value={data.address.street} onChange={v => setAddr('street', v)} placeholder="e.g. MG Road" />
           </Field>
           <Field label="City">
-            <TextInput value={address.city} onChange={v => setAddr('city', v)} placeholder="e.g. Mumbai" />
+            <TextInput value={data.address.city} onChange={v => setAddr('city', v)} placeholder="e.g. Mumbai" />
           </Field>
           <Field label="State">
-            <TextInput value={address.state} onChange={v => setAddr('state', v)} placeholder="e.g. Maharashtra" />
+            <TextInput value={data.address.state} onChange={v => setAddr('state', v)} placeholder="e.g. Maharashtra" />
           </Field>
           <Field label="Pincode">
-            <TextInput value={address.pincode} onChange={v => setAddr('pincode', v)} placeholder="e.g. 400001" />
+            <TextInput value={data.address.pincode} onChange={v => setAddr('pincode', v)} placeholder="e.g. 400001" />
           </Field>
           <Field label="Country">
-            <TextInput value={address.country} onChange={v => setAddr('country', v)} placeholder="e.g. India" />
+            <TextInput value={data.address.country} onChange={v => setAddr('country', v)} placeholder="e.g. India" />
           </Field>
         </div>
       </div>
@@ -407,8 +339,8 @@ export default function ContactSection() {
       <div className="border-t border-gray-100 pt-6">
         <SectionHeader icon={Clock}>Working Hours</SectionHeader>
         <textarea
-          value={workingHours}
-          onChange={e => setWorkingHours(e.target.value)}
+          value={data.workingHours}
+          onChange={e => setField('workingHours', e.target.value)}
           rows={3}
           placeholder={"Mon–Sat: 9 AM – 8 PM\nSunday: 10 AM – 5 PM"}
           className="w-full px-3 py-2 border border-gray-200 rounded-xl text-sm focus:outline-none focus:border-[#D32F2F] resize-none"
@@ -420,14 +352,14 @@ export default function ContactSection() {
         <SectionHeader icon={Hash}>Business Details</SectionHeader>
         <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
           <Field label="GST Number">
-            <TextInput value={gstNumber} onChange={setGstNumber} placeholder="e.g. 27AABCU9603R1ZX" />
+            <TextInput value={data.gstNumber} onChange={v => setField('gstNumber', v)} placeholder="e.g. 27AABCU9603R1ZX" />
           </Field>
           <Field label="Google Map Link">
             <div className="relative">
               <Link size={14} className="absolute left-3 top-1/2 -translate-y-1/2 text-[#9E9E9E]" />
               <input
-                value={googleMapLink}
-                onChange={e => setGoogleMapLink(e.target.value)}
+                value={data.googleMapLink}
+                onChange={e => setField('googleMapLink', e.target.value)}
                 placeholder="https://maps.google.com/..."
                 className="w-full pl-9 pr-3 py-2 border border-gray-200 rounded-xl text-sm focus:outline-none focus:border-[#D32F2F]"
               />
@@ -444,7 +376,7 @@ export default function ContactSection() {
             <div className="relative">
               <Facebook size={14} className="absolute left-3 top-1/2 -translate-y-1/2 text-[#1877F2]" />
               <input
-                value={socialLinks.facebook}
+                value={data.socialLinks.facebook}
                 onChange={e => setSocial('facebook', e.target.value)}
                 placeholder="https://facebook.com/yourpage"
                 className="w-full pl-9 pr-3 py-2 border border-gray-200 rounded-xl text-sm focus:outline-none focus:border-[#D32F2F]"
@@ -455,7 +387,7 @@ export default function ContactSection() {
             <div className="relative">
               <Instagram size={14} className="absolute left-3 top-1/2 -translate-y-1/2 text-[#E4405F]" />
               <input
-                value={socialLinks.instagram}
+                value={data.socialLinks.instagram}
                 onChange={e => setSocial('instagram', e.target.value)}
                 placeholder="https://instagram.com/yourhandle"
                 className="w-full pl-9 pr-3 py-2 border border-gray-200 rounded-xl text-sm focus:outline-none focus:border-[#D32F2F]"
@@ -466,7 +398,7 @@ export default function ContactSection() {
             <div className="relative">
               <Youtube size={14} className="absolute left-3 top-1/2 -translate-y-1/2 text-[#FF0000]" />
               <input
-                value={socialLinks.youtube}
+                value={data.socialLinks.youtube}
                 onChange={e => setSocial('youtube', e.target.value)}
                 placeholder="https://youtube.com/@yourchannel"
                 className="w-full pl-9 pr-3 py-2 border border-gray-200 rounded-xl text-sm focus:outline-none focus:border-[#D32F2F]"
@@ -477,7 +409,7 @@ export default function ContactSection() {
             <div className="relative">
               <Twitter size={14} className="absolute left-3 top-1/2 -translate-y-1/2 text-[#212121]" />
               <input
-                value={socialLinks.x}
+                value={data.socialLinks.x}
                 onChange={e => setSocial('x', e.target.value)}
                 placeholder="https://x.com/yourhandle"
                 className="w-full pl-9 pr-3 py-2 border border-gray-200 rounded-xl text-sm focus:outline-none focus:border-[#D32F2F]"
@@ -488,7 +420,7 @@ export default function ContactSection() {
             <div className="relative">
               <Linkedin size={14} className="absolute left-3 top-1/2 -translate-y-1/2 text-[#0A66C2]" />
               <input
-                value={socialLinks.linkedin}
+                value={data.socialLinks.linkedin}
                 onChange={e => setSocial('linkedin', e.target.value)}
                 placeholder="https://linkedin.com/company/yourpage"
                 className="w-full pl-9 pr-3 py-2 border border-gray-200 rounded-xl text-sm focus:outline-none focus:border-[#D32F2F]"

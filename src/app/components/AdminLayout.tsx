@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { Outlet, Link, useLocation, useNavigate } from 'react-router';
 import { AdminThemeContext } from '../context/AdminThemeContext';
 import {
@@ -30,6 +30,10 @@ export default function AdminLayout() {
 
   const location = useLocation();
   const navigate = useNavigate();
+
+  useEffect(() => {
+    window.scrollTo(0, 0);
+  }, [location.pathname]);
 
   const toggleTheme = () => {
     setIsDark(d => {

@@ -24,6 +24,7 @@ interface EventItem {
   location: string;
   mainImage?: { media_url: string; media_type: string }[];
   eventStatus: string;
+  eventType?: string;
   seats?: number;
   fees?: string;
 }
@@ -241,7 +242,7 @@ export default function AdminEvents() {
           <table className="w-full min-w-[620px]">
             <thead>
               <tr className="bg-gray-50 border-b border-gray-100">
-                {['Sr No', 'Event', 'Date', 'Venue', 'Seats', 'Fees', 'Status', 'Actions'].map(h => (
+                {['Sr No', 'Event', 'Date', 'Venue', 'Seats', 'Fees', 'Type', 'Status', 'Actions'].map(h => (
                   <th
                     key={h}
                     className="text-left px-4 py-3 text-xs font-semibold text-[#616161] uppercase tracking-wider whitespace-nowrap"
@@ -254,7 +255,7 @@ export default function AdminEvents() {
             <tbody>
               {loading ? (
                 <tr>
-                  <td colSpan={8} className="px-4 py-16 text-center">
+                  <td colSpan={9} className="px-4 py-16 text-center">
                     <div className="flex items-center justify-center gap-2 text-[#616161] text-sm">
                       <Loader2 size={16} className="animate-spin" /> Loading events…
                     </div>
@@ -262,7 +263,7 @@ export default function AdminEvents() {
                 </tr>
               ) : events.length === 0 ? (
                 <tr>
-                  <td colSpan={8} className="px-4 py-16 text-center">
+                  <td colSpan={9} className="px-4 py-16 text-center">
                     <div className="flex flex-col items-center gap-2 text-[#9E9E9E]">
                       <Calendar size={28} className="opacity-30" />
                       <span className="text-sm">No events found</span>
@@ -327,6 +328,17 @@ export default function AdminEvents() {
                       {/* Fees */}
                       <td className="px-4 py-3 text-sm font-semibold text-[#212121]">
                         {e.fees || '—'}
+                      </td>
+
+                      {/* Type */}
+                      <td className="px-4 py-3">
+                        {e.eventType ? (
+                          <span className="text-xs px-2 py-0.5 rounded-full font-medium bg-purple-100 text-purple-700 whitespace-nowrap">
+                            {e.eventType}
+                          </span>
+                        ) : (
+                          <span className="text-xs text-[#9E9E9E]">—</span>
+                        )}
                       </td>
 
                       {/* Status */}

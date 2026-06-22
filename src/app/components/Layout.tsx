@@ -1,7 +1,12 @@
-import { useState } from 'react';
-import { Outlet, Link, useLocation, useNavigate } from 'react-router';
-import { Menu, X, Phone, Mail, MapPin, Facebook, Instagram, Youtube, Twitter, Send, Hash } from 'lucide-react';
+import { useEffect, useState } from 'react';
+import { Outlet, Link, useLocation } from 'react-router';
+import { useDispatch, useSelector } from 'react-redux';
+import { Menu, X, Phone, Mail, MapPin, Facebook, Instagram, Youtube, Twitter, Linkedin, Send } from 'lucide-react';
 import BookingModal from './BookingModal';
+import { fetchBrandInfo } from '../store/slice/BrandInfoSlice';
+import { fetchContact } from '../store/slice/ContactSlice';
+import type { RootState, AppDispatch } from '../store/Store';
+import type { Address, SocialLinks } from '../store/slice/ContactSlice';
 
 const navLinks = [
   { label: 'Home', path: '/' },
@@ -11,14 +16,58 @@ const navLinks = [
   { label: 'Contact Us', path: '/contact' },
 ];
 
+const quickLinks = [
+  ...navLinks,
+  { label: 'Admin', path: '/admin/login' },
+];
+
+const socialConfig: { key: keyof SocialLinks; Icon: React.ElementType }[] = [
+  { key: 'facebook', Icon: Facebook },
+  { key: 'instagram', Icon: Instagram },
+  { key: 'youtube', Icon: Youtube },
+  { key: 'x', Icon: Twitter },
+  { key: 'linkedin', Icon: Linkedin },
+];
+
+function formatAddress(addr: Address): string {
+  const parts = [
+    addr.officeNumber,
+    addr.building,
+    addr.landmark,
+    addr.street,
+    addr.city,
+    addr.state && addr.pincode ? `${addr.state} – ${addr.pincode}` : addr.state || addr.pincode,
+    addr.country,
+  ].filter(Boolean);
+  return parts.join(', ');
+}
+
 export default function Layout() {
+  const dispatch = useDispatch<AppDispatch>();
   const [mobileOpen, setMobileOpen] = useState(false);
   const [bookingOpen, setBookingOpen] = useState(false);
   const location = useLocation();
-  const navigate = useNavigate();
+
+  const { data: brand, initialized: brandInit } = useSelector((state: RootState) => state.brandInfo);
+  const { data: contact, initialized: contactInit } = useSelector((state: RootState) => state.contact);
+
+  useEffect(() => {
+    window.scrollTo(0, 0);
+  }, [location.pathname]);
+
+  useEffect(() => {
+    if (!brandInit) dispatch(fetchBrandInfo());
+  }, [dispatch, brandInit]);
+
+  useEffect(() => {
+    if (!contactInit) dispatch(fetchContact());
+  }, [dispatch, contactInit]);
 
   const isActive = (path: string) =>
     path === '/' ? location.pathname === '/' : location.pathname.startsWith(path);
+
+  const activeSocialLinks = socialConfig.filter(({ key }) => contact.socialLinks[key]);
+  const addressText = formatAddress(contact.address);
 
   return (
     <div className="min-h-screen flex flex-col bg-white">
@@ -26,15 +75,15 @@ export default function Layout() {
       <header className="sticky top-0 z-50 bg-white shadow-md">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
           <div className="flex items-center justify-between h-16 lg:h-20">
-            {/* Logo */}
-            <Link to="/" className="flex items-center gap-2 flex-shrink-0">
-              <div className="w-10 h-10 rounded-full bg-gradient-to-br from-[#D32F2F] to-[#B71C1C] flex items-center justify-center shadow-sm">
-                <Hash size={18} className="text-white" />
-              </div>
-              <div>
-                <div className="text-[#D32F2F] font-bold text-base leading-tight" style={{ fontFamily: 'Poppins, sans-serif' }}>VIP Numerology</div>
-                <div className="text-[#616161] text-xs leading-tight hidden sm:block">Unlock Success Through Powerful Numbers</div>
-              </div>
+            {/* Logo from Redux */}
+            <Link to="/" className="flex items-center flex-shrink-0">
+              {brand.logo ? (
+                <img src={brand.logo} alt={brand.companyName || 'Logo'} className="h-12 w-auto object-contain" />
+              ) : (
+                <span className="text-[#D32F2F] font-bold text-lg" style={{ fontFamily: 'Poppins, sans-serif' }}>
+                  {brand.companyName || 'VIP Numerology'}
+                </span>
+              )}
             </Link>
 
             {/* Desktop Nav */}
@@ -66,7 +115,7 @@ export default function Layout() {
               </button>
             </div>
 
-            {/* Mobile */}
+            {/* Mobile toggle */}
             <button className="lg:hidden p-2 rounded-lg" onClick={() => setMobileOpen(!mobileOpen)}>
               {mobileOpen ? <X size={24} /> : <Menu size={24} />}
             </button>
@@ -107,35 +156,56 @@ export default function Layout() {
       <footer className="bg-[#212121] text-white">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-16">
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-5 gap-10">
+
+            {/* Brand + Contact Info */}
             <div className="lg:col-span-2">
-              <div className="flex items-center gap-2 mb-4">
-                <div className="w-10 h-10 rounded-full bg-[#D32F2F] flex items-center justify-center">
-                  <Hash size={18} className="text-white" />
-                </div>
-                <div>
-                  <div className="text-white font-bold text-base" style={{ fontFamily: 'Poppins, sans-serif' }}>VIP Numerology</div>
-                  <div className="text-gray-400 text-xs">Unlock Success Through Powerful Numbers</div>
-                </div>
+              <div className="mb-5">
+                {brand?.logo ? (
+                  <img src={brand?.logo} alt={brand.companyName || 'Logo'} className="h-12 w-auto object-contain" />
+                ) : (
+                  <span className="text-white font-bold text-lg" style={{ fontFamily: 'Poppins, sans-serif' }}>
+                    {brand.companyName || 'VIP Numerology'}
+                  </span>
+                )}
               </div>
-              <p className="text-gray-400 text-sm leading-relaxed mb-6">
+              <p className="text-gray-400 text-sm leading-relaxed mb-5">
                 India's premier numerology consultancy, helping thousands discover the power of numbers to transform their lives, businesses, and relationships.
               </p>
               <div className="space-y-2 text-sm text-gray-400">
-                <div className="flex items-center gap-2"><Phone size={13} className="text-[#FBC02D]" /><span>+91 98765 43210</span></div>
-                <div className="flex items-center gap-2"><Mail size={13} className="text-[#FBC02D]" /><span>support@vipnumerology.com</span></div>
-                <div className="flex items-center gap-2"><MapPin size={13} className="text-[#FBC02D]" /><span>Pune, Maharashtra, India</span></div>
+                {contact.contactNumber && (
+                  <div className="flex items-center gap-2">
+                    <Phone size={13} className="text-[#FBC02D] flex-shrink-0" />
+                    <span>{contact.contactNumber}</span>
+                  </div>
+                )}
+                {contact.officeEmail && (
+                  <div className="flex items-center gap-2">
+                    <Mail size={13} className="text-[#FBC02D] flex-shrink-0" />
+                    <span>{contact.officeEmail}</span>
+                  </div>
+                )}
+                {addressText && (
+                  <div className="flex items-start gap-2">
+                    <MapPin size={13} className="text-[#FBC02D] flex-shrink-0 mt-0.5" />
+                    <span>{addressText}</span>
+                  </div>
+                )}
               </div>
             </div>
 
+            {/* Quick Links */}
             <div>
               <h4 className="font-bold text-white mb-4 text-sm" style={{ fontFamily: 'Poppins, sans-serif' }}>Quick Links</h4>
               <ul className="space-y-2 text-sm text-gray-400">
-                {navLinks.map(l => (
-                  <li key={l.path}><Link to={l.path} className="hover:text-[#FBC02D] transition-colors">{l.label}</Link></li>
+                {quickLinks.map(l => (
+                  <li key={l.path}>
+                    <Link to={l.path} className="hover:text-[#FBC02D] transition-colors">{l.label}</Link>
+                  </li>
                 ))}
               </ul>
             </div>
 
+            {/* Services */}
             <div>
               <h4 className="font-bold text-white mb-4 text-sm" style={{ fontFamily: 'Poppins, sans-serif' }}>Services</h4>
               <ul className="space-y-2 text-sm text-gray-400">
@@ -145,28 +215,50 @@ export default function Layout() {
               </ul>
             </div>
 
+            {/* Newsletter + Social */}
             <div>
-              <h4 className="font-bold text-white mb-4 text-sm" style={{ fontFamily: 'Poppins, sans-serif' }}>Newsletter</h4>
+              <h4 className="font-bold text-white mb-4 text-sm" style={{ fontFamily: 'Poppins, sans-serif' }}>Social Links</h4>
               <p className="text-gray-400 text-sm mb-4">Subscribe for numerology insights & exclusive offers.</p>
               <div className="flex gap-2 mb-5">
-                <input type="email" placeholder="Your email" className="flex-1 bg-white/10 border border-white/20 rounded-lg px-3 py-2 text-sm text-white placeholder-gray-500 focus:outline-none focus:border-[#FBC02D]" />
+                <input
+                  type="email"
+                  placeholder="Your email"
+                  className="flex-1 bg-white/10 border border-white/20 rounded-lg px-3 py-2 text-sm text-white placeholder-gray-500 focus:outline-none focus:border-[#FBC02D]"
+                />
                 <button className="p-2 bg-[#D32F2F] rounded-lg hover:bg-[#B71C1C] transition-colors"><Send size={15} /></button>
               </div>
-              <div className="flex gap-3">
-                {[Facebook, Instagram, Youtube, Twitter].map((Icon, i) => (
-                  <a key={i} href="#" className="w-8 h-8 bg-white/10 rounded-lg flex items-center justify-center hover:bg-[#D32F2F] transition-colors">
-                    <Icon size={13} />
-                  </a>
-                ))}
-              </div>
+              {activeSocialLinks.length > 0 && (
+                <div className="flex gap-3 flex-wrap">
+                  {activeSocialLinks.map(({ key, Icon }) => (
+                    <a
+                      key={key}
+                      href={contact.socialLinks[key]}
+                      target="_blank"
+                      rel="noopener noreferrer"
+                      className="w-8 h-8 bg-white/10 rounded-lg flex items-center justify-center hover:bg-[#D32F2F] transition-colors"
+                    >
+                      <Icon size={13} />
+                    </a>
+                  ))}
+                </div>
+              )}
             </div>
           </div>
 
+          {/* Bottom bar */}
           <div className="border-t border-white/10 mt-12 pt-6 flex flex-col sm:flex-row items-center justify-between gap-4">
-            <p className="text-gray-500 text-sm">© 2024 VIP Numerology. All rights reserved. | GST: 27ABCDE1234F1Z5</p>
-            <Link to="/admin/login" className="px-4 py-2 border border-[#D32F2F] text-[#D32F2F] rounded-xl text-sm font-medium hover:bg-[#D32F2F] hover:text-white transition-colors">
-              Admin Login
-            </Link>
+            <p className="text-gray-500 text-sm">© 2026 VIP Numerology. All rights reserved.</p>
+            <p className="text-gray-500 text-sm">
+              Design by{' '}
+              <a
+                href="https://infeonit.com"
+                target="_blank"
+                rel="noopener noreferrer"
+                className="text-gray-400 hover:underline transition-all"
+              >
+                Infeon IT Services
+              </a>
+            </p>
           </div>
         </div>
       </footer>

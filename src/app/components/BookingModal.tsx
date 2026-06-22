@@ -41,10 +41,13 @@ export default function BookingModal({ onClose }: BookingModalProps) {
   };
 
   return (
-    <div className="fixed inset-0 bg-black/60 z-[100] flex items-center justify-center p-4 overflow-y-auto" onClick={onClose}>
+    <div
+      className="fixed inset-0 bg-black/60 z-[100] flex items-center justify-center p-4 overflow-y-auto"
+      onClick={onClose}
+    >
       <div
         className="bg-white rounded-2xl w-full max-w-lg my-4 shadow-2xl relative"
-        onClick={e => e.stopPropagation()}
+        onClick={(e) => e.stopPropagation()}
       >
         {/* Header */}
         <div className="flex items-center justify-between p-6 border-b border-gray-100">
@@ -53,33 +56,62 @@ export default function BookingModal({ onClose }: BookingModalProps) {
               <Hash size={18} className="text-white" />
             </div>
             <div>
-              <h2 className="font-bold text-[#212121] text-lg" style={{ fontFamily: 'Poppins, sans-serif' }}>Book a Consultation</h2>
+              <h2
+                className="font-bold text-[#212121] text-lg"
+                style={{ fontFamily: "Poppins, sans-serif" }}
+              >
+                Book a Consultation
+              </h2>
               <p className="text-[#616161] text-xs">Step {step} of 3</p>
             </div>
           </div>
-          <button onClick={onClose} className="w-8 h-8 rounded-xl bg-gray-100 flex items-center justify-center text-gray-500 hover:bg-gray-200 transition-colors">
+          <button
+            onClick={onClose}
+            className="w-8 h-8 rounded-xl bg-gray-100 flex items-center justify-center text-gray-500 hover:bg-gray-200 transition-colors"
+          >
             <X size={16} />
           </button>
         </div>
 
-        {/* Progress */}
         <div className="px-6 pt-4">
-          <div className="flex items-center gap-0 mb-1">
+          {/* Progress */}
+          <div className="grid grid-cols-3 items-center mb-2">
             {[1, 2, 3].map((s, i) => (
-              <div key={s} className="flex items-center flex-1">
-                <div className={`w-8 h-8 rounded-full flex items-center justify-center font-bold text-xs border-2 transition-all ${
-                  step > s ? 'bg-[#4CAF50] border-[#4CAF50] text-white' :
-                  step === s ? 'bg-[#D32F2F] border-[#D32F2F] text-white' :
-                  'bg-white border-gray-300 text-gray-400'
-                }`}>
+              <div key={s} className="relative flex justify-center">
+                {/* Line */}
+                {i < 2 && (
+                  <div
+                    className={`absolute top-4 left-1/2 w-full h-0.5 ${
+                      step > s + 1
+                        ? "bg-[#4CAF50]"
+                        : step === s + 1
+                          ? "bg-[#D32F2F]"
+                          : "bg-gray-200"
+                    }`}
+                  />
+                )}
+
+                {/* Circle */}
+                <div
+                  className={`relative z-10 w-8 h-8 rounded-full flex items-center justify-center font-bold text-xs border-2 transition-all ${
+                    step > s
+                      ? "bg-[#4CAF50] border-[#4CAF50] text-white"
+                      : step === s
+                        ? "bg-[#D32F2F] border-[#D32F2F] text-white"
+                        : "bg-white border-gray-300 text-gray-400"
+                  }`}
+                >
                   {step > s ? <CheckCircle size={14} /> : s}
                 </div>
-                {i < 2 && <div className={`flex-1 h-0.5 ${step > s + 1 ? 'bg-[#4CAF50]' : step === s + 1 ? 'bg-[#D32F2F]' : 'bg-gray-200'}`} />}
               </div>
             ))}
           </div>
-          <div className="flex justify-between text-xs text-[#616161] mb-4">
-            <span>User Type</span><span>Details</span><span>Confirmation</span>
+
+          {/* Labels */}
+          <div className="grid grid-cols-3 text-center text-xs text-[#616161] mb-4">
+            <span>User Type</span>
+            <span>Details</span>
+            <span>Confirmation</span>
           </div>
         </div>
 
@@ -87,25 +119,56 @@ export default function BookingModal({ onClose }: BookingModalProps) {
           {/* Step 1 */}
           {step === 1 && (
             <div>
-              <p className="text-[#616161] text-sm mb-5">Select your profile to get a personalised experience.</p>
+              <p className="text-[#616161] text-sm mb-5">
+                Select your profile to get a personalised experience.
+              </p>
               <div className="grid grid-cols-2 gap-3 mb-5">
                 {[
-                  { type: 'customer' as const, icon: User, title: 'Customer', desc: 'Book a VIP number or consultation for myself.' },
-                  { type: 'professional' as const, icon: Briefcase, title: 'Professional', desc: 'Join the VIP Numerology network.' },
-                ].map(opt => {
+                  {
+                    type: "customer" as const,
+                    icon: User,
+                    title: "Customer",
+                    desc: "Book a VIP number or consultation for myself.",
+                  },
+                  {
+                    type: "professional" as const,
+                    icon: Briefcase,
+                    title: "Professional",
+                    desc: "Join the VIP Numerology network.",
+                  },
+                ].map((opt) => {
                   const Icon = opt.icon;
                   return (
                     <button
                       key={opt.type}
                       onClick={() => setUserType(opt.type)}
-                      className={`p-4 rounded-2xl border-2 text-left transition-all ${userType === opt.type ? 'border-[#D32F2F] bg-red-50' : 'border-gray-200 hover:border-[#D32F2F]/40'}`}
+                      className={`p-4 rounded-2xl border-2 text-left transition-all ${userType === opt.type ? "border-[#D32F2F] bg-red-50" : "border-gray-200 hover:border-[#D32F2F]/40"}`}
                     >
-                      <div className={`w-10 h-10 rounded-xl flex items-center justify-center mb-3 ${userType === opt.type ? 'bg-[#D32F2F]' : 'bg-gray-100'}`}>
-                        <Icon size={18} className={userType === opt.type ? 'text-white' : 'text-gray-500'} />
+                      <div
+                        className={`w-10 h-10 rounded-xl flex items-center justify-center mb-3 ${userType === opt.type ? "bg-[#D32F2F]" : "bg-gray-100"}`}
+                      >
+                        <Icon
+                          size={18}
+                          className={
+                            userType === opt.type
+                              ? "text-white"
+                              : "text-gray-500"
+                          }
+                        />
                       </div>
-                      <div className="font-bold text-[#212121] text-sm mb-1" style={{ fontFamily: 'Poppins, sans-serif' }}>{opt.title}</div>
+                      <div
+                        className="font-bold text-[#212121] text-sm mb-1"
+                        style={{ fontFamily: "Poppins, sans-serif" }}
+                      >
+                        {opt.title}
+                      </div>
                       <div className="text-[#616161] text-xs">{opt.desc}</div>
-                      {userType === opt.type && <CheckCircle size={14} className="text-[#D32F2F] mt-2" />}
+                      {userType === opt.type && (
+                        <CheckCircle
+                          size={14}
+                          className="text-[#D32F2F] mt-2"
+                        />
+                      )}
                     </button>
                   );
                 })}
@@ -124,26 +187,48 @@ export default function BookingModal({ onClose }: BookingModalProps) {
           {step === 2 && (
             <form onSubmit={handleSubmit} className="space-y-3">
               <div className="max-h-80 overflow-y-auto pr-1 space-y-3">
-                {fields.map(f => (
+                {fields.map((f) => (
                   <div key={f.key}>
-                    <label className="block text-xs font-semibold text-[#212121] mb-1">{f.label}</label>
-                    {f.type === 'textarea' ? (
-                      <textarea rows={2} value={form[f.key] || ''} onChange={e => setForm(p => ({ ...p, [f.key]: e.target.value }))} placeholder={f.placeholder}
-                        className="w-full px-3 py-2 border border-gray-200 rounded-xl text-sm focus:outline-none focus:border-[#D32F2F] bg-gray-50 resize-none" />
+                    <label className="block text-xs font-semibold text-[#212121] mb-1">
+                      {f.label}
+                    </label>
+                    {f.type === "textarea" ? (
+                      <textarea
+                        rows={2}
+                        value={form[f.key] || ""}
+                        onChange={(e) =>
+                          setForm((p) => ({ ...p, [f.key]: e.target.value }))
+                        }
+                        placeholder={f.placeholder}
+                        className="w-full px-3 py-2 border border-gray-200 rounded-xl text-sm focus:outline-none focus:border-[#D32F2F] bg-gray-50 resize-none"
+                      />
                     ) : (
-                      <input type={f.type} required={f.key !== 'referral'} value={form[f.key] || ''} onChange={e => setForm(p => ({ ...p, [f.key]: e.target.value }))} placeholder={f.placeholder}
-                        className="w-full px-3 py-2 border border-gray-200 rounded-xl text-sm focus:outline-none focus:border-[#D32F2F] bg-gray-50" />
+                      <input
+                        type={f.type}
+                        required={f.key !== "referral"}
+                        value={form[f.key] || ""}
+                        onChange={(e) =>
+                          setForm((p) => ({ ...p, [f.key]: e.target.value }))
+                        }
+                        placeholder={f.placeholder}
+                        className="w-full px-3 py-2 border border-gray-200 rounded-xl text-sm focus:outline-none focus:border-[#D32F2F] bg-gray-50"
+                      />
                     )}
                   </div>
                 ))}
               </div>
               <div className="flex gap-2 pt-2">
-                <button type="button" onClick={() => setStep(1)}
-                  className="flex-1 py-2.5 border-2 border-gray-200 text-[#616161] rounded-xl text-sm font-semibold flex items-center justify-center gap-1 hover:border-[#D32F2F] hover:text-[#D32F2F]">
+                <button
+                  type="button"
+                  onClick={() => setStep(1)}
+                  className="flex-1 py-2.5 border-2 border-gray-200 text-[#616161] rounded-xl text-sm font-semibold flex items-center justify-center gap-1 hover:border-[#D32F2F] hover:text-[#D32F2F]"
+                >
                   <ChevronLeft size={14} /> Back
                 </button>
-                <button type="submit"
-                  className="flex-1 py-2.5 bg-[#D32F2F] text-white rounded-xl text-sm font-semibold flex items-center justify-center gap-1 hover:bg-[#B71C1C]">
+                <button
+                  type="submit"
+                  className="flex-1 py-2.5 bg-[#D32F2F] text-white rounded-xl text-sm font-semibold flex items-center justify-center gap-1 hover:bg-[#B71C1C]"
+                >
                   Submit <ChevronRight size={14} />
                 </button>
               </div>
@@ -156,22 +241,49 @@ export default function BookingModal({ onClose }: BookingModalProps) {
               <div className="w-16 h-16 bg-green-100 rounded-full flex items-center justify-center mx-auto mb-4">
                 <CheckCircle size={32} className="text-green-500" />
               </div>
-              <h3 className="text-xl font-bold text-[#212121] mb-2" style={{ fontFamily: 'Poppins, sans-serif' }}>Booking Confirmed! 🎉</h3>
-              <p className="text-[#616161] text-sm mb-6">Thank you, <strong>{form.name || 'Valued Client'}</strong>! Our team will contact you within 24 hours.</p>
+              <h3
+                className="text-xl font-bold text-[#212121] mb-2"
+                style={{ fontFamily: "Poppins, sans-serif" }}
+              >
+                Booking Confirmed! 🎉
+              </h3>
+              <p className="text-[#616161] text-sm mb-6">
+                Thank you, <strong>{form.name || "Valued Client"}</strong>! Our
+                team will contact you within 24 hours.
+              </p>
               <div className="grid grid-cols-2 gap-3 mb-5">
                 <div className="bg-[#FFF8E1] rounded-xl p-4">
                   <Mail size={20} className="text-[#D32F2F] mb-1 mx-auto" />
-                  <div className="font-semibold text-[#212121] text-xs mb-0.5" style={{ fontFamily: 'Poppins, sans-serif' }}>Email Sent</div>
-                  <div className="text-[#616161] text-xs truncate">{form.email || 'your email'}</div>
+                  <div
+                    className="font-semibold text-[#212121] text-xs mb-0.5"
+                    style={{ fontFamily: "Poppins, sans-serif" }}
+                  >
+                    Email Sent
+                  </div>
+                  <div className="text-[#616161] text-xs truncate">
+                    {form.email || "your email"}
+                  </div>
                 </div>
                 <div className="bg-[#FFF8E1] rounded-xl p-4">
-                  <MessageCircle size={20} className="text-green-500 mb-1 mx-auto" />
-                  <div className="font-semibold text-[#212121] text-xs mb-0.5" style={{ fontFamily: 'Poppins, sans-serif' }}>WhatsApp Sent</div>
-                  <div className="text-[#616161] text-xs">{form.mobile || 'your number'}</div>
+                  <MessageCircle
+                    size={20}
+                    className="text-green-500 mb-1 mx-auto"
+                  />
+                  <div
+                    className="font-semibold text-[#212121] text-xs mb-0.5"
+                    style={{ fontFamily: "Poppins, sans-serif" }}
+                  >
+                    WhatsApp Sent
+                  </div>
+                  <div className="text-[#616161] text-xs">
+                    {form.mobile || "your number"}
+                  </div>
                 </div>
               </div>
-              <button onClick={onClose}
-                className="w-full py-3 bg-[#D32F2F] text-white rounded-xl font-semibold hover:bg-[#B71C1C] transition-colors">
+              <button
+                onClick={onClose}
+                className="w-full py-3 bg-[#D32F2F] text-white rounded-xl font-semibold hover:bg-[#B71C1C] transition-colors"
+              >
                 Close
               </button>
             </div>

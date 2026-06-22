@@ -36,11 +36,13 @@ interface FormState {
   seats: string;
   fees: string;
   status: string;
+  eventType: string;
   image: string;
   gallery: string[];
 }
 
 const STATUS_OPTIONS = ["Draft", "Upcoming", "Completed", "Cancelled"];
+const EVENT_TYPE_OPTIONS = ["Workshop", "Seminar", "Expo", "Masterclass", "Webinar", "Consultation", "Conference", "Networking"];
 
 const QUILL_MODULES = {
   toolbar: [
@@ -67,6 +69,7 @@ export default function EventForm() {
     seats: "",
     fees: "",
     status: "Draft",
+    eventType: "",
     image: "",
     gallery: [],
   });
@@ -102,6 +105,7 @@ export default function EventForm() {
             seats: e.seats != null ? String(e.seats) : "",
             fees: e.fees ?? "",
             status: e.eventStatus ?? "Draft",
+            eventType: e.eventType ?? "",
             image:
               Array.isArray(e.mainImage) && e.mainImage[0]?.media_url
                 ? e.mainImage[0].media_url
@@ -226,6 +230,7 @@ export default function EventForm() {
         seats: form.seats ? Number(form.seats) : null,
         fees: form.fees,
         eventStatus: form.status,
+        eventType: form.eventType || null,
         mainImage: form.image
           ? [{ media_url: form.image, media_type: "image" }]
           : null,
@@ -268,26 +273,13 @@ export default function EventForm() {
       <div className="max-w-2xl mx-auto">
         {/* Header */}
         <div className="mb-5">
-          <div className="flex items-center justify-between">
-            <h1
-              className="text-xl font-bold text-[#212121]"
-              style={{ fontFamily: "Poppins, sans-serif" }}
-            >
-              {isEdit ? "Edit Event" : "Create Event"}
-            </h1>
-            {saved && (
-              <div className="flex items-center gap-1.5 bg-green-50 border border-green-200 text-green-700 text-xs px-3 py-1.5 rounded-xl font-medium">
-                <CheckCircle size={13} /> {isEdit ? "Updated" : "Created"}
-              </div>
-            )}
-          </div>
+          <h1
+            className="text-xl font-bold text-[#212121]"
+            style={{ fontFamily: "Poppins, sans-serif" }}
+          >
+            {isEdit ? "Edit Event" : "Create Event"}
+          </h1>
         </div>
-
-        {saveError && (
-          <div className="flex items-center gap-2 px-4 py-3 mb-4 bg-red-50 border border-red-200 rounded-xl text-sm text-red-600">
-            <AlertCircle size={14} /> {saveError}
-          </div>
-        )}
 
         <form onSubmit={handleSubmit} className="space-y-5">
           {/* ── Event Details ── */}
@@ -443,8 +435,8 @@ export default function EventForm() {
                 />
               </div>
 
-              {/* Seats / Fees / Status */}
-              <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
+              {/* Seats / Fees */}
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                 <div>
                   <label className="block text-xs font-semibold text-[#616161] uppercase tracking-wider mb-1.5">
                     Seats
@@ -469,6 +461,10 @@ export default function EventForm() {
                     className="w-full px-3 py-2.5 border border-gray-200 rounded-xl text-sm focus:outline-none focus:border-[#D32F2F]"
                   />
                 </div>
+              </div>
+
+              {/* Status / Event Type */}
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                 <div>
                   <label className="block text-xs font-semibold text-[#616161] uppercase tracking-wider mb-1.5">
                     Status
@@ -480,6 +476,21 @@ export default function EventForm() {
                   >
                     {STATUS_OPTIONS.map((s) => (
                       <option key={s}>{s}</option>
+                    ))}
+                  </select>
+                </div>
+                <div>
+                  <label className="block text-xs font-semibold text-[#616161] uppercase tracking-wider mb-1.5">
+                    Event Type
+                  </label>
+                  <select
+                    value={form.eventType}
+                    onChange={(e) => setField("eventType", e.target.value)}
+                    className="w-full px-3 py-2.5 border border-gray-200 rounded-xl text-sm focus:outline-none focus:border-[#D32F2F] bg-white"
+                  >
+                    <option value="">— Select type —</option>
+                    {EVENT_TYPE_OPTIONS.map((t) => (
+                      <option key={t}>{t}</option>
                     ))}
                   </select>
                 </div>
@@ -582,6 +593,18 @@ export default function EventForm() {
               />
             </label>
           </div>
+
+          {/* ── Feedback ── */}
+          {saved && (
+            <div className="flex items-center gap-2 px-4 py-3 bg-green-50 border border-green-200 rounded-xl text-sm text-green-700">
+              <CheckCircle size={15} /> {isEdit ? "Event updated successfully!" : "Event created successfully!"}
+            </div>
+          )}
+          {saveError && (
+            <div className="flex items-center gap-2 px-4 py-3 bg-red-50 border border-red-200 rounded-xl text-sm text-red-600">
+              <AlertCircle size={15} /> {saveError}
+            </div>
+          )}
 
           {/* ── Actions ── */}
           <div className="flex gap-3">
