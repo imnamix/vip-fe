@@ -1,64 +1,68 @@
-import { useState } from 'react';
+import { useState, useEffect, useRef } from 'react';
 import { useNavigate } from 'react-router';
-import { Search, Plus, Eye, Edit, Trash2, ChevronLeft, ChevronRight, X, Phone, Mail, MapPin, Hash, Calendar } from 'lucide-react';
+import { Search, Eye, ChevronLeft, ChevronRight, X, RefreshCw, Users } from 'lucide-react';
+import { getAllEnquires } from '../../services/EnquiresService';
 
-const STATUSES = ['Active', 'Inactive', 'Pending', 'Blocked'];
-const SOURCES = ['Website', 'WhatsApp', 'Referral', 'Event', 'Social Media'];
-const CITIES = ['Mumbai', 'Delhi', 'Bangalore', 'Pune', 'Chennai', 'Hyderabad', 'Ahmedabad', 'Kochi'];
+const LIMIT = 10;
 
-function makeCustomers() {
-  const names = ['Priya Sharma', 'Rajesh Patel', 'Ananya Reddy', 'Vikram Singh', 'Meena Iyer', 'Suresh Kumar', 'Deepa Nair', 'Karan Mehta', 'Pooja Verma', 'Amit Joshi'];
-  return Array.from({ length: 50 }, (_, i) => ({
-    id: `VIP-C${String(1001 + i).padStart(5, '0')}`,
-    name: names[i % 10],
-    mobile: `+91 ${9800000000 + i}`,
-    email: names[i % 10].split(' ')[0].toLowerCase() + `${i}@email.com`,
-    dob: `${(i % 28) + 1}/${(i % 12) + 1}/198${i % 10}`,
-    city: CITIES[i % 8],
-    preferredNumber: ['9999988888', '8888877777', '7777766666', '6666655555'][i % 4],
-    status: STATUSES[i % 4] as typeof STATUSES[number],
-    source: SOURCES[i % 5],
-    date: `${['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun'][i % 6]} ${(i % 28) + 1}, 2024`,
-    totalSpent: `₹${((i + 1) * 4999).toLocaleString()}`,
-    notes: 'Interested in premium 9-series numbers for business purposes.',
-  }));
+function getPageNumbers(current: number, total: number): (number | '...')[] {
+  if (total <= 7) return Array.from({ length: total }, (_, i) => i + 1);
+  const pages: (number | '...')[] = [];
+  const left  = Math.max(2, current - 1);
+  const right = Math.min(total - 1, current + 1);
+  pages.push(1);
+  if (left > 2)          pages.push('...');
+  for (let i = left; i <= right; i++) pages.push(i);
+  if (right < total - 1) pages.push('...');
+  pages.push(total);
+  return pages;
 }
-
-const statusColors: Record<string, string> = {
-  Active: 'bg-green-100 text-green-700',
-  Inactive: 'bg-gray-100 text-gray-600',
-  Pending: 'bg-yellow-100 text-yellow-700',
-  Blocked: 'bg-red-100 text-[#D32F2F]',
-};
-
-const PAGE_SIZE = 10;
 
 export default function Customers() {
   const navigate = useNavigate();
-  const [allCustomers, setAllCustomers] = useState(makeCustomers);
-  const [search, setSearch] = useState('');
-  const [statusFilter, setStatusFilter] = useState('All');
-  const [sourceFilter, setSourceFilter] = useState('All');
-  const [page, setPage] = useState(1);
-  const [viewCustomer, setViewCustomer] = useState<typeof allCustomers[0] | null>(null);
-  const [deleteId, setDeleteId] = useState<string | null>(null);
 
-  const filtered = allCustomers.filter(c =>
-    (statusFilter === 'All' || c.status === statusFilter) &&
-    (sourceFilter === 'All' || c.source === sourceFilter) &&
-    (c.name.toLowerCase().includes(search.toLowerCase()) ||
-      c.mobile.includes(search) ||
-      c.id.includes(search.toUpperCase()) ||
-      c.city.toLowerCase().includes(search.toLowerCase()))
-  );
+  const [leads,      setLeads]      = useState<any[]>([]);
+  const [total,      setTotal]      = useState(0);
+  const [loading,    setLoading]    = useState(true);
+  const [fetchError, setFetchError] = useState('');
+  const [page,       setPage]       = useState(1);
+  const [search,     setSearch]     = useState('');
 
-  const totalPages = Math.ceil(filtered.length / PAGE_SIZE);
-  const paginated = filtered.slice((page - 1) * PAGE_SIZE, page * PAGE_SIZE);
+  const searchTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
 
-  const handleDelete = (id: string) => {
-    setAllCustomers(cs => cs.filter(c => c.id !== id));
-    setDeleteId(null);
+  const fetchLeads = async (p: number, q: string) => {
+    setLoading(true);
+    setFetchError('');
+    try {
+      const res = await getAllEnquires(p, LIMIT, q || undefined, 'Delivered');
+      setLeads(res?.data ?? []);
+      setTotal(res?.count ?? 0);
+    } catch {
+      setFetchError('Failed to load customers. Please try again.');
+    } finally {
+      setLoading(false);
+    }
   };
+
+  useEffect(() => {
+    fetchLeads(1, '');
+  }, []);
+
+  const handleSearchChange = (q: string) => {
+    setSearch(q);
+    if (searchTimer.current) clearTimeout(searchTimer.current);
+    searchTimer.current = setTimeout(() => {
+      setPage(1);
+      fetchLeads(1, q);
+    }, 350);
+  };
+
+  const handlePageChange = (p: number) => {
+    setPage(p);
+    fetchLeads(p, search);
+  };
+
+  const totalPages = Math.ceil(total / LIMIT);
 
   return (
     <div>
@@ -66,196 +70,178 @@ export default function Customers() {
       <div className="flex flex-wrap items-center justify-between gap-3 mb-5">
         <div>
           <h1 className="text-xl font-bold text-[#212121]" style={{ fontFamily: 'Poppins, sans-serif' }}>Customers</h1>
-          <p className="text-[#616161] text-xs">{filtered.length} customers</p>
+          <p className="text-[#616161] text-xs">
+            {loading ? 'Loading…' : `${total} delivered customer${total !== 1 ? 's' : ''}`}
+          </p>
         </div>
         <button
-          onClick={() => navigate('/admin/customers/new')}
-          className="flex items-center gap-2 px-4 py-2 bg-[#D32F2F] text-white rounded-xl text-sm font-semibold hover:bg-[#B71C1C] transition-colors"
+          onClick={() => fetchLeads(page, search)}
+          title="Refresh"
+          className="p-2 border border-gray-200 rounded-xl text-[#616161] hover:border-[#D32F2F] hover:text-[#D32F2F] transition-colors"
         >
-          <Plus size={14} /> Add Customer
+          <RefreshCw size={14} className={loading ? 'animate-spin' : ''} />
         </button>
       </div>
 
-      {/* Filters */}
+      {/* Search */}
       <div className="bg-white rounded-2xl border border-gray-100 p-4 mb-4 flex flex-wrap gap-3 items-center">
         <div className="relative flex-1 min-w-40">
           <Search size={13} className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400" />
           <input
             type="text"
-            placeholder="Search name, mobile, ID, city..."
+            placeholder="Search name, mobile…"
             value={search}
-            onChange={e => { setSearch(e.target.value); setPage(1); }}
-            className="w-full pl-8 pr-4 py-2 border border-gray-200 rounded-xl text-sm focus:outline-none focus:border-[#D32F2F]"
+            onChange={e => handleSearchChange(e.target.value)}
+            className="w-full pl-8 pr-8 py-2 border border-gray-200 rounded-xl text-sm focus:outline-none focus:border-[#D32F2F]"
           />
+          {search && (
+            <button onClick={() => handleSearchChange('')} className="absolute right-2.5 top-1/2 -translate-y-1/2 text-gray-400 hover:text-gray-600">
+              <X size={12} />
+            </button>
+          )}
         </div>
-        <select value={statusFilter} onChange={e => { setStatusFilter(e.target.value); setPage(1); }}
-          className="px-3 py-2 border border-gray-200 rounded-xl text-sm focus:outline-none focus:border-[#D32F2F] bg-white text-[#616161]">
-          <option value="All">All Status</option>
-          {STATUSES.map(s => <option key={s}>{s}</option>)}
-        </select>
-        <select value={sourceFilter} onChange={e => { setSourceFilter(e.target.value); setPage(1); }}
-          className="px-3 py-2 border border-gray-200 rounded-xl text-sm focus:outline-none focus:border-[#D32F2F] bg-white text-[#616161]">
-          <option value="All">All Sources</option>
-          {SOURCES.map(s => <option key={s}>{s}</option>)}
-        </select>
-        {(search || statusFilter !== 'All' || sourceFilter !== 'All') && (
-          <button onClick={() => { setSearch(''); setStatusFilter('All'); setSourceFilter('All'); setPage(1); }}
-            className="text-xs text-[#D32F2F] hover:underline font-medium">Clear filters</button>
-        )}
       </div>
+
+      {/* Error */}
+      {fetchError && (
+        <div className="bg-red-50 border border-red-200 rounded-2xl px-4 py-3 text-sm text-red-600 mb-4 flex items-center justify-between">
+          {fetchError}
+          <button onClick={() => fetchLeads(page, search)} className="text-[#D32F2F] font-semibold text-xs hover:underline">Retry</button>
+        </div>
+      )}
 
       {/* Table */}
       <div className="bg-white rounded-2xl border border-gray-100 overflow-hidden">
-        <div className="overflow-x-auto">
-          <table className="w-full min-w-[700px]">
-            <thead>
-              <tr className="bg-gray-50 border-b border-gray-100">
-                {['Customer ID', 'Name', 'Mobile', 'City', 'Source', 'Status', 'Date', 'Actions'].map(h => (
-                  <th key={h} className="text-left px-4 py-3 text-xs font-semibold text-[#616161] uppercase tracking-wider whitespace-nowrap">{h}</th>
-                ))}
-              </tr>
-            </thead>
-            <tbody>
-              {paginated.length === 0 ? (
-                <tr><td colSpan={8} className="px-4 py-12 text-center text-[#616161] text-sm">No customers found.</td></tr>
-              ) : paginated.map(c => (
-                <tr key={c.id} className="border-b border-gray-50 hover:bg-gray-50 transition-colors">
-                  <td className="px-4 py-3 text-xs font-mono font-semibold text-[#D32F2F]">{c.id}</td>
-                  <td className="px-4 py-3">
-                    <div className="flex items-center gap-2">
-                      <div className="w-7 h-7 rounded-full bg-gradient-to-br from-[#D32F2F] to-[#FBC02D] flex items-center justify-center text-white text-xs font-bold flex-shrink-0">
-                        {c.name[0]}
-                      </div>
-                      <span className="text-sm font-medium text-[#212121] whitespace-nowrap">{c.name}</span>
-                    </div>
-                  </td>
-                  <td className="px-4 py-3 text-sm text-[#616161] whitespace-nowrap">{c.mobile}</td>
-                  <td className="px-4 py-3 text-sm text-[#616161]">{c.city}</td>
-                  <td className="px-4 py-3"><span className="bg-blue-50 text-blue-600 text-xs px-2 py-0.5 rounded-full">{c.source}</span></td>
-                  <td className="px-4 py-3">
-                    <span className={`text-xs px-2 py-0.5 rounded-full font-medium ${statusColors[c.status]}`}>{c.status}</span>
-                  </td>
-                  <td className="px-4 py-3 text-xs text-[#616161] whitespace-nowrap">{c.date}</td>
-                  <td className="px-4 py-3">
-                    <div className="flex items-center gap-1">
-                      <button onClick={() => setViewCustomer(c)} className="p-1.5 text-blue-500 hover:bg-blue-50 rounded-lg transition-colors" title="View"><Eye size={13} /></button>
-                      <button onClick={() => navigate(`/admin/customers/${c.id}/edit`)} className="p-1.5 text-[#FBC02D] hover:bg-yellow-50 rounded-lg transition-colors" title="Edit"><Edit size={13} /></button>
-                      <button onClick={() => setDeleteId(c.id)} className="p-1.5 text-[#D32F2F] hover:bg-red-50 rounded-lg transition-colors" title="Delete"><Trash2 size={13} /></button>
-                    </div>
-                  </td>
-                </tr>
-              ))}
-            </tbody>
-          </table>
-        </div>
-
-        {/* Pagination */}
-        <div className="px-4 py-3 flex flex-wrap items-center justify-between gap-3 border-t border-gray-100">
-          <span className="text-xs text-[#616161]">
-            Showing {filtered.length === 0 ? 0 : (page - 1) * PAGE_SIZE + 1}–{Math.min(page * PAGE_SIZE, filtered.length)} of {filtered.length}
-          </span>
-          <div className="flex items-center gap-1.5">
-            <button onClick={() => setPage(p => Math.max(1, p - 1))} disabled={page === 1}
-              className="w-8 h-8 rounded-lg border border-gray-200 flex items-center justify-center text-[#616161] disabled:opacity-40 hover:border-[#D32F2F] hover:text-[#D32F2F] transition-colors">
-              <ChevronLeft size={13} />
-            </button>
-            {Array.from({ length: Math.min(5, totalPages) }, (_, i) => {
-              const p = totalPages <= 5 ? i + 1 : Math.max(1, Math.min(page - 2, totalPages - 4)) + i;
-              return (
-                <button key={p} onClick={() => setPage(p)}
-                  className={`w-8 h-8 rounded-lg text-xs font-medium transition-colors ${page === p ? 'bg-[#D32F2F] text-white' : 'border border-gray-200 text-[#616161] hover:border-[#D32F2F]'}`}>
-                  {p}
-                </button>
-              );
-            })}
-            <button onClick={() => setPage(p => Math.min(totalPages, p + 1))} disabled={page === totalPages || totalPages === 0}
-              className="w-8 h-8 rounded-lg border border-gray-200 flex items-center justify-center text-[#616161] disabled:opacity-40 hover:border-[#D32F2F] hover:text-[#D32F2F] transition-colors">
-              <ChevronRight size={13} />
-            </button>
+        {loading ? (
+          <div className="divide-y divide-gray-50">
+            {[...Array(LIMIT)].map((_, i) => (
+              <div key={i} className="flex items-center gap-4 px-4 py-3">
+                <div className="w-6 h-3 bg-gray-100 rounded animate-pulse" />
+                <div className="w-32 h-3 bg-gray-100 rounded animate-pulse" />
+                <div className="w-24 h-3 bg-gray-100 rounded animate-pulse" />
+                <div className="w-20 h-3 bg-gray-100 rounded animate-pulse ml-auto" />
+              </div>
+            ))}
           </div>
-        </div>
+        ) : (
+          <>
+            <div className="overflow-x-auto">
+              <table className="w-full min-w-[600px]">
+                <thead>
+                  <tr className="bg-gray-50 border-b border-gray-100">
+                    {['#', 'Name', 'Mobile', 'Location', 'Source', 'Type', 'Date', 'Actions'].map(h => (
+                      <th key={h} className="text-left px-4 py-3 text-xs font-semibold text-[#616161] uppercase tracking-wider whitespace-nowrap">{h}</th>
+                    ))}
+                  </tr>
+                </thead>
+                <tbody>
+                  {leads.length === 0 ? (
+                    <tr>
+                      <td colSpan={8} className="px-4 py-16 text-center">
+                        <div className="flex flex-col items-center gap-2 text-[#9E9E9E]">
+                          <Users size={28} className="opacity-30" />
+                          <span className="text-sm">{search ? 'No results found' : 'No delivered customers yet'}</span>
+                          {search && <span className="text-xs">Try a different search term.</span>}
+                        </div>
+                      </td>
+                    </tr>
+                  ) : (
+                    leads.map((inq, idx) => {
+                      const location = [inq.district, inq.state].filter(Boolean).join(', ') || '—';
+                      const date = inq.created_at
+                        ? new Date(inq.created_at).toLocaleDateString('en-IN', { day: 'numeric', month: 'short', year: 'numeric' })
+                        : '—';
+                      return (
+                        <tr key={inq.id} className="border-b border-gray-50 hover:bg-gray-50 transition-colors">
+                          <td className="px-4 py-3 text-xs font-mono font-semibold text-[#D32F2F]">
+                            {(page - 1) * LIMIT + idx + 1}
+                          </td>
+                          <td className="px-4 py-3">
+                            <div className="flex items-center gap-2">
+                              <div className="w-7 h-7 rounded-full bg-gradient-to-br from-[#D32F2F] to-[#FBC02D] flex items-center justify-center text-white text-xs font-bold flex-shrink-0">
+                                {(inq.name || '?')[0].toUpperCase()}
+                              </div>
+                              <span className="text-sm font-medium text-[#212121] whitespace-nowrap">{inq.name || '—'}</span>
+                            </div>
+                          </td>
+                          <td className="px-4 py-3 text-sm text-[#616161] whitespace-nowrap">{inq.mobile || '—'}</td>
+                          <td className="px-4 py-3 text-sm text-[#616161] whitespace-nowrap">{location}</td>
+                          <td className="px-4 py-3">
+                            {inq.source
+                              ? <span className="bg-blue-50 text-blue-600 text-xs px-2 py-0.5 rounded-full">{inq.source}</span>
+                              : <span className="text-xs text-[#9E9E9E]">—</span>}
+                          </td>
+                          <td className="px-4 py-3">
+                            <span className={`text-xs px-2 py-0.5 rounded-full font-medium capitalize ${
+                              inq.inquiryType === 'numerologist' ? 'bg-purple-50 text-purple-700' : 'bg-blue-50 text-blue-700'
+                            }`}>
+                              {inq.inquiryType || 'customer'}
+                            </span>
+                          </td>
+                          <td className="px-4 py-3 text-xs text-[#616161] whitespace-nowrap">{date}</td>
+                          <td className="px-4 py-3">
+                            <button
+                              onClick={() => navigate(`/admin/inquiries/${inq.id}`)}
+                              className="p-1.5 text-blue-500 hover:bg-blue-50 rounded-lg transition-colors"
+                              title="View Inquiry"
+                            >
+                              <Eye size={13} />
+                            </button>
+                          </td>
+                        </tr>
+                      );
+                    })
+                  )}
+                </tbody>
+              </table>
+            </div>
+
+            {/* Pagination */}
+            {totalPages > 1 && (
+              <div className="px-4 py-3 flex flex-wrap items-center justify-between gap-3 border-t border-gray-100">
+                <span className="text-xs text-[#616161]">
+                  {total === 0
+                    ? '0 results'
+                    : `${(page - 1) * LIMIT + 1}–${Math.min(page * LIMIT, total)} of ${total}`}
+                </span>
+                <div className="flex items-center gap-1.5">
+                  <button
+                    onClick={() => handlePageChange(page - 1)}
+                    disabled={page === 1}
+                    className="w-8 h-8 rounded-lg border border-gray-200 flex items-center justify-center disabled:opacity-40 hover:border-[#D32F2F] transition-colors"
+                  >
+                    <ChevronLeft size={13} />
+                  </button>
+                  {getPageNumbers(page, totalPages).map((p, idx) =>
+                    p === '...' ? (
+                      <span key={`ellipsis-${idx}`} className="w-8 h-8 flex items-center justify-center text-xs text-[#9E9E9E]">…</span>
+                    ) : (
+                      <button
+                        key={p}
+                        onClick={() => handlePageChange(p as number)}
+                        className={`w-8 h-8 rounded-lg text-xs font-medium transition-colors ${
+                          page === p
+                            ? 'bg-[#D32F2F] text-white'
+                            : 'border border-gray-200 hover:border-[#D32F2F] text-[#616161]'
+                        }`}
+                      >
+                        {p}
+                      </button>
+                    )
+                  )}
+                  <button
+                    onClick={() => handlePageChange(page + 1)}
+                    disabled={page === totalPages}
+                    className="w-8 h-8 rounded-lg border border-gray-200 flex items-center justify-center disabled:opacity-40 hover:border-[#D32F2F] transition-colors"
+                  >
+                    <ChevronRight size={13} />
+                  </button>
+                </div>
+              </div>
+            )}
+          </>
+        )}
       </div>
-
-      {/* View Popup */}
-      {viewCustomer && (
-        <div className="fixed inset-0 bg-black/60 z-50 flex items-center justify-center p-4" onClick={() => setViewCustomer(null)}>
-          <div className="bg-white rounded-2xl max-w-md w-full shadow-2xl overflow-hidden" onClick={e => e.stopPropagation()}>
-            {/* Header */}
-            <div className="flex items-center justify-between px-6 py-4 border-b border-gray-100">
-              <h3 className="font-bold text-[#212121]" style={{ fontFamily: 'Poppins, sans-serif' }}>Customer Details</h3>
-              <button onClick={() => setViewCustomer(null)} className="w-7 h-7 bg-gray-100 rounded-lg flex items-center justify-center text-gray-500 hover:bg-gray-200">
-                <X size={14} />
-              </button>
-            </div>
-            {/* Body */}
-            <div className="p-6">
-              <div className="flex items-center gap-4 mb-5">
-                <div className="w-14 h-14 rounded-2xl bg-gradient-to-br from-[#D32F2F] to-[#FBC02D] flex items-center justify-center text-white text-xl font-bold shadow">
-                  {viewCustomer.name[0]}
-                </div>
-                <div>
-                  <div className="font-bold text-lg text-[#212121]" style={{ fontFamily: 'Poppins, sans-serif' }}>{viewCustomer.name}</div>
-                  <div className="text-xs font-mono text-[#D32F2F]">{viewCustomer.id}</div>
-                  <span className={`text-xs px-2 py-0.5 rounded-full font-medium mt-1 inline-block ${statusColors[viewCustomer.status]}`}>{viewCustomer.status}</span>
-                </div>
-              </div>
-              <div className="space-y-3">
-                {[
-                  [<Phone size={13} />, viewCustomer.mobile],
-                  [<Mail size={13} />, viewCustomer.email],
-                  [<MapPin size={13} />, viewCustomer.city],
-                  [<Calendar size={13} />, `DOB: ${viewCustomer.dob}`],
-                  [<Hash size={13} />, `Preferred: ${viewCustomer.preferredNumber}`],
-                ].map(([icon, val], i) => (
-                  <div key={i} className="flex items-center gap-2.5 text-sm text-[#616161]">
-                    <span className="text-[#D32F2F]">{icon as React.ReactNode}</span>{val as string}
-                  </div>
-                ))}
-              </div>
-              <div className="mt-4 pt-4 border-t border-gray-100 grid grid-cols-2 gap-3">
-                <div className="bg-[#FFF8E1] rounded-xl p-3 text-center">
-                  <div className="font-bold text-[#D32F2F] text-base">{viewCustomer.totalSpent}</div>
-                  <div className="text-xs text-[#616161]">Total Spent</div>
-                </div>
-                <div className="bg-[#FFF8E1] rounded-xl p-3 text-center">
-                  <div className="font-bold text-[#212121] text-sm">{viewCustomer.source}</div>
-                  <div className="text-xs text-[#616161]">Source</div>
-                </div>
-              </div>
-              {viewCustomer.notes && (
-                <div className="mt-4 p-3 bg-gray-50 rounded-xl text-xs text-[#616161]">{viewCustomer.notes}</div>
-              )}
-            </div>
-            <div className="px-6 py-4 border-t border-gray-100 flex gap-2">
-              <button onClick={() => { setViewCustomer(null); navigate(`/admin/customers/${viewCustomer.id}/edit`); }}
-                className="flex-1 py-2 bg-[#D32F2F] text-white rounded-xl text-sm font-semibold hover:bg-[#B71C1C] transition-colors">
-                Edit Customer
-              </button>
-              <button onClick={() => setViewCustomer(null)}
-                className="flex-1 py-2 border border-gray-200 text-[#616161] rounded-xl text-sm font-semibold hover:bg-gray-50">
-                Close
-              </button>
-            </div>
-          </div>
-        </div>
-      )}
-
-      {/* Delete Confirm */}
-      {deleteId && (
-        <div className="fixed inset-0 bg-black/60 z-50 flex items-center justify-center p-4" onClick={() => setDeleteId(null)}>
-          <div className="bg-white rounded-2xl max-w-sm w-full p-6 shadow-2xl text-center" onClick={e => e.stopPropagation()}>
-            <div className="w-12 h-12 bg-red-100 rounded-full flex items-center justify-center mx-auto mb-4">
-              <Trash2 size={22} className="text-[#D32F2F]" />
-            </div>
-            <h3 className="font-bold text-[#212121] mb-2" style={{ fontFamily: 'Poppins, sans-serif' }}>Delete Customer?</h3>
-            <p className="text-sm text-[#616161] mb-5">This action cannot be undone. The customer and all related data will be permanently removed.</p>
-            <div className="flex gap-3">
-              <button onClick={() => setDeleteId(null)} className="flex-1 py-2.5 border border-gray-200 text-[#616161] rounded-xl text-sm font-semibold">Cancel</button>
-              <button onClick={() => handleDelete(deleteId)} className="flex-1 py-2.5 bg-[#D32F2F] text-white rounded-xl text-sm font-semibold hover:bg-[#B71C1C]">Delete</button>
-            </div>
-          </div>
-        </div>
-      )}
     </div>
   );
 }

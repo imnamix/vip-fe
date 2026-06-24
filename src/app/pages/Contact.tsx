@@ -3,6 +3,7 @@ import { useOutletContext } from 'react-router';
 import { useSelector } from 'react-redux';
 import { Phone, Mail, MapPin, Clock, Send, CheckCircle } from 'lucide-react';
 import BannerCarousel from '../components/BannerCarousel';
+import { createGeneralInquiry } from '../services/GeneralInquiryService';
 import type { RootState } from '../store/Store';
 import type { Address } from '../store/slice/ContactSlice';
 
@@ -58,6 +59,7 @@ function toEmbedUrl(url: string, fallbackAddress?: string): string {
 export default function Contact() {
   const [tab, setTab] = useState<'inquiry' | 'booking'>('inquiry');
   const [submitted, setSubmitted] = useState(false);
+  const [submitting, setSubmitting] = useState(false);
   const [form, setForm] = useState({ name: '', mobile: '', email: '', message: '' });
   const { openBooking } = useOutletContext<OutletCtx>();
 
@@ -90,9 +92,23 @@ export default function Contact() {
     },
   ];
 
-  const handleSubmit = (e: React.FormEvent) => {
+  const handleSubmit = async (e: React.FormEvent<HTMLFormElement>) => {
     e.preventDefault();
-    setSubmitted(true);
+    setSubmitting(true);
+    try {
+      await createGeneralInquiry({
+        name: form.name.trim(),
+        mobile: form.mobile.trim(),
+        message: form.message.trim() || undefined,
+        lookingFor: 'General Contact Inquiry',
+      });
+      setSubmitted(true);
+      setForm({ name: '', mobile: '', email: '', message: '' });
+    } catch {
+      // keep form open so user can retry
+    } finally {
+      setSubmitting(false);
+    }
   };
 
   return (
@@ -206,10 +222,10 @@ export default function Contact() {
                       className="w-full px-4 py-3 border border-gray-200 rounded-xl text-sm focus:outline-none focus:border-[#D32F2F] bg-gray-50 focus:bg-white transition-colors resize-none"
                       placeholder="Tell us how we can help you..." />
                   </div>
-                  <button type="submit"
-                    className="w-full py-3.5 bg-[#D32F2F] text-white rounded-xl font-semibold flex items-center justify-center gap-2 hover:bg-[#B71C1C] transition-colors"
+                  <button type="submit" disabled={submitting}
+                    className="w-full py-3.5 bg-[#D32F2F] text-white rounded-xl font-semibold flex items-center justify-center gap-2 hover:bg-[#B71C1C] transition-colors disabled:opacity-60 disabled:cursor-not-allowed"
                     style={{ fontFamily: 'Poppins, sans-serif' }}>
-                    <Send size={15} /> Send Message
+                    <Send size={15} /> {submitting ? 'Sending…' : 'Send Message'}
                   </button>
                 </form>
               )}

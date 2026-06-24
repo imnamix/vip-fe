@@ -12,6 +12,7 @@ import Customers from './pages/admin/Customers';
 import CustomerForm from './pages/admin/CustomerForm';
 import Inquiries from './pages/admin/Inquiries';
 import InquiryDetail from './pages/admin/InquiryDetail';
+import GeneralInquiries from './pages/admin/GeneralInquiries';
 import Numerologists from './pages/admin/Numerologists';
 import NumerologistDetail from './pages/admin/NumerologistDetail';
 import NumerologistForm from './pages/admin/NumerologistForm';
@@ -27,6 +28,7 @@ import UserRoles from './pages/admin/UserRoles';
 import DeliveryTracking from './pages/admin/DeliveryTracking';
 import Notifications from './pages/admin/Notifications';
 import AdminProfile from './pages/admin/AdminProfile';
+import Settings from './pages/admin/Settings';
 
 export const router = createBrowserRouter([
   {
@@ -51,6 +53,7 @@ export const router = createBrowserRouter([
       { path: 'customers/:id/edit', Component: CustomerForm },
       { path: 'inquiries', Component: Inquiries },
       { path: 'inquiries/:id', Component: InquiryDetail },
+      { path: 'general-inquiries', Component: GeneralInquiries },
       { path: 'numerologists', Component: Numerologists },
       { path: 'numerologists/new', Component: NumerologistForm },
       { path: 'numerologists/:id', Component: NumerologistDetail },
@@ -69,6 +72,7 @@ export const router = createBrowserRouter([
       { path: 'delivery', Component: DeliveryTracking },
       { path: 'notifications', Component: Notifications },
       { path: 'profile', Component: AdminProfile },
+      { path: 'settings', Component: Settings },
     ],
   },
 ]);

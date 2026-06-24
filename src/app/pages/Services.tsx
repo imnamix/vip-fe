@@ -7,6 +7,7 @@ import {
   DollarSign, CheckCircle,
 } from 'lucide-react';
 import BannerCarousel from '../components/BannerCarousel';
+import GeneralInquiryPopup from '../components/GeneralInquiryPopup';
 import { getAllServices } from '../services/ServicesService';
 import { getServicePage } from '../services/ServicePageService';
 
@@ -63,6 +64,7 @@ export default function Services() {
   const [services, setServices] = useState<ServiceItem[]>([]);
   const [bannerSlides, setBannerSlides] = useState(FALLBACK_SLIDES);
   const [loading, setLoading] = useState(true);
+  const [inquiryContext, setInquiryContext] = useState<{ lookingFor: string; title: string } | null>(null);
   const { openBooking } = useOutletContext<OutletCtx>();
   const navigate = useNavigate();
 
@@ -186,7 +188,11 @@ export default function Services() {
                 {renderDescription(selected.description)}
               </div>
               <button
-                onClick={() => { setSelected(null); openBooking(); }}
+                onClick={() => {
+                  const svc = selected;
+                  setSelected(null);
+                  setInquiryContext({ lookingFor: `Enquiry for ${svc!.title}`, title: svc!.title });
+                }}
                 className="w-full py-3.5 bg-[#D32F2F] text-white rounded-xl font-semibold hover:bg-[#B71C1C] transition-colors"
                 style={{ fontFamily: 'Poppins, sans-serif' }}
               >
@@ -223,6 +229,14 @@ export default function Services() {
           </div>
         </div>
       </section>
+
+      {inquiryContext && (
+        <GeneralInquiryPopup
+          lookingFor={inquiryContext.lookingFor}
+          title={inquiryContext.title}
+          onClose={() => setInquiryContext(null)}
+        />
+      )}
     </div>
   );
 }

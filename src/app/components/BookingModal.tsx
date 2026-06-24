@@ -1,44 +1,125 @@
 import { useState } from 'react';
-import { X, User, Briefcase, CheckCircle, Mail, MessageCircle, ChevronRight, ChevronLeft, Hash } from 'lucide-react';
+import { X, User, Briefcase, CheckCircle, ChevronRight, ChevronLeft, Hash } from 'lucide-react';
+import { createInquiry } from '../services/EnquiresService';
 
-type UserType = 'customer' | 'professional' | null;
-type Step = 1 | 2 | 3;
+type UserType = 'customer' | 'numerologist' | null;
+type Step = 1 | 2 | 3 | 4;
+
+const INDIAN_STATES = [
+  'Andhra Pradesh', 'Arunachal Pradesh', 'Assam', 'Bihar', 'Chhattisgarh',
+  'Goa', 'Gujarat', 'Haryana', 'Himachal Pradesh', 'Jharkhand', 'Karnataka',
+  'Kerala', 'Madhya Pradesh', 'Maharashtra', 'Manipur', 'Meghalaya', 'Mizoram',
+  'Nagaland', 'Odisha', 'Punjab', 'Rajasthan', 'Sikkim', 'Tamil Nadu',
+  'Telangana', 'Tripura', 'Uttar Pradesh', 'Uttarakhand', 'West Bengal',
+  'Andaman and Nicobar Islands', 'Chandigarh', 'Delhi', 'Jammu and Kashmir',
+  'Ladakh', 'Lakshadweep', 'Puducherry',
+];
+
+const VI_STORES_BY_STATE: Record<string, string[]> = {
+  'Maharashtra': ['Vi Store - Andheri West, Mumbai', 'Vi Store - Thane West', 'Vi Store - Pune Deccan', 'Vi Store - Nagpur Sitabuldi', 'Vi Store - Nashik CBS', 'Vi Store - Aurangabad'],
+  'Gujarat': ['Vi Store - Ahmedabad CG Road', 'Vi Store - Surat Ring Road', 'Vi Store - Vadodara Alkapuri', 'Vi Store - Rajkot'],
+  'Karnataka': ['Vi Store - Bangalore Koramangala', 'Vi Store - Bangalore MG Road', 'Vi Store - Mysore'],
+  'Tamil Nadu': ['Vi Store - Chennai Anna Nagar', 'Vi Store - Chennai T Nagar', 'Vi Store - Coimbatore RS Puram'],
+  'Rajasthan': ['Vi Store - Jaipur MI Road', 'Vi Store - Jodhpur Sojati Gate', 'Vi Store - Udaipur'],
+  'Madhya Pradesh': ['Vi Store - Indore Vijay Nagar', 'Vi Store - Bhopal MP Nagar', 'Vi Store - Gwalior'],
+  'Uttar Pradesh': ['Vi Store - Lucknow Hazratganj', 'Vi Store - Kanpur Civil Lines', 'Vi Store - Agra Sanjay Place', 'Vi Store - Varanasi'],
+  'Delhi': ['Vi Store - Connaught Place', 'Vi Store - Lajpat Nagar', 'Vi Store - Janakpuri', 'Vi Store - Rajouri Garden'],
+  'Haryana': ['Vi Store - Gurugram DLF Phase 1', 'Vi Store - Faridabad Sector 15', 'Vi Store - Ambala'],
+  'Punjab': ['Vi Store - Chandigarh Sector 17', 'Vi Store - Ludhiana Feroze Gandhi Mkt', 'Vi Store - Amritsar'],
+  'Telangana': ['Vi Store - Hyderabad Banjara Hills', 'Vi Store - Hyderabad Secunderabad', 'Vi Store - Warangal'],
+  'West Bengal': ['Vi Store - Kolkata Park Street', 'Vi Store - Kolkata Salt Lake', 'Vi Store - Siliguri'],
+  'Bihar': ['Vi Store - Patna Boring Road', 'Vi Store - Gaya'],
+  'Odisha': ['Vi Store - Bhubaneswar', 'Vi Store - Cuttack'],
+  'Kerala': ['Vi Store - Kochi MG Road', 'Vi Store - Thiruvananthapuram', 'Vi Store - Kozhikode'],
+  'Goa': ['Vi Store - Panaji', 'Vi Store - Vasco da Gama'],
+  'Assam': ['Vi Store - Guwahati GS Road', 'Vi Store - Dibrugarh'],
+  'Jharkhand': ['Vi Store - Ranchi Main Road', 'Vi Store - Jamshedpur'],
+  'Chhattisgarh': ['Vi Store - Raipur Pandri', 'Vi Store - Bhilai Sector 6'],
+  'Andhra Pradesh': ['Vi Store - Visakhapatnam', 'Vi Store - Vijayawada Eluru Road', 'Vi Store - Guntur'],
+  'Uttarakhand': ['Vi Store - Dehradun Rajpur Road', 'Vi Store - Haridwar'],
+  'Himachal Pradesh': ['Vi Store - Shimla Mall Road', 'Vi Store - Dharamshala'],
+  'Chandigarh': ['Vi Store - Chandigarh Sector 17', 'Vi Store - Chandigarh Sector 22'],
+};
+
+const STEP_LABELS = ['User Type', 'Details', 'Requirements', 'Confirmation'];
 
 interface BookingModalProps {
   onClose: () => void;
 }
 
-const customerFields = [
-  { label: 'Full Name', key: 'name', type: 'text', placeholder: 'Enter your full name' },
-  { label: 'Date of Birth', key: 'dob', type: 'date', placeholder: '' },
-  { label: 'Mobile Number', key: 'mobile', type: 'tel', placeholder: '+91 98765 43210' },
-  { label: 'Email Address', key: 'email', type: 'email', placeholder: 'you@example.com' },
-  { label: 'City', key: 'city', type: 'text', placeholder: 'Mumbai' },
-  { label: 'What are your goals?', key: 'goals', type: 'textarea', placeholder: 'Wealth, career, relationships...' },
-];
+const emptyCustomer = {
+  name: '', mobile: '', address: '', taluka: '', district: '', state: '',
+  pinCode: '', nearestViStore: '',
+};
 
-const professionalFields = [
-  { label: 'Full Name', key: 'name', type: 'text', placeholder: 'Enter your full name' },
-  { label: 'Organisation / Practice Name', key: 'org', type: 'text', placeholder: 'Your business name' },
-  { label: 'Certification Details', key: 'cert', type: 'text', placeholder: 'Certification body and year' },
-  { label: 'Mobile Number', key: 'mobile', type: 'tel', placeholder: '+91 98765 43210' },
-  { label: 'Email Address', key: 'email', type: 'email', placeholder: 'you@example.com' },
-  { label: 'Years of Experience', key: 'experience', type: 'number', placeholder: '5' },
-  { label: 'Specialisation', key: 'specialisation', type: 'text', placeholder: 'Vedic numerology, name correction...' },
-  { label: 'Referral Code (optional)', key: 'referral', type: 'text', placeholder: 'VIP-XXXXX' },
-];
+const emptyNumerologist = {
+  name: '', mobile: '', clientName: '', clientMobile: '',
+  address: '', district: '', state: '', pinCode: '', nearestViStore: '',
+};
+
+const emptyRequirements = {
+  hasNumerologistRef: 'no' as 'yes' | 'no',
+  numerologistRefName: '',
+  numerologistRefMobile: '',
+  requireDigits: '',
+  notRequireDigits: '',
+  total: '',
+  specialRequirements: '',
+};
+
+const inputCls = 'w-full px-3 py-2 border border-gray-200 rounded-xl text-sm focus:outline-none focus:border-[#D32F2F] bg-gray-50';
+const labelCls = 'block text-xs font-semibold text-[#212121] mb-1';
 
 export default function BookingModal({ onClose }: BookingModalProps) {
   const [step, setStep] = useState<Step>(1);
   const [userType, setUserType] = useState<UserType>(null);
-  const [form, setForm] = useState<Record<string, string>>({});
+  const [customerForm, setCustomerForm] = useState(emptyCustomer);
+  const [numForm, setNumForm] = useState(emptyNumerologist);
+  const [requirements, setRequirements] = useState(emptyRequirements);
+  const [loading, setLoading] = useState(false);
+  const [error, setError] = useState('');
 
-  const fields = userType === 'customer' ? customerFields : professionalFields;
+  const activeState = userType === 'customer' ? customerForm.state : numForm.state;
+  const storeOptions = VI_STORES_BY_STATE[activeState] ?? [];
 
-  const handleSubmit = (e: React.FormEvent) => {
-    e.preventDefault();
-    setStep(3);
+  const handleFinalSubmit = async () => {
+    setLoading(true);
+    setError('');
+    try {
+      const base =
+        userType === 'customer'
+          ? { inquiryType: 'customer', source: 'Website', ...customerForm }
+          : { inquiryType: 'numerologist', source: 'Website', ...numForm };
+
+      const payload = {
+        ...base,
+        requireDigits: requirements.requireDigits,
+        notRequireDigits: requirements.notRequireDigits,
+        total: requirements.total,
+        specialRequirements: requirements.specialRequirements,
+        ...(userType === 'customer' && {
+          hasNumerologistRef: requirements.hasNumerologistRef === 'yes',
+          numerologistRefName:
+            requirements.hasNumerologistRef === 'yes'
+              ? requirements.numerologistRefName
+              : '',
+          numerologistRefMobile:
+            requirements.hasNumerologistRef === 'yes'
+              ? requirements.numerologistRefMobile
+              : '',
+        }),
+      };
+
+      await createInquiry(payload);
+      setStep(4);
+    } catch {
+      setError('Something went wrong. Please try again.');
+    } finally {
+      setLoading(false);
+    }
   };
+
+  const displayName = userType === 'customer' ? customerForm.name : numForm.name;
 
   return (
     <div
@@ -49,125 +130,125 @@ export default function BookingModal({ onClose }: BookingModalProps) {
         className="bg-white rounded-2xl w-full max-w-lg my-4 shadow-2xl relative"
         onClick={(e) => e.stopPropagation()}
       >
-        {/* Header */}
-        <div className="flex items-center justify-between p-6 border-b border-gray-100">
+        {/* ── Header ── */}
+        <div className="flex items-center justify-between px-6 py-4 border-b border-gray-100">
           <div className="flex items-center gap-3">
-            <div className="w-9 h-9 bg-[#D32F2F] rounded-xl flex items-center justify-center">
+            <div className="w-9 h-9 bg-[#D32F2F] rounded-xl flex items-center justify-center flex-shrink-0">
               <Hash size={18} className="text-white" />
             </div>
             <div>
               <h2
-                className="font-bold text-[#212121] text-lg"
-                style={{ fontFamily: "Poppins, sans-serif" }}
+                className="font-bold text-[#212121] text-lg leading-tight"
+                style={{ fontFamily: 'Poppins, sans-serif' }}
               >
                 Book a Consultation
               </h2>
-              <p className="text-[#616161] text-xs">Step {step} of 3</p>
+              <p className="text-[#616161] text-xs">
+                Step {step} of 4 — {STEP_LABELS[step - 1]}
+              </p>
             </div>
           </div>
           <button
             onClick={onClose}
-            className="w-8 h-8 rounded-xl bg-gray-100 flex items-center justify-center text-gray-500 hover:bg-gray-200 transition-colors"
+            className="w-8 h-8 rounded-xl bg-gray-100 flex items-center justify-center text-gray-500 hover:bg-gray-200 transition-colors flex-shrink-0"
           >
             <X size={16} />
           </button>
         </div>
 
-        <div className="px-6 pt-4">
-          {/* Progress */}
-          <div className="grid grid-cols-3 items-center mb-2">
-            {[1, 2, 3].map((s, i) => (
+        {/* ── Progress ── */}
+        <div className="px-6 pt-4 pb-2">
+          <div className="grid grid-cols-4 items-center mb-2">
+            {[1, 2, 3, 4].map((s, i) => (
               <div key={s} className="relative flex justify-center">
-                {/* Line */}
-                {i < 2 && (
+                {i < 3 && (
                   <div
-                    className={`absolute top-4 left-1/2 w-full h-0.5 ${
-                      step > s + 1
-                        ? "bg-[#4CAF50]"
-                        : step === s + 1
-                          ? "bg-[#D32F2F]"
-                          : "bg-gray-200"
+                    className={`absolute top-4 left-1/2 w-full h-0.5 transition-colors ${
+                      step > s ? 'bg-[#D32F2F]' : 'bg-gray-200'
                     }`}
                   />
                 )}
-
-                {/* Circle */}
                 <div
                   className={`relative z-10 w-8 h-8 rounded-full flex items-center justify-center font-bold text-xs border-2 transition-all ${
                     step > s
-                      ? "bg-[#4CAF50] border-[#4CAF50] text-white"
+                      ? 'bg-[#FBC02D] border-[#FBC02D] text-white'
                       : step === s
-                        ? "bg-[#D32F2F] border-[#D32F2F] text-white"
-                        : "bg-white border-gray-300 text-gray-400"
+                      ? 'bg-[#D32F2F] border-[#D32F2F] text-white'
+                      : 'bg-white border-gray-300 text-gray-400'
                   }`}
                 >
-                  {step > s ? <CheckCircle size={14} /> : s}
+                  {step > s ? <CheckCircle size={13} /> : s}
                 </div>
               </div>
             ))}
           </div>
-
-          {/* Labels */}
-          <div className="grid grid-cols-3 text-center text-xs text-[#616161] mb-4">
-            <span>User Type</span>
-            <span>Details</span>
-            <span>Confirmation</span>
+          <div className="grid grid-cols-4 text-center mb-3">
+            {STEP_LABELS.map((label, i) => (
+              <span
+                key={label}
+                className={`text-[10px] font-medium leading-tight px-0.5 ${
+                  step === i + 1 ? 'text-[#D32F2F] font-bold' : 'text-[#9E9E9E]'
+                }`}
+              >
+                {label}
+              </span>
+            ))}
           </div>
         </div>
 
         <div className="px-6 pb-6">
-          {/* Step 1 */}
+          {/* ══ STEP 1 — User Type ══ */}
           {step === 1 && (
             <div>
               <p className="text-[#616161] text-sm mb-5">
-                Select your profile to get a personalised experience.
+                Select your profile to get started.
               </p>
               <div className="grid grid-cols-2 gap-3 mb-5">
                 {[
                   {
-                    type: "customer" as const,
+                    type: 'customer' as const,
                     icon: User,
-                    title: "Customer",
-                    desc: "Book a VIP number or consultation for myself.",
+                    title: 'Customer',
+                    desc: 'I want to book a VIP number for myself.',
                   },
                   {
-                    type: "professional" as const,
+                    type: 'numerologist' as const,
                     icon: Briefcase,
-                    title: "Professional",
-                    desc: "Join the VIP Numerology network.",
+                    title: 'Numerologist',
+                    desc: 'I am a numerologist booking for my client.',
                   },
                 ].map((opt) => {
                   const Icon = opt.icon;
+                  const selected = userType === opt.type;
                   return (
                     <button
                       key={opt.type}
                       onClick={() => setUserType(opt.type)}
-                      className={`p-4 rounded-2xl border-2 text-left transition-all ${userType === opt.type ? "border-[#D32F2F] bg-red-50" : "border-gray-200 hover:border-[#D32F2F]/40"}`}
+                      className={`p-4 rounded-2xl border-2 text-left transition-all ${
+                        selected
+                          ? 'border-[#D32F2F] bg-red-50'
+                          : 'border-gray-200 hover:border-[#D32F2F]/40'
+                      }`}
                     >
                       <div
-                        className={`w-10 h-10 rounded-xl flex items-center justify-center mb-3 ${userType === opt.type ? "bg-[#D32F2F]" : "bg-gray-100"}`}
+                        className={`w-10 h-10 rounded-xl flex items-center justify-center mb-3 ${
+                          selected ? 'bg-[#D32F2F]' : 'bg-gray-100'
+                        }`}
                       >
                         <Icon
                           size={18}
-                          className={
-                            userType === opt.type
-                              ? "text-white"
-                              : "text-gray-500"
-                          }
+                          className={selected ? 'text-white' : 'text-gray-500'}
                         />
                       </div>
                       <div
                         className="font-bold text-[#212121] text-sm mb-1"
-                        style={{ fontFamily: "Poppins, sans-serif" }}
+                        style={{ fontFamily: 'Poppins, sans-serif' }}
                       >
                         {opt.title}
                       </div>
                       <div className="text-[#616161] text-xs">{opt.desc}</div>
-                      {userType === opt.type && (
-                        <CheckCircle
-                          size={14}
-                          className="text-[#D32F2F] mt-2"
-                        />
+                      {selected && (
+                        <CheckCircle size={14} className="text-[#D32F2F] mt-2" />
                       )}
                     </button>
                   );
@@ -183,41 +264,277 @@ export default function BookingModal({ onClose }: BookingModalProps) {
             </div>
           )}
 
-          {/* Step 2 */}
+          {/* ══ STEP 2 — Details ══ */}
           {step === 2 && (
-            <form onSubmit={handleSubmit} className="space-y-3">
-              <div className="max-h-80 overflow-y-auto pr-1 space-y-3">
-                {fields.map((f) => (
-                  <div key={f.key}>
-                    <label className="block text-xs font-semibold text-[#212121] mb-1">
-                      {f.label}
-                    </label>
-                    {f.type === "textarea" ? (
-                      <textarea
-                        rows={2}
-                        value={form[f.key] || ""}
-                        onChange={(e) =>
-                          setForm((p) => ({ ...p, [f.key]: e.target.value }))
-                        }
-                        placeholder={f.placeholder}
-                        className="w-full px-3 py-2 border border-gray-200 rounded-xl text-sm focus:outline-none focus:border-[#D32F2F] bg-gray-50 resize-none"
-                      />
-                    ) : (
+            <div>
+              <div className="max-h-[58vh] overflow-y-auto pr-1 space-y-3">
+                {userType === 'customer' ? (
+                  <>
+                    {/* Customer details */}
+                    <div className="grid grid-cols-2 gap-3">
+                      <div>
+                        <label className={labelCls}>Customer Name *</label>
+                        <input
+                          type="text"
+                          value={customerForm.name}
+                          onChange={(e) =>
+                            setCustomerForm((p) => ({ ...p, name: e.target.value }))
+                          }
+                          placeholder="Full name"
+                          className={inputCls}
+                        />
+                      </div>
+                      <div>
+                        <label className={labelCls}>Mobile Number *</label>
+                        <input
+                          type="tel"
+                          value={customerForm.mobile}
+                          onChange={(e) =>
+                            setCustomerForm((p) => ({ ...p, mobile: e.target.value }))
+                          }
+                          placeholder="98765 43210"
+                          className={inputCls}
+                        />
+                      </div>
+                    </div>
+                    <div>
+                      <label className={labelCls}>Address</label>
                       <input
-                        type={f.type}
-                        required={f.key !== "referral"}
-                        value={form[f.key] || ""}
+                        type="text"
+                        value={customerForm.address}
                         onChange={(e) =>
-                          setForm((p) => ({ ...p, [f.key]: e.target.value }))
+                          setCustomerForm((p) => ({ ...p, address: e.target.value }))
                         }
-                        placeholder={f.placeholder}
-                        className="w-full px-3 py-2 border border-gray-200 rounded-xl text-sm focus:outline-none focus:border-[#D32F2F] bg-gray-50"
+                        placeholder="House/Flat no., Street"
+                        className={inputCls}
                       />
-                    )}
-                  </div>
-                ))}
+                    </div>
+                    <div className="grid grid-cols-2 gap-3">
+                      <div>
+                        <label className={labelCls}>Taluka</label>
+                        <input
+                          type="text"
+                          value={customerForm.taluka}
+                          onChange={(e) =>
+                            setCustomerForm((p) => ({ ...p, taluka: e.target.value }))
+                          }
+                          placeholder="Taluka"
+                          className={inputCls}
+                        />
+                      </div>
+                      <div>
+                        <label className={labelCls}>District</label>
+                        <input
+                          type="text"
+                          value={customerForm.district}
+                          onChange={(e) =>
+                            setCustomerForm((p) => ({ ...p, district: e.target.value }))
+                          }
+                          placeholder="District"
+                          className={inputCls}
+                        />
+                      </div>
+                    </div>
+                    <div className="grid grid-cols-2 gap-3">
+                      <div>
+                        <label className={labelCls}>State</label>
+                        <select
+                          value={customerForm.state}
+                          onChange={(e) =>
+                            setCustomerForm((p) => ({
+                              ...p,
+                              state: e.target.value,
+                              nearestViStore: '',
+                            }))
+                          }
+                          className={inputCls}
+                        >
+                          <option value="">Select State</option>
+                          {INDIAN_STATES.map((s) => (
+                            <option key={s}>{s}</option>
+                          ))}
+                        </select>
+                      </div>
+                      <div>
+                        <label className={labelCls}>Pin Code</label>
+                        <input
+                          type="text"
+                          maxLength={6}
+                          value={customerForm.pinCode}
+                          onChange={(e) =>
+                            setCustomerForm((p) => ({ ...p, pinCode: e.target.value }))
+                          }
+                          placeholder="400001"
+                          className={inputCls}
+                        />
+                      </div>
+                    </div>
+                    <div>
+                      <label className={labelCls}>Nearest Vi Store</label>
+                      <select
+                        value={customerForm.nearestViStore}
+                        onChange={(e) =>
+                          setCustomerForm((p) => ({
+                            ...p,
+                            nearestViStore: e.target.value,
+                          }))
+                        }
+                        disabled={!customerForm.state}
+                        className={inputCls}
+                      >
+                        <option value="">
+                          {customerForm.state
+                            ? 'Select nearest store'
+                            : 'Select state first'}
+                        </option>
+                        {storeOptions.map((s) => (
+                          <option key={s}>{s}</option>
+                        ))}
+                      </select>
+                    </div>
+                  </>
+                ) : (
+                  <>
+                    {/* Numerologist details */}
+                    <div className="grid grid-cols-2 gap-3">
+                      <div>
+                        <label className={labelCls}>Numerologist Name *</label>
+                        <input
+                          type="text"
+                          value={numForm.name}
+                          onChange={(e) =>
+                            setNumForm((p) => ({ ...p, name: e.target.value }))
+                          }
+                          placeholder="Your full name"
+                          className={inputCls}
+                        />
+                      </div>
+                      <div>
+                        <label className={labelCls}>Numerologist Mobile *</label>
+                        <input
+                          type="tel"
+                          value={numForm.mobile}
+                          onChange={(e) =>
+                            setNumForm((p) => ({ ...p, mobile: e.target.value }))
+                          }
+                          placeholder="98765 43210"
+                          className={inputCls}
+                        />
+                      </div>
+                    </div>
+                    <div className="grid grid-cols-2 gap-3">
+                      <div>
+                        <label className={labelCls}>Client Name *</label>
+                        <input
+                          type="text"
+                          value={numForm.clientName}
+                          onChange={(e) =>
+                            setNumForm((p) => ({ ...p, clientName: e.target.value }))
+                          }
+                          placeholder="Client's full name"
+                          className={inputCls}
+                        />
+                      </div>
+                      <div>
+                        <label className={labelCls}>Client Mobile *</label>
+                        <input
+                          type="tel"
+                          value={numForm.clientMobile}
+                          onChange={(e) =>
+                            setNumForm((p) => ({ ...p, clientMobile: e.target.value }))
+                          }
+                          placeholder="98765 43210"
+                          className={inputCls}
+                        />
+                      </div>
+                    </div>
+                    <div>
+                      <label className={labelCls}>Address</label>
+                      <input
+                        type="text"
+                        value={numForm.address}
+                        onChange={(e) =>
+                          setNumForm((p) => ({ ...p, address: e.target.value }))
+                        }
+                        placeholder="House/Flat no., Street"
+                        className={inputCls}
+                      />
+                    </div>
+                    <div className="grid grid-cols-2 gap-3">
+                      <div>
+                        <label className={labelCls}>District</label>
+                        <input
+                          type="text"
+                          value={numForm.district}
+                          onChange={(e) =>
+                            setNumForm((p) => ({ ...p, district: e.target.value }))
+                          }
+                          placeholder="District"
+                          className={inputCls}
+                        />
+                      </div>
+                      <div>
+                        <label className={labelCls}>State</label>
+                        <select
+                          value={numForm.state}
+                          onChange={(e) =>
+                            setNumForm((p) => ({
+                              ...p,
+                              state: e.target.value,
+                              nearestViStore: '',
+                            }))
+                          }
+                          className={inputCls}
+                        >
+                          <option value="">Select State</option>
+                          {INDIAN_STATES.map((s) => (
+                            <option key={s}>{s}</option>
+                          ))}
+                        </select>
+                      </div>
+                    </div>
+                    <div className="grid grid-cols-2 gap-3">
+                      <div>
+                        <label className={labelCls}>Pin Code</label>
+                        <input
+                          type="text"
+                          maxLength={6}
+                          value={numForm.pinCode}
+                          onChange={(e) =>
+                            setNumForm((p) => ({ ...p, pinCode: e.target.value }))
+                          }
+                          placeholder="400001"
+                          className={inputCls}
+                        />
+                      </div>
+                      <div>
+                        <label className={labelCls}>Nearest Vi Store</label>
+                        <select
+                          value={numForm.nearestViStore}
+                          onChange={(e) =>
+                            setNumForm((p) => ({
+                              ...p,
+                              nearestViStore: e.target.value,
+                            }))
+                          }
+                          disabled={!numForm.state}
+                          className={inputCls}
+                        >
+                          <option value="">
+                            {numForm.state ? 'Select nearest store' : 'Select state first'}
+                          </option>
+                          {storeOptions.map((s) => (
+                            <option key={s}>{s}</option>
+                          ))}
+                        </select>
+                      </div>
+                    </div>
+                  </>
+                )}
               </div>
-              <div className="flex gap-2 pt-2">
+
+              {/* Step 2 nav */}
+              <div className="flex gap-2 pt-4">
                 <button
                   type="button"
                   onClick={() => setStep(1)}
@@ -226,60 +543,225 @@ export default function BookingModal({ onClose }: BookingModalProps) {
                   <ChevronLeft size={14} /> Back
                 </button>
                 <button
-                  type="submit"
+                  type="button"
+                  onClick={() => {
+                    const nameOk =
+                      userType === 'customer'
+                        ? customerForm.name.trim() && customerForm.mobile.trim()
+                        : numForm.name.trim() &&
+                          numForm.mobile.trim() &&
+                          numForm.clientName.trim() &&
+                          numForm.clientMobile.trim();
+                    if (!nameOk) {
+                      setError('Please fill in all required fields (*).');
+                      return;
+                    }
+                    setError('');
+                    setStep(3);
+                  }}
                   className="flex-1 py-2.5 bg-[#D32F2F] text-white rounded-xl text-sm font-semibold flex items-center justify-center gap-1 hover:bg-[#B71C1C]"
                 >
-                  Submit <ChevronRight size={14} />
+                  Next <ChevronRight size={14} />
                 </button>
               </div>
-            </form>
+              {error && <p className="text-red-500 text-xs mt-2 text-center">{error}</p>}
+            </div>
           )}
 
-          {/* Step 3 */}
+          {/* ══ STEP 3 — Requirements ══ */}
           {step === 3 && (
+            <div>
+              <div className="max-h-[58vh] overflow-y-auto pr-1 space-y-4">
+
+                {/* Numerologist reference — customers only */}
+                {userType === 'customer' && (
+                  <div className="bg-gray-50 rounded-2xl p-4 border border-gray-100">
+                    <p className="text-xs font-bold text-[#212121] uppercase tracking-wider mb-3">
+                      Numerologist Reference
+                    </p>
+                    <div className="flex gap-6 mb-3">
+                      {(['yes', 'no'] as const).map((v) => (
+                        <label key={v} className="flex items-center gap-2 cursor-pointer">
+                          <input
+                            type="radio"
+                            name="hasNumerologistRef"
+                            value={v}
+                            checked={requirements.hasNumerologistRef === v}
+                            onChange={() =>
+                              setRequirements((p) => ({
+                                ...p,
+                                hasNumerologistRef: v,
+                                numerologistRefName: '',
+                                numerologistRefMobile: '',
+                              }))
+                            }
+                            className="accent-[#D32F2F] w-4 h-4"
+                          />
+                          <span className="text-sm font-medium text-[#212121] capitalize">
+                            {v}
+                          </span>
+                        </label>
+                      ))}
+                    </div>
+
+                    {requirements.hasNumerologistRef === 'yes' && (
+                      <div className="grid grid-cols-2 gap-3">
+                        <div>
+                          <label className={labelCls}>Numerologist Name *</label>
+                          <input
+                            type="text"
+                            value={requirements.numerologistRefName}
+                            onChange={(e) =>
+                              setRequirements((p) => ({
+                                ...p,
+                                numerologistRefName: e.target.value,
+                              }))
+                            }
+                            placeholder="Numerologist name"
+                            className={inputCls}
+                          />
+                        </div>
+                        <div>
+                          <label className={labelCls}>Numerologist Mobile *</label>
+                          <input
+                            type="tel"
+                            value={requirements.numerologistRefMobile}
+                            onChange={(e) =>
+                              setRequirements((p) => ({
+                                ...p,
+                                numerologistRefMobile: e.target.value,
+                              }))
+                            }
+                            placeholder="98765 43210"
+                            className={inputCls}
+                          />
+                        </div>
+                      </div>
+                    )}
+                  </div>
+                )}
+
+                {/* Requirements */}
+                <div className="bg-gray-50 rounded-2xl p-4 border border-gray-100">
+                  <p className="text-xs font-bold text-[#212121] uppercase tracking-wider mb-3">
+                    Number Requirements
+                  </p>
+                  <div className="space-y-3">
+                    <div className="grid grid-cols-2 gap-3">
+                      <div>
+                        <label className={labelCls}>Require Digits</label>
+                        <input
+                          type="text"
+                          value={requirements.requireDigits}
+                          onChange={(e) =>
+                            setRequirements((p) => ({
+                              ...p,
+                              requireDigits: e.target.value,
+                            }))
+                          }
+                          placeholder="e.g. 8, 1, 5"
+                          className={inputCls}
+                        />
+                      </div>
+                      <div>
+                        <label className={labelCls}>Not Require Digits</label>
+                        <input
+                          type="text"
+                          value={requirements.notRequireDigits}
+                          onChange={(e) =>
+                            setRequirements((p) => ({
+                              ...p,
+                              notRequireDigits: e.target.value,
+                            }))
+                          }
+                          placeholder="e.g. 4, 8"
+                          className={inputCls}
+                        />
+                      </div>
+                    </div>
+                    <div>
+                      <label className={labelCls}>Total</label>
+                      <input
+                        type="text"
+                        value={requirements.total}
+                        onChange={(e) =>
+                          setRequirements((p) => ({ ...p, total: e.target.value }))
+                        }
+                        placeholder="e.g. 5, 9"
+                        className={inputCls}
+                      />
+                    </div>
+                    <div>
+                      <label className={labelCls}>Any Special Requirements</label>
+                      <textarea
+                        rows={3}
+                        value={requirements.specialRequirements}
+                        onChange={(e) =>
+                          setRequirements((p) => ({
+                            ...p,
+                            specialRequirements: e.target.value,
+                          }))
+                        }
+                        placeholder="Describe any special requirements..."
+                        className={inputCls + ' resize-none'}
+                      />
+                    </div>
+                  </div>
+                </div>
+              </div>
+
+              {error && <p className="text-red-500 text-xs mt-2 text-center">{error}</p>}
+
+              {/* Step 3 nav */}
+              <div className="flex gap-2 pt-4">
+                <button
+                  type="button"
+                  onClick={() => { setError(''); setStep(2); }}
+                  className="flex-1 py-2.5 border-2 border-gray-200 text-[#616161] rounded-xl text-sm font-semibold flex items-center justify-center gap-1 hover:border-[#D32F2F] hover:text-[#D32F2F]"
+                >
+                  <ChevronLeft size={14} /> Back
+                </button>
+                <button
+                  type="button"
+                  disabled={loading}
+                  onClick={() => {
+                    if (
+                      userType === 'customer' &&
+                      requirements.hasNumerologistRef === 'yes' &&
+                      (!requirements.numerologistRefName.trim() ||
+                        !requirements.numerologistRefMobile.trim())
+                    ) {
+                      setError('Please fill in numerologist name and mobile.');
+                      return;
+                    }
+                    setError('');
+                    handleFinalSubmit();
+                  }}
+                  className="flex-1 py-2.5 bg-[#D32F2F] text-white rounded-xl text-sm font-semibold flex items-center justify-center gap-1 hover:bg-[#B71C1C] disabled:opacity-50"
+                >
+                  {loading ? 'Submitting…' : <>Submit <ChevronRight size={14} /></>}
+                </button>
+              </div>
+            </div>
+          )}
+
+          {/* ══ STEP 4 — Confirmation ══ */}
+          {step === 4 && (
             <div className="text-center py-4">
               <div className="w-16 h-16 bg-green-100 rounded-full flex items-center justify-center mx-auto mb-4">
                 <CheckCircle size={32} className="text-green-500" />
               </div>
               <h3
                 className="text-xl font-bold text-[#212121] mb-2"
-                style={{ fontFamily: "Poppins, sans-serif" }}
+                style={{ fontFamily: 'Poppins, sans-serif' }}
               >
-                Booking Confirmed! 🎉
+                Inquiry Submitted!
               </h3>
               <p className="text-[#616161] text-sm mb-6">
-                Thank you, <strong>{form.name || "Valued Client"}</strong>! Our
-                team will contact you within 24 hours.
+                Thank you,{' '}
+                <strong>{displayName || 'Valued Client'}</strong>! Our team
+                will contact you within 24 hours.
               </p>
-              <div className="grid grid-cols-2 gap-3 mb-5">
-                <div className="bg-[#FFF8E1] rounded-xl p-4">
-                  <Mail size={20} className="text-[#D32F2F] mb-1 mx-auto" />
-                  <div
-                    className="font-semibold text-[#212121] text-xs mb-0.5"
-                    style={{ fontFamily: "Poppins, sans-serif" }}
-                  >
-                    Email Sent
-                  </div>
-                  <div className="text-[#616161] text-xs truncate">
-                    {form.email || "your email"}
-                  </div>
-                </div>
-                <div className="bg-[#FFF8E1] rounded-xl p-4">
-                  <MessageCircle
-                    size={20}
-                    className="text-green-500 mb-1 mx-auto"
-                  />
-                  <div
-                    className="font-semibold text-[#212121] text-xs mb-0.5"
-                    style={{ fontFamily: "Poppins, sans-serif" }}
-                  >
-                    WhatsApp Sent
-                  </div>
-                  <div className="text-[#616161] text-xs">
-                    {form.mobile || "your number"}
-                  </div>
-                </div>
-              </div>
               <button
                 onClick={onClose}
                 className="w-full py-3 bg-[#D32F2F] text-white rounded-xl font-semibold hover:bg-[#B71C1C] transition-colors"

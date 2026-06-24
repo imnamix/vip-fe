@@ -37,6 +37,7 @@ import { getAllVipNumbers } from '../services/VipNumbersService';
 import { getAllServices } from '../services/ServicesService';
 import { getAllTestimonials } from '../services/TestimonialService';
 import { getAllFaqs } from '../services/FaqService';
+import GeneralInquiryPopup from '../components/GeneralInquiryPopup';
 
 interface VipNumber {
   id: number;
@@ -357,6 +358,7 @@ function ReviewsCarousel({ reviews }: { reviews: Testimonial[] }) {
 
 export default function Home() {
   const [slides, setSlides] = useState<ApiSlide[]>([]);
+  const [slidesLoaded, setSlidesLoaded] = useState(false);
   const [currentSlide, setCurrentSlide] = useState(0);
   const [aboutUs, setAboutUs] = useState<AboutUsData | null>(null);
   const [vipNumbers, setVipNumbers] = useState<VipNumber[]>([]);
@@ -373,11 +375,14 @@ export default function Home() {
   const { openBooking } = useOutletContext<OutletCtx>();
   const navigate = useNavigate();
 
+  const [inquiryContext, setInquiryContext] = useState<{ lookingFor: string; title: string } | null>(null);
+
   useEffect(() => {
     getAllHomepage(1, 1).then(res => {
       const record = res?.data?.[0];
       if (record?.slides?.length) setSlides(record.slides);
-    }).catch(() => {});
+      setSlidesLoaded(true);
+    }).catch(() => { setSlidesLoaded(true); });
 
     getAllAboutUs(1, 1).then(res => {
       const record = res?.data?.[0];
@@ -411,7 +416,7 @@ export default function Home() {
     );
     observer.observe(el);
     return () => observer.disconnect();
-  }, []);
+  }, [aboutUs]);
 
   useEffect(() => {
     if (slides.length < 2) return;
@@ -422,12 +427,19 @@ export default function Home() {
   const prevSlide = () => setCurrentSlide(s => (s - 1 + slides.length) % slides.length);
   const nextSlide = () => setCurrentSlide(s => (s + 1) % slides.length);
 
+  const openVipInquiry = (vip: VipNumber) =>
+    setInquiryContext({ lookingFor: `Enquiry for ${vip.vipNumber}`, title: vip.vipNumber });
+
+  const openServiceInquiry = (service: FetchedService) =>
+    setInquiryContext({ lookingFor: `Enquiry for ${service.title}`, title: service.title });
+
   return (
     <div className="overflow-x-hidden">
       {/* ─── Hero Slider ─────────────────────── */}
+      {(!slidesLoaded || slides.length > 0) && (
       <section className="group relative h-[85vh] min-h-[520px] overflow-hidden bg-[#1a1a1a]">
         {slides.length === 0 ? (
-          /* Loading / empty state — dark bg so layout doesn't jump */
+          /* Loading skeleton */
           <div className="absolute inset-0 flex items-center justify-center">
             <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 w-full">
               <div className="max-w-2xl animate-pulse space-y-4">
@@ -510,8 +522,10 @@ export default function Home() {
           </>
         )}
       </section>
+      )}
 
       {/* ─── About Preview ───────────────────── */}
+      {aboutUs && (aboutUs.homepageAboutUsTitle || aboutUs.homepageAboutUsDescription || aboutUs.homepageAboutUsImage) && (
       <section ref={aboutRef} className="py-20 bg-white overflow-hidden">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
           <div className="grid grid-cols-1 lg:grid-cols-2 gap-16 items-center">
@@ -586,8 +600,10 @@ export default function Home() {
           </div>
         </div>
       </section>
+      )}
 
       {/* ─── VIP Numbers ─────────────────────── */}
+      {vipNumbers.length > 0 && (
       <section className="py-20 bg-[#FFF8E1]">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
           <div className="text-center mb-14">
@@ -627,7 +643,7 @@ export default function Home() {
                     {n.price != null ? `₹${Number(n.price).toLocaleString('en-IN')}` : '—'}
                   </span>
                   <button
-                    onClick={openBooking}
+                    onClick={() => n.tag !== 'SOLD OUT' && openVipInquiry(n)}
                     disabled={n.tag === 'SOLD OUT'}
                     className={`px-4 py-1.5 rounded-xl text-sm font-semibold transition-colors ${n.tag === 'SOLD OUT' ? 'bg-gray-100 text-gray-400 cursor-not-allowed' : 'bg-[#D32F2F] text-white hover:bg-[#B71C1C]'}`}
                   >
@@ -644,8 +660,10 @@ export default function Home() {
           </div> */}
         </div>
       </section>
+      )}
 
       {/* ─── Services ────────────────────────── */}
+      {fetchedServices.length > 0 && (
       <section className="py-20 bg-white">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
           <div className="text-center mb-14">
@@ -679,6 +697,7 @@ export default function Home() {
           </div>
         </div>
       </section>
+      )}
 
       {/* ─── Service Detail Popup ─────────────── */}
       {selectedService && (
@@ -708,7 +727,7 @@ export default function Home() {
                 {renderServiceDescription(selectedService.description)}
               </div>
               <button
-                onClick={() => { setSelectedService(null); openBooking(); }}
+                onClick={() => { openServiceInquiry(selectedService); setSelectedService(null); }}
                 className="w-full py-3.5 bg-[#D32F2F] text-white rounded-xl font-semibold hover:bg-[#B71C1C] transition-colors"
                 style={{ fontFamily: 'Poppins, sans-serif' }}
               >
@@ -717,6 +736,15 @@ export default function Home() {
             </div>
           </div>
         </div>
+      )}
+
+      {/* ─── General Inquiry Popup ───────────── */}
+      {inquiryContext && (
+        <GeneralInquiryPopup
+          lookingFor={inquiryContext.lookingFor}
+          title={inquiryContext.title}
+          onClose={() => setInquiryContext(null)}
+        />
       )}
 
       {/* ─── Benefits ────────────────────────── */}
@@ -745,6 +773,7 @@ export default function Home() {
       </section>
 
       {/* ─── Social Proof / Testimonials ─────── */}
+      {testimonials.length > 0 && (
       <section className="py-20 bg-white">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
           <div className="text-center mb-14">
@@ -779,6 +808,7 @@ export default function Home() {
           <ReviewsCarousel reviews={testimonials} />
         </div>
       </section>
+      )}
 
       {/* ─── FAQ ─────────────────────────────── */}
       {faqs.length > 0 && (() => {

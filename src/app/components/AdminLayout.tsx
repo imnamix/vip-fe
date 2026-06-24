@@ -4,20 +4,19 @@ import { AdminThemeContext } from '../context/AdminThemeContext';
 import {
   LayoutDashboard, Users, MessageSquare, UserCheck, Calendar,
   FileText, Shield, Truck, Bell, ChevronLeft, Menu, Search,
-  LogOut, ChevronDown, User, X, Sun, Moon, Hash,
+  LogOut, ChevronDown, User, X, Sun, Moon, Hash, Settings, ExternalLink,
 } from 'lucide-react';
 
 const menuItems = [
-  { label: 'Dashboard',       path: '/admin',               icon: LayoutDashboard },
-  { label: 'Customers',       path: '/admin/customers',     icon: Users           },
-  { label: 'Inquiries',       path: '/admin/inquiries',     icon: MessageSquare   },
-  { label: 'Numerologists',   path: '/admin/numerologists', icon: UserCheck       },
-  { label: 'Events',          path: '/admin/events',        icon: Calendar        },
-  { label: 'Top VIP Numbers', path: '/admin/vip-numbers',   icon: Hash            },
-  { label: 'Content',         path: '/admin/content',       icon: FileText        },
-  { label: 'User & Roles',    path: '/admin/roles',         icon: Shield          },
-  { label: 'Delivery',        path: '/admin/delivery',      icon: Truck           },
-  { label: 'Notifications',   path: '/admin/notifications', icon: Bell            },
+  { label: 'Dashboard',          path: '/admin',                      icon: LayoutDashboard },
+  { label: 'Inquiries',          path: '/admin/inquiries',            icon: MessageSquare   },
+  { label: 'General Enquiries',  path: '/admin/general-inquiries',    icon: MessageSquare   },
+  { label: 'Events',             path: '/admin/events',               icon: Calendar        },
+  { label: 'Top VIP Numbers',    path: '/admin/vip-numbers',          icon: Hash            },
+  { label: 'Content',            path: '/admin/content',              icon: FileText        },
+  { label: 'User & Roles',       path: '/admin/roles',                icon: Shield          },
+  { label: 'Delivery',           path: '/admin/delivery',             icon: Truck           },
+  { label: 'Settings',           path: '/admin/settings',             icon: Settings        },
 ];
 
 export default function AdminLayout() {
@@ -89,6 +88,20 @@ export default function AdminLayout() {
           );
         })}
       </nav>
+
+      {/* Go to Website */}
+      <div className="px-2 pb-1 flex-shrink-0">
+        <a
+          href="/"
+          target="_blank"
+          rel="noopener noreferrer"
+          className="flex items-center gap-3 px-3 py-2.5 rounded-xl text-sm font-medium text-[#616161] dark:text-gray-400 hover:bg-gray-50 dark:hover:bg-white/5 hover:text-[#212121] dark:hover:text-white transition-all"
+          title={!sidebarOpen ? 'Go to Website' : undefined}
+        >
+          <ExternalLink size={17} className="flex-shrink-0" />
+          {sidebarOpen && <span className="truncate">Go to Website</span>}
+        </a>
+      </div>
 
       {/* Collapse (desktop only) */}
       <div className="p-3 border-t border-gray-100 dark:border-white/5 flex-shrink-0 hidden lg:block">
