@@ -4,12 +4,8 @@ import { loadingActionHandler } from '../store/slice/Loader';
 
 export const sessionTimeoutHandler = (isSessionTimeout = false) => {
   localStorage.removeItem('token');
-
-  if (isSessionTimeout) {
-    window.location.href = '/session-timeout';
-  } else {
-    window.location.href = '/login';
-  }
+  localStorage.removeItem('admin_user');
+  window.location.href = '/admin/login';
 };
 
 // ------------------------------------ Authorized routes ------------------------------------

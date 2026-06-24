@@ -30,6 +30,14 @@ export default function AdminLayout() {
   const location = useLocation();
   const navigate = useNavigate();
 
+  // Auth guard: redirect to login if no token
+  useEffect(() => {
+    const token = localStorage.getItem('token');
+    if (!token) {
+      navigate('/admin/login', { replace: true });
+    }
+  }, [navigate]);
+
   useEffect(() => {
     window.scrollTo(0, 0);
   }, [location.pathname]);
@@ -41,6 +49,28 @@ export default function AdminLayout() {
       return next;
     });
   };
+
+  const handleLogout = () => {
+    localStorage.removeItem('token');
+    localStorage.removeItem('admin_user');
+    setProfileOpen(false);
+    navigate('/admin/login', { replace: true });
+  };
+
+  const adminUser = (() => {
+    try {
+      const raw = localStorage.getItem('admin_user');
+      return raw ? JSON.parse(raw) : null;
+    } catch { return null; }
+  })();
+
+  const displayName = adminUser?.name || 'Admin';
+  const displayInitials = displayName
+    .split(' ')
+    .map((w: string) => w[0])
+    .join('')
+    .toUpperCase()
+    .slice(0, 2);
 
   const isActive = (path: string) =>
     path === '/admin' ? location.pathname === '/admin' : location.pathname.startsWith(path);
@@ -191,9 +221,9 @@ export default function AdminLayout() {
                   className="flex items-center gap-2 p-1.5 rounded-xl hover:bg-gray-100 dark:hover:bg-white/10 transition-colors"
                 >
                   <div className="w-7 h-7 rounded-full bg-gradient-to-br from-[#D32F2F] to-[#FBC02D] flex items-center justify-center flex-shrink-0">
-                    <span className="text-white text-xs font-bold">SA</span>
+                    <span className="text-white text-xs font-bold">{displayInitials}</span>
                   </div>
-                  <span className="hidden md:block text-sm font-semibold text-[#212121] dark:text-white" style={{ fontFamily: 'Poppins, sans-serif' }}>Super Admin</span>
+                  <span className="hidden md:block text-sm font-semibold text-[#212121] dark:text-white" style={{ fontFamily: 'Poppins, sans-serif' }}>{displayName}</span>
                   <ChevronDown size={13} className="text-gray-400 dark:text-gray-500" />
                 </button>
 
@@ -202,8 +232,8 @@ export default function AdminLayout() {
                     <div className="fixed inset-0 z-40" onClick={() => setProfileOpen(false)} />
                     <div className="absolute right-0 top-full mt-1 w-52 bg-white dark:bg-[#1e2133] rounded-xl border border-gray-100 dark:border-white/10 shadow-lg dark:shadow-black/50 py-1 z-50">
                       <div className="px-4 py-3 border-b border-gray-100 dark:border-white/10">
-                        <div className="text-sm font-semibold text-[#212121] dark:text-white">Super Admin</div>
-                        <div className="text-xs text-gray-400 dark:text-gray-500">admin@vipnumerology.com</div>
+                        <div className="text-sm font-semibold text-[#212121] dark:text-white">{displayName}</div>
+                        <div className="text-xs text-gray-400 dark:text-gray-500">{adminUser?.email || ''}</div>
                       </div>
                       <button
                         onClick={() => { setProfileOpen(false); navigate('/admin/profile'); }}
@@ -211,7 +241,6 @@ export default function AdminLayout() {
                       >
                         <User size={14} className="text-[#616161] dark:text-gray-400" /> Profile
                       </button>
-                      {/* Theme toggle inside dropdown too */}
                       <button
                         onClick={() => { setProfileOpen(false); toggleTheme(); }}
                         className="w-full flex items-center gap-2 px-4 py-2.5 text-sm text-[#212121] dark:text-gray-200 hover:bg-gray-50 dark:hover:bg-white/5 transition-colors"
@@ -224,7 +253,7 @@ export default function AdminLayout() {
                       </button>
                       <div className="border-t border-gray-100 dark:border-white/10 mt-1 pt-1">
                         <button
-                          onClick={() => navigate('/admin/login')}
+                          onClick={handleLogout}
                           className="w-full flex items-center gap-2 px-4 py-2.5 text-sm text-[#D32F2F] hover:bg-red-50 dark:hover:bg-red-900/20 transition-colors"
                         >
                           <LogOut size={14} /> Sign Out
