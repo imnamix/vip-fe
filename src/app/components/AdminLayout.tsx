@@ -2,7 +2,7 @@ import { useState, useEffect } from 'react';
 import { Outlet, Link, useLocation, useNavigate } from 'react-router';
 import { AdminThemeContext } from '../context/AdminThemeContext';
 import {
-  LayoutDashboard, Users, MessageSquare, UserCheck, Calendar,
+  LayoutDashboard, Users, MessageSquare, Calendar,
   FileText, Shield, Truck, Bell, ChevronLeft, Menu, Search,
   LogOut, ChevronDown, User, X, Sun, Moon, Hash, Settings, ExternalLink,
 } from 'lucide-react';
@@ -10,11 +10,12 @@ import {
 const menuItems = [
   { label: 'Dashboard',          path: '/admin',                      icon: LayoutDashboard },
   { label: 'Inquiries',          path: '/admin/inquiries',            icon: MessageSquare   },
-  { label: 'General Enquiries',  path: '/admin/general-inquiries',    icon: MessageSquare   },
+  { label: 'General Inquiries',  path: '/admin/general-inquiries',    icon: MessageSquare   },
   { label: 'Events',             path: '/admin/events',               icon: Calendar        },
   { label: 'Top VIP Numbers',    path: '/admin/vip-numbers',          icon: Hash            },
   { label: 'Content',            path: '/admin/content',              icon: FileText        },
-  { label: 'User & Roles',       path: '/admin/roles',                icon: Shield          },
+  { label: 'Roles',              path: '/admin/roles',                icon: Shield          },
+  { label: 'Users',              path: '/admin/users',                icon: Users           },
   { label: 'Delivery',           path: '/admin/delivery',             icon: Truck           },
   { label: 'Settings',           path: '/admin/settings',             icon: Settings        },
 ];
@@ -83,11 +84,19 @@ export default function AdminLayout() {
           <span className="text-white font-bold text-sm" style={{ fontFamily: 'Poppins, sans-serif' }}>V</span>
         </div>
         {(sidebarOpen || mobileSidebarOpen) && (
-          <div className="overflow-hidden">
+          <div className="overflow-hidden flex-1">
             <div className="text-[#D32F2F] font-bold text-sm leading-tight truncate" style={{ fontFamily: 'Poppins, sans-serif' }}>VIP Numerology</div>
             <div className="text-gray-400 dark:text-gray-500 text-xs truncate">Admin Portal</div>
           </div>
         )}
+        {/* Collapse toggle — desktop only */}
+        <button
+          onClick={() => setSidebarOpen(!sidebarOpen)}
+          className="hidden lg:flex items-center justify-center w-7 h-7 rounded-lg text-gray-400 dark:text-gray-500 hover:bg-gray-100 dark:hover:bg-white/10 hover:text-gray-600 dark:hover:text-gray-300 transition-colors flex-shrink-0 ml-auto"
+          title={sidebarOpen ? 'Collapse sidebar' : 'Expand sidebar'}
+        >
+          <ChevronLeft size={15} className={`transition-transform duration-300 ${sidebarOpen ? '' : 'rotate-180'}`} />
+        </button>
       </div>
 
       {/* Nav */}
@@ -133,16 +142,6 @@ export default function AdminLayout() {
         </a>
       </div>
 
-      {/* Collapse (desktop only) */}
-      <div className="p-3 border-t border-gray-100 dark:border-white/5 flex-shrink-0 hidden lg:block">
-        <button
-          onClick={() => setSidebarOpen(!sidebarOpen)}
-          className="w-full flex items-center justify-center gap-2 p-2 rounded-lg text-gray-400 dark:text-gray-500 hover:bg-gray-50 dark:hover:bg-white/5 hover:text-gray-600 dark:hover:text-gray-300 transition-colors"
-        >
-          <ChevronLeft size={15} className={`transition-transform ${sidebarOpen ? '' : 'rotate-180'}`} />
-          {sidebarOpen && <span className="text-xs">Collapse</span>}
-        </button>
-      </div>
     </>
   );
 

@@ -24,7 +24,8 @@ import VipNumbers from './pages/admin/VipNumbers';
 import VipNumberForm from './pages/admin/VipNumberForm';
 import VipNumberView from './pages/admin/VipNumberView';
 import ContentManagement from './pages/admin/ContentManagement';
-import UserRoles from './pages/admin/UserRoles';
+import Roles from './pages/admin/Roles';
+import AdminUsers from './pages/admin/AdminUsers';
 import DeliveryTracking from './pages/admin/DeliveryTracking';
 import Notifications from './pages/admin/Notifications';
 import AdminProfile from './pages/admin/AdminProfile';
@@ -68,7 +69,8 @@ export const router = createBrowserRouter([
       { path: 'vip-numbers/:id', Component: VipNumberView },
       { path: 'vip-numbers/:id/edit', Component: VipNumberForm },
       { path: 'content', Component: ContentManagement },
-      { path: 'roles', Component: UserRoles },
+      { path: 'roles', Component: Roles },
+      { path: 'users', Component: AdminUsers },
       { path: 'delivery', Component: DeliveryTracking },
       { path: 'notifications', Component: Notifications },
       { path: 'profile', Component: AdminProfile },

@@ -260,7 +260,7 @@ export default function GeneralInquiries() {
 
   const statCards = [
     {
-      label: 'Total Enquiries',
+      label: 'Total Inquiries',
       value: stats.total,
       icon: MessageSquarePlus,
       bg: 'bg-blue-50 dark:bg-blue-900/20',
@@ -274,7 +274,7 @@ export default function GeneralInquiries() {
       iconColor: 'text-orange-500',
     },
     {
-      label: "Today's Enquiries",
+      label: "Today's Inquiries",
       value: stats.today,
       icon: Calendar,
       bg: 'bg-green-50 dark:bg-green-900/20',
@@ -295,7 +295,7 @@ export default function GeneralInquiries() {
       <div className="flex flex-wrap items-center justify-between gap-3 mb-5">
         <div>
           <h1 className="text-xl font-bold text-[#212121] dark:text-white" style={{ fontFamily: 'Poppins, sans-serif' }}>
-            General Enquiries
+            General Inquiries
           </h1>
           <p className="text-[#616161] dark:text-gray-400 text-xs mt-0.5">
             {loading ? 'Loading…' : `${total} enquier${total !== 1 ? 'ies' : 'y'} total`}

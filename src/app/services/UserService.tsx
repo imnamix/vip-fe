@@ -58,6 +58,29 @@ export const getAllUsers = async (
   }
 };
 
+export const uploadProfilePicture = async (file: File): Promise<string> => {
+  const form = new FormData();
+  form.append('files', file);
+  const response = await ApiRequest.post('uploadFiles/uploadS3', form, {
+    headers: { 'Content-Type': 'multipart/form-data' },
+  });
+  const result = response.data?.files?.[0]?.data;
+  if (!result?.access_url) throw new Error('Upload failed — no URL returned');
+  return result.access_url;
+};
+
+export const changePassword = async (
+  id: number | string,
+  currentPassword: string,
+  newPassword: string,
+) => {
+  const response = await ApiRequest.post(`user/change-password/${id}`, {
+    currentPassword,
+    newPassword,
+  });
+  return response.data;
+};
+
 export const deleteUsers = async (id: any) => {
   try {
     const response = await ApiRequest.delete(URL.DELETE, {
