@@ -1,11 +1,10 @@
 import { useState, useEffect, useRef, useCallback } from 'react';
+import { useSearchParams } from 'react-router';
 import { Plus, Edit, Trash2, Users, ChevronLeft, ChevronRight, Search, Save, RefreshCw, X, Eye, EyeOff, Send } from 'lucide-react';
 import { getAllUsers, getUserByID, addUser, updateUser, deleteUsers } from '../../services/UserService';
 import { getAllRoles } from '../../services/RoleService';
 
 // ─── Types ────────────────────────────────────────────────────────────────────
-type Mode = 'list' | 'form';
-
 interface AdminUser {
   id: string | number;
   name: string;
@@ -13,10 +12,10 @@ interface AdminUser {
   mobile: string;
   roleName: string;
   status: string;
+  profilePicture?: string;
   created_at?: string;
 }
 
-// Normalize raw API user → AdminUser (handles role as object or string, phone vs mobile)
 function normalizeUser(raw: any): AdminUser {
   const roleRaw = raw.role;
   const roleName: string =
@@ -30,17 +29,17 @@ function normalizeUser(raw: any): AdminUser {
     : statusRaw || 'Active';
 
   return {
-    id:         raw.id,
-    name:       raw.name ?? '',
-    email:      raw.email ?? '',
-    mobile:     raw.phone ?? raw.mobile ?? '',
+    id:             raw.id,
+    name:           raw.name ?? '',
+    email:          raw.email ?? '',
+    mobile:         raw.phone ?? raw.mobile ?? '',
     roleName,
     status,
-    created_at: raw.created_at,
+    profilePicture: raw.profilePicture ?? undefined,
+    created_at:     raw.created_at,
   };
 }
 
-// Derive badge colour from role name (graceful fallback for unknown names)
 function roleBadgeClass(roleName: string): string {
   const key = roleName.toLowerCase();
   if (key.includes('super'))    return 'bg-red-100 text-[#D32F2F]';
@@ -74,21 +73,28 @@ function SkeletonRows({ count }: { count: number }) {
 }
 
 export default function AdminUsers() {
-  const [mode, setMode]           = useState<Mode>('list');
-  const [users, setUsers]         = useState<AdminUser[]>([]);
-  const [total, setTotal]         = useState(0);
-  const [loading, setLoading]     = useState(true);
-  const [saving, setSaving]       = useState(false);
+  const [searchParams, setSearchParams] = useSearchParams();
+
+  // mode and editUserId are URL-driven — survives refresh
+  const mode       = searchParams.get('mode') === 'form' ? 'form' : 'list';
+  const editUserId = searchParams.get('id') ?? null;
+
+  const [users, setUsers]           = useState<AdminUser[]>([]);
+  const [total, setTotal]           = useState(0);
+  const [loading, setLoading]       = useState(true);
+  const [formLoading, setFormLoading] = useState(false);
+  const [saving, setSaving]         = useState(false);
   const [fetchError, setFetchError] = useState('');
   const [saveError, setSaveError]   = useState('');
 
-  const [roleOptions, setRoleOptions] = useState<string[]>([]);
+  const [roleOptions, setRoleOptions]   = useState<string[]>([]);
   const [showPassword, setShowPassword] = useState(false);
 
-  const [userForm, setUserForm]     = useState(emptyForm);
-  const [editUserId, setEditUserId] = useState<string | number | null>(null);
-  const [deleteId, setDeleteId]     = useState<string | number | null>(null);
-  const [deleting, setDeleting]     = useState(false);
+  const [userForm, setUserForm] = useState(emptyForm);
+  const [deleteId, setDeleteId] = useState<string | number | null>(null);
+  const [deleting, setDeleting] = useState(false);
+
+  const [previewPic, setPreviewPic] = useState<string | null>(null);
 
   const [search, setSearch] = useState('');
   const [page, setPage]     = useState(1);
@@ -110,15 +116,13 @@ export default function AdminUsers() {
     }
   }, []);
 
-  // ── Fetch role names from admin_role table ────────────────────────────────
   const fetchRoles = useCallback(async () => {
     try {
       const res = await getAllRoles();
       const list: any[] = res?.data ?? res ?? [];
-      const names = list.map((r: any) => r.name).filter(Boolean);
-      setRoleOptions(names);
+      setRoleOptions(list.map((r: any) => r.name).filter(Boolean));
     } catch {
-      // non-critical; user can still view the list
+      // non-critical
     }
   }, []);
 
@@ -127,7 +131,32 @@ export default function AdminUsers() {
     fetchRoles();
   }, [fetchUsers, fetchRoles]);
 
-  // ── Search with debounce ───────────────────────────────────────────────────
+  // ── Restore form on refresh ────────────────────────────────────────────────
+  useEffect(() => {
+    if (mode !== 'form') return;
+
+    if (editUserId) {
+      setFormLoading(true);
+      getUserByID(editUserId)
+        .then(res => {
+          const raw = res?.data ?? res;
+          if (raw) {
+            const u = normalizeUser(raw);
+            setUserForm({ name: u.name, email: u.email, mobile: u.mobile, roleName: u.roleName, status: u.status, password: '' });
+          } else {
+            setSearchParams({});
+          }
+        })
+        .catch(() => setSearchParams({}))
+        .finally(() => setFormLoading(false));
+    } else {
+      setUserForm({ ...emptyForm });
+    }
+    // only on initial mount
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
+
+  // ── Search ─────────────────────────────────────────────────────────────────
   const handleSearch = (q: string) => {
     setSearch(q);
     if (searchTimer.current) clearTimeout(searchTimer.current);
@@ -139,27 +168,26 @@ export default function AdminUsers() {
   // ── Form helpers ───────────────────────────────────────────────────────────
   const openNew = () => {
     setUserForm({ ...emptyForm, roleName: roleOptions[0] ?? '' });
-    setEditUserId(null);
     setSaveError('');
-    setMode('form');
+    setShowPassword(false);
+    setSearchParams({ mode: 'form' });
   };
 
   const openEdit = async (u: AdminUser) => {
     setSaveError('');
     setShowPassword(false);
     setUserForm({ name: u.name, email: u.email, mobile: u.mobile, roleName: u.roleName, status: u.status, password: '' });
-    setEditUserId(u.id);
-    setMode('form');
+    setSearchParams({ mode: 'form', id: String(u.id) });
     try {
       const res = await getUserByID(u.id);
       const fresh = normalizeUser(res?.data ?? res ?? u);
       setUserForm({ name: fresh.name, email: fresh.email, mobile: fresh.mobile, roleName: fresh.roleName, status: fresh.status, password: '' });
     } catch {
-      // keep data already set from the list
+      // keep data already set
     }
   };
 
-  const handleBack = () => { setMode('list'); setSaveError(''); setShowPassword(false); };
+  const handleBack = () => { setSaveError(''); setSearchParams({}); };
 
   // ── Save ───────────────────────────────────────────────────────────────────
   const handleSave = async (sendWelcome = false) => {
@@ -184,7 +212,7 @@ export default function AdminUsers() {
         await addUser(payload);
       }
       await fetchUsers(page, search);
-      setMode('list');
+      setSearchParams({});
     } catch {
       setSaveError('Failed to save. Please try again.');
     } finally {
@@ -306,13 +334,26 @@ export default function AdminUsers() {
                         const joined = u.created_at
                           ? new Date(u.created_at).toLocaleDateString('en-IN', { day: 'numeric', month: 'short', year: 'numeric' })
                           : '—';
+                        const initials = (u.name || '?').split(' ').map(w => w[0]).join('').slice(0, 2).toUpperCase();
                         return (
                           <tr key={u.id} className="border-b border-gray-50 hover:bg-gray-50 transition-colors">
                             <td className="px-4 py-3">
                               <div className="flex items-center gap-2">
-                                <div className="w-7 h-7 rounded-full bg-gradient-to-br from-[#D32F2F] to-[#FBC02D] flex items-center justify-center text-white text-xs font-bold flex-shrink-0">
-                                  {(u.name || '?').split(' ').map(w => w[0]).join('').slice(0, 2).toUpperCase()}
-                                </div>
+                                {/* Avatar — shows profile pic if available, initials otherwise */}
+                                <button
+                                  type="button"
+                                  onClick={() => u.profilePicture && setPreviewPic(u.profilePicture)}
+                                  className={`w-7 h-7 rounded-full flex-shrink-0 overflow-hidden flex items-center justify-center transition-opacity ${u.profilePicture ? 'cursor-pointer hover:opacity-80' : 'cursor-default'}`}
+                                  title={u.profilePicture ? 'View photo' : undefined}
+                                >
+                                  {u.profilePicture ? (
+                                    <img src={u.profilePicture} alt={u.name} className="w-full h-full object-cover" />
+                                  ) : (
+                                    <div className="w-full h-full bg-gradient-to-br from-[#D32F2F] to-[#FBC02D] flex items-center justify-center text-white text-[10px] font-bold">
+                                      {initials}
+                                    </div>
+                                  )}
+                                </button>
                                 <span className="text-sm font-medium text-[#212121] whitespace-nowrap">{u.name}</span>
                               </div>
                             </td>
@@ -375,154 +416,164 @@ export default function AdminUsers() {
       {/* ═══════════════ FORM ═══════════════ */}
       {mode === 'form' && (
         <div className="flex justify-center">
-          <div className="bg-white rounded-2xl border border-gray-100 py-4 px-8 w-full max-w-lg">
-
-            {/* Centered heading */}
-            <div className="text-start mb-4">
-              {/* <div className="w-12 h-12 rounded-full bg-red-50 flex items-center justify-center mx-auto mb-3">
-                <Users size={20} className="text-[#D32F2F]" />
-              </div> */}
-              <h2 className="text-lg font-bold text-[#212121]" style={{ fontFamily: 'Poppins, sans-serif' }}>
-                {editUserId ? 'Edit User' : 'Create New User'}
-              </h2>
-              <p className="text-xs text-[#616161] mt-1">
-                {editUserId ? 'Update user details and role assignment' : 'Fill in the details to add a new admin user'}
-              </p>
-            </div>
-
-            <div className="space-y-4">
-              {/* Name */}
-              <div>
-                <label className="block text-xs font-semibold text-[#616161] uppercase tracking-wider mb-1.5">Full Name *</label>
-                <input
-                  type="text"
-                  value={userForm.name}
-                  onChange={e => setUserForm(f => ({ ...f, name: e.target.value }))}
-                  placeholder="e.g. Anita Sharma"
-                  className="w-full px-3 py-2.5 border border-gray-200 rounded-xl text-sm focus:outline-none focus:border-[#D32F2F]"
-                />
+          {formLoading ? (
+            <div className="bg-white rounded-2xl border border-gray-100 py-4 px-8 w-full max-w-lg animate-pulse h-96" />
+          ) : (
+            <div className="bg-white rounded-2xl border border-gray-100 py-4 px-8 w-full max-w-lg">
+              <div className="text-start mb-4">
+                <h2 className="text-lg font-bold text-[#212121]" style={{ fontFamily: 'Poppins, sans-serif' }}>
+                  {editUserId ? 'Edit User' : 'Create New User'}
+                </h2>
+                <p className="text-xs text-[#616161] mt-1">
+                  {editUserId ? 'Update user details and role assignment' : 'Fill in the details to add a new admin user'}
+                </p>
               </div>
 
-              {/* Email */}
-              <div>
-                <label className="block text-xs font-semibold text-[#616161] uppercase tracking-wider mb-1.5">Email *</label>
-                <input
-                  type="email"
-                  value={userForm.email}
-                  onChange={e => setUserForm(f => ({ ...f, email: e.target.value }))}
-                  placeholder="user@vipnumerology.com"
-                  className="w-full px-3 py-2.5 border border-gray-200 rounded-xl text-sm focus:outline-none focus:border-[#D32F2F]"
-                />
-              </div>
-
-              {/* Mobile */}
-              <div>
-                <label className="block text-xs font-semibold text-[#616161] uppercase tracking-wider mb-1.5">Mobile</label>
-                <input
-                  type="tel"
-                  value={userForm.mobile}
-                  onChange={e => setUserForm(f => ({ ...f, mobile: e.target.value }))}
-                  placeholder="+91 98000 00000"
-                  className="w-full px-3 py-2.5 border border-gray-200 rounded-xl text-sm focus:outline-none focus:border-[#D32F2F]"
-                />
-              </div>
-
-              {/* Password */}
-              <div>
-                <label className="block text-xs font-semibold text-[#616161] uppercase tracking-wider mb-1.5">
-                  Password {!editUserId && '*'}{editUserId && <span className="text-[10px] normal-case font-normal ml-1">(leave blank to keep current)</span>}
-                </label>
-                <div className="relative">
-                  <input
-                    type={showPassword ? 'text' : 'password'}
-                    value={userForm.password}
-                    onChange={e => setUserForm(f => ({ ...f, password: e.target.value }))}
-                    placeholder={editUserId ? '••••••••' : 'Min. 8 characters'}
-                    className="w-full px-3 py-2.5 pr-10 border border-gray-200 rounded-xl text-sm focus:outline-none focus:border-[#D32F2F]"
-                  />
-                  <button
-                    type="button"
-                    onClick={() => setShowPassword(v => !v)}
-                    className="absolute right-3 top-1/2 -translate-y-1/2 text-gray-400 hover:text-[#616161] transition-colors"
-                  >
-                    {showPassword ? <EyeOff size={15} /> : <Eye size={15} />}
-                  </button>
-                </div>
-              </div>
-
-              {/* Role + Status */}
-              <div className="grid grid-cols-2 gap-4">
+              <div className="space-y-4">
+                {/* Name */}
                 <div>
-                  <label className="block text-xs font-semibold text-[#616161] uppercase tracking-wider mb-1.5">Role</label>
-                  {roleOptions.length > 0 ? (
+                  <label className="block text-xs font-semibold text-[#616161] uppercase tracking-wider mb-1.5">Full Name *</label>
+                  <input
+                    type="text"
+                    value={userForm.name}
+                    onChange={e => setUserForm(f => ({ ...f, name: e.target.value }))}
+                    placeholder="e.g. Anita Sharma"
+                    className="w-full px-3 py-2.5 border border-gray-200 rounded-xl text-sm focus:outline-none focus:border-[#D32F2F]"
+                  />
+                </div>
+
+                {/* Email */}
+                <div>
+                  <label className="block text-xs font-semibold text-[#616161] uppercase tracking-wider mb-1.5">Email *</label>
+                  <input
+                    type="email"
+                    value={userForm.email}
+                    onChange={e => setUserForm(f => ({ ...f, email: e.target.value }))}
+                    placeholder="user@vipnumerology.com"
+                    className="w-full px-3 py-2.5 border border-gray-200 rounded-xl text-sm focus:outline-none focus:border-[#D32F2F]"
+                  />
+                </div>
+
+                {/* Mobile */}
+                <div>
+                  <label className="block text-xs font-semibold text-[#616161] uppercase tracking-wider mb-1.5">Mobile</label>
+                  <input
+                    type="tel"
+                    value={userForm.mobile}
+                    onChange={e => setUserForm(f => ({ ...f, mobile: e.target.value }))}
+                    placeholder="+91 98000 00000"
+                    className="w-full px-3 py-2.5 border border-gray-200 rounded-xl text-sm focus:outline-none focus:border-[#D32F2F]"
+                  />
+                </div>
+
+                {/* Password */}
+                <div>
+                  <label className="block text-xs font-semibold text-[#616161] uppercase tracking-wider mb-1.5">
+                    Password {!editUserId && '*'}{editUserId && <span className="text-[10px] normal-case font-normal ml-1">(leave blank to keep current)</span>}
+                  </label>
+                  <div className="relative">
+                    <input
+                      type={showPassword ? 'text' : 'password'}
+                      value={userForm.password}
+                      onChange={e => setUserForm(f => ({ ...f, password: e.target.value }))}
+                      placeholder={editUserId ? '••••••••' : 'Min. 8 characters'}
+                      className="w-full px-3 py-2.5 pr-10 border border-gray-200 rounded-xl text-sm focus:outline-none focus:border-[#D32F2F]"
+                    />
+                    <button
+                      type="button"
+                      onClick={() => setShowPassword(v => !v)}
+                      className="absolute right-3 top-1/2 -translate-y-1/2 text-gray-400 hover:text-[#616161] transition-colors"
+                    >
+                      {showPassword ? <EyeOff size={15} /> : <Eye size={15} />}
+                    </button>
+                  </div>
+                </div>
+
+                {/* Role + Status */}
+                <div className="grid grid-cols-2 gap-4">
+                  <div>
+                    <label className="block text-xs font-semibold text-[#616161] uppercase tracking-wider mb-1.5">Role</label>
+                    {roleOptions.length > 0 ? (
+                      <select
+                        value={userForm.roleName}
+                        onChange={e => setUserForm(f => ({ ...f, roleName: e.target.value }))}
+                        className="w-full px-3 py-2.5 border border-gray-200 rounded-xl text-sm focus:outline-none focus:border-[#D32F2F] bg-white"
+                      >
+                        <option value="">Select a role</option>
+                        {roleOptions.map(r => <option key={r} value={r}>{r}</option>)}
+                      </select>
+                    ) : (
+                      <input
+                        type="text"
+                        value={userForm.roleName}
+                        onChange={e => setUserForm(f => ({ ...f, roleName: e.target.value }))}
+                        placeholder="Role name"
+                        className="w-full px-3 py-2.5 border border-gray-200 rounded-xl text-sm focus:outline-none focus:border-[#D32F2F]"
+                      />
+                    )}
+                  </div>
+                  <div>
+                    <label className="block text-xs font-semibold text-[#616161] uppercase tracking-wider mb-1.5">Status</label>
                     <select
-                      value={userForm.roleName}
-                      onChange={e => setUserForm(f => ({ ...f, roleName: e.target.value }))}
+                      value={userForm.status}
+                      onChange={e => setUserForm(f => ({ ...f, status: e.target.value }))}
                       className="w-full px-3 py-2.5 border border-gray-200 rounded-xl text-sm focus:outline-none focus:border-[#D32F2F] bg-white"
                     >
-                      <option value="">Select a role</option>
-                      {roleOptions.map(r => <option key={r} value={r}>{r}</option>)}
+                      {['Active', 'Inactive'].map(s => <option key={s}>{s}</option>)}
                     </select>
-                  ) : (
-                    <input
-                      type="text"
-                      value={userForm.roleName}
-                      onChange={e => setUserForm(f => ({ ...f, roleName: e.target.value }))}
-                      placeholder="Role name"
-                      className="w-full px-3 py-2.5 border border-gray-200 rounded-xl text-sm focus:outline-none focus:border-[#D32F2F]"
-                    />
-                  )}
-                </div>
-                <div>
-                  <label className="block text-xs font-semibold text-[#616161] uppercase tracking-wider mb-1.5">Status</label>
-                  <select
-                    value={userForm.status}
-                    onChange={e => setUserForm(f => ({ ...f, status: e.target.value }))}
-                    className="w-full px-3 py-2.5 border border-gray-200 rounded-xl text-sm focus:outline-none focus:border-[#D32F2F] bg-white"
-                  >
-                    {['Active', 'Inactive'].map(s => <option key={s}>{s}</option>)}
-                  </select>
+                  </div>
                 </div>
               </div>
 
-              {/* Role badge hint */}
-              {/* {userForm.roleName && (
-                <div className="flex items-center gap-2 p-3 bg-gray-50 rounded-xl">
-                  <span className={`text-xs px-2 py-0.5 rounded-full font-medium ${roleBadgeClass(userForm.roleName)}`}>
-                    {userForm.roleName}
-                  </span>
-                  <span className="text-xs text-[#616161]">Permissions are inherited from this role</span>
-                </div>
-              )} */}
-            </div>
+              {saveError && (
+                <div className="mt-4 bg-red-50 border border-red-200 rounded-xl px-4 py-2.5 text-sm text-red-600">{saveError}</div>
+              )}
 
-            {saveError && (
-              <div className="mt-4 bg-red-50 border border-red-200 rounded-xl px-4 py-2.5 text-sm text-red-600">{saveError}</div>
-            )}
-
-            {/* Action buttons */}
-            <div className="flex gap-3 mt-7">
-              <button
-                onClick={() => handleSave(false)}
-                disabled={saving}
-                className="flex-1 py-2.5 bg-[#D32F2F] text-white rounded-xl text-sm font-semibold flex items-center justify-center gap-2 hover:bg-[#B71C1C] disabled:opacity-60 transition-colors"
-              >
-                {saving
-                  ? <><RefreshCw size={13} className="animate-spin" /> Saving…</>
-                  : <><Save size={13} /> {editUserId ? 'Update' : 'Save'}</>
-                }
-              </button>
-              <button
-                onClick={() => handleSave(true)}
-                disabled={saving}
-                className="flex-1 py-2.5 border-2 border-[#D32F2F] text-[#D32F2F] rounded-xl text-sm font-semibold flex items-center justify-center gap-2 hover:bg-red-50 disabled:opacity-60 transition-colors"
-              >
-                {saving
-                  ? <><RefreshCw size={13} className="animate-spin" /> Saving…</>
-                  : <><Send size={13} /> Save & Send</>
-                }
-              </button>
+              <div className="flex gap-3 mt-7">
+                <button
+                  onClick={() => handleSave(false)}
+                  disabled={saving}
+                  className="flex-1 py-2.5 bg-[#D32F2F] text-white rounded-xl text-sm font-semibold flex items-center justify-center gap-2 hover:bg-[#B71C1C] disabled:opacity-60 transition-colors"
+                >
+                  {saving
+                    ? <><RefreshCw size={13} className="animate-spin" /> Saving…</>
+                    : <><Save size={13} /> {editUserId ? 'Update' : 'Save'}</>
+                  }
+                </button>
+                <button
+                  onClick={() => handleSave(true)}
+                  disabled={saving}
+                  className="flex-1 py-2.5 border-2 border-[#D32F2F] text-[#D32F2F] rounded-xl text-sm font-semibold flex items-center justify-center gap-2 hover:bg-red-50 disabled:opacity-60 transition-colors"
+                >
+                  {saving
+                    ? <><RefreshCw size={13} className="animate-spin" /> Saving…</>
+                    : <><Send size={13} /> Save & Send</>
+                  }
+                </button>
+              </div>
             </div>
+          )}
+        </div>
+      )}
+
+      {/* Profile picture preview popup */}
+      {previewPic && (
+        <div
+          className="fixed inset-0 bg-black/70 z-50 flex items-center justify-center p-4"
+          onClick={() => setPreviewPic(null)}
+        >
+          <div className="relative max-w-sm w-full" onClick={e => e.stopPropagation()}>
+            <button
+              onClick={() => setPreviewPic(null)}
+              className="absolute -top-3 -right-3 w-8 h-8 bg-white rounded-full flex items-center justify-center shadow-lg hover:bg-gray-100 z-10"
+            >
+              <X size={14} className="text-[#616161]" />
+            </button>
+            <img
+              src={previewPic}
+              alt="Profile"
+              className="w-full rounded-2xl shadow-2xl object-cover max-h-[80vh]"
+            />
           </div>
         </div>
       )}
