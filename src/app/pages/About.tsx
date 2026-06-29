@@ -337,7 +337,7 @@ export default function About() {
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
           <div className="text-center mb-14">
             <div className="text-[#D32F2F] font-semibold text-xs uppercase tracking-widest mb-3">Our Advantage</div>
-            <h2 className="text-4xl font-bold text-[#212121]" style={{ fontFamily: 'Poppins, sans-serif' }}>Why Choose VIP Numerologist?</h2>
+            <h2 className="text-4xl font-bold text-[#212121]" style={{ fontFamily: 'Poppins, sans-serif' }}>Why Choose VIP Numerology?</h2>
             <p className="text-[#616161] mt-3 max-w-xl mx-auto">We combine ancient Vedic wisdom with modern methodology to deliver measurable, life-changing results.</p>
           </div>
           <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6">
@@ -520,7 +520,7 @@ export default function About() {
           <h2 className="text-4xl font-bold text-white mb-4" style={{ fontFamily: 'Poppins, sans-serif' }}>Begin Your Numerology Journey</h2>
           <p className="text-red-100 text-lg mb-8">Join 12,450+ clients who've transformed their lives with the power of numbers.</p>
           <button onClick={openBooking} className="px-10 py-4 bg-[#FBC02D] text-black rounded-xl font-bold text-lg hover:bg-yellow-400 transition-colors" style={{ fontFamily: 'Poppins, sans-serif' }}>
-            Book Your Consultation
+            Book Your Number
           </button>
         </div>
       </section>

@@ -1,10 +1,26 @@
-import { useState, useEffect, useCallback } from 'react';
-import { useSearchParams } from 'react-router';
-import { Plus, Edit, Trash2, Shield, Check, X, ChevronLeft, Save, RefreshCw } from 'lucide-react';
-import { getAllRoles, getRoleById, addRole, updateRole, deleteRole } from '../../services/RoleService';
+import { useState, useEffect, useCallback } from "react";
+import { useSearchParams } from "react-router";
+import {
+  Plus,
+  Edit,
+  Trash2,
+  Shield,
+  Check,
+  X,
+  ChevronLeft,
+  Save,
+  RefreshCw,
+} from "lucide-react";
+import {
+  getAllRoles,
+  getRoleById,
+  addRole,
+  updateRole,
+  deleteRole,
+} from "../../services/RoleService";
 
 // ─── Types ────────────────────────────────────────────────────────────────────
-type Permission = 'create' | 'view' | 'update' | 'delete';
+type Permission = "create" | "view" | "update" | "delete";
 
 interface ModulePermissions {
   create: boolean;
@@ -23,24 +39,45 @@ interface Role {
 }
 
 const MODULES: string[] = [
-  'Dashboard', 'Inquiry', 'General Inquiry', 'Events',
-  'Top VIP Numbers', 'Content', 'Roles', 'Users',
-  'Delivery', 'Settings',
+  "Dashboard",
+  "Inquiry",
+  "General Inquiry",
+  "Events",
+  "Top VIP Numbers",
+  "Content",
+  "Roles",
+  "Users",
+  "Delivery",
+  "Settings",
 ];
-const PERMISSIONS: Permission[] = ['create', 'view', 'update', 'delete'];
-const COLOR_OPTIONS = ['#D32F2F', '#FF9800', '#2196F3', '#4CAF50', '#9C27B0', '#009688'];
+const PERMISSIONS: Permission[] = ["create", "view", "update", "delete"];
+const COLOR_OPTIONS = [
+  "#D32F2F",
+  "#FF9800",
+  "#2196F3",
+  "#4CAF50",
+  "#9C27B0",
+  "#009688",
+];
 
 const emptyPermissions = (): Record<string, ModulePermissions> =>
-  Object.fromEntries(MODULES.map(m => [m, { create: false, view: false, update: false, delete: false }]));
+  Object.fromEntries(
+    MODULES.map((m) => [
+      m,
+      { create: false, view: false, update: false, delete: false },
+    ]),
+  );
 
 // API uses read/write; UI uses view/create — convert on fetch
-const apiToUiPermissions = (apiPerms: Record<string, any>): Record<string, ModulePermissions> => {
+const apiToUiPermissions = (
+  apiPerms: Record<string, any>,
+): Record<string, ModulePermissions> => {
   const result = emptyPermissions();
   for (const mod of MODULES) {
     const p = apiPerms[mod] ?? {};
     result[mod] = {
-      create: p.write  ?? p.create ?? false,
-      view:   p.read   ?? p.view   ?? false,
+      create: p.write ?? p.create ?? false,
+      view: p.read ?? p.view ?? false,
       update: p.update ?? false,
       delete: p.delete ?? false,
     };
@@ -49,19 +86,31 @@ const apiToUiPermissions = (apiPerms: Record<string, any>): Record<string, Modul
 };
 
 // Convert UI format back to API format on save
-const uiToApiPermissions = (uiPerms: Record<string, ModulePermissions>): Record<string, any> => {
+const uiToApiPermissions = (
+  uiPerms: Record<string, ModulePermissions>,
+): Record<string, any> => {
   const result: Record<string, any> = {};
   for (const mod of MODULES) {
-    const p = uiPerms[mod] ?? { create: false, view: false, update: false, delete: false };
-    result[mod] = { write: p.create, read: p.view, update: p.update, delete: p.delete };
+    const p = uiPerms[mod] ?? {
+      create: false,
+      view: false,
+      update: false,
+      delete: false,
+    };
+    result[mod] = {
+      write: p.create,
+      read: p.view,
+      update: p.update,
+      delete: p.delete,
+    };
   }
   return result;
 };
 
-const emptyRole = (): Omit<Role, 'id'> => ({
-  name: '',
-  description: '',
-  color: '#D32F2F',
+const emptyRole = (): Omit<Role, "id"> => ({
+  name: "",
+  description: "",
+  color: "#D32F2F",
   permissions: emptyPermissions(),
 });
 
@@ -83,52 +132,59 @@ export default function Roles() {
   const [searchParams, setSearchParams] = useSearchParams();
 
   // mode and editRoleId are derived from URL — survives page refresh
-  const mode       = searchParams.get('mode') === 'form' ? 'form' : 'list';
-  const editRoleId = searchParams.get('id') ?? null;
+  const mode = searchParams.get("mode") === "form" ? "form" : "list";
+  const editRoleId = searchParams.get("id") ?? null;
 
-  const [roles, setRoles]             = useState<Role[]>([]);
-  const [loading, setLoading]         = useState(true);
+  const [roles, setRoles] = useState<Role[]>([]);
+  const [loading, setLoading] = useState(true);
   const [formLoading, setFormLoading] = useState(false);
-  const [saving, setSaving]           = useState(false);
-  const [fetchError, setFetchError]   = useState('');
-  const [saveError, setSaveError]     = useState('');
-  const [roleForm, setRoleForm]       = useState(emptyRole());
-  const [deleteId, setDeleteId]       = useState<string | number | null>(null);
-  const [deleting, setDeleting]       = useState(false);
-  const [deleteError, setDeleteError] = useState('');
+  const [saving, setSaving] = useState(false);
+  const [fetchError, setFetchError] = useState("");
+  const [saveError, setSaveError] = useState("");
+  const [roleForm, setRoleForm] = useState(emptyRole());
+  const [deleteId, setDeleteId] = useState<string | number | null>(null);
+  const [deleting, setDeleting] = useState(false);
+  const [deleteError, setDeleteError] = useState("");
 
   // ── Fetch list ─────────────────────────────────────────────────────────────
   const fetchRoles = useCallback(async () => {
     setLoading(true);
-    setFetchError('');
+    setFetchError("");
     try {
       const res = await getAllRoles();
       const rawRoles: any[] = res?.data ?? res ?? [];
-      setRoles(rawRoles.map(r => ({ ...r, permissions: apiToUiPermissions(r.permissions ?? {}) })));
+      setRoles(
+        rawRoles.map((r) => ({
+          ...r,
+          permissions: apiToUiPermissions(r.permissions ?? {}),
+        })),
+      );
     } catch {
-      setFetchError('Failed to load roles. Please try again.');
+      setFetchError("Failed to load roles. Please try again.");
     } finally {
       setLoading(false);
     }
   }, []);
 
-  useEffect(() => { fetchRoles(); }, [fetchRoles]);
+  useEffect(() => {
+    fetchRoles();
+  }, [fetchRoles]);
 
   // ── Restore form on refresh ────────────────────────────────────────────────
   // If the page loads with mode=form&id=X in the URL, re-fetch that role
   useEffect(() => {
-    if (mode !== 'form') return;
+    if (mode !== "form") return;
 
     if (editRoleId) {
       setFormLoading(true);
       getRoleById(editRoleId)
-        .then(res => {
+        .then((res) => {
           const r = res?.data ?? res;
           if (r) {
             setRoleForm({
-              name:        r.name        ?? '',
-              description: r.description ?? '',
-              color:       r.color       ?? '#D32F2F',
+              name: r.name ?? "",
+              description: r.description ?? "",
+              color: r.color ?? "#D32F2F",
               permissions: apiToUiPermissions(r.permissions ?? {}),
             });
           } else {
@@ -147,33 +203,39 @@ export default function Roles() {
   // ── Form helpers ───────────────────────────────────────────────────────────
   const openNew = () => {
     setRoleForm(emptyRole());
-    setSaveError('');
-    setSearchParams({ mode: 'form' });
+    setSaveError("");
+    setSearchParams({ mode: "form" });
   };
 
   const openEdit = (r: Role) => {
     setRoleForm({
-      name:        r.name,
+      name: r.name,
       description: r.description,
-      color:       r.color,
+      color: r.color,
       permissions: r.permissions ?? emptyPermissions(),
     });
-    setSaveError('');
-    setSearchParams({ mode: 'form', id: String(r.id) });
+    setSaveError("");
+    setSearchParams({ mode: "form", id: String(r.id) });
   };
 
   const handleBack = () => {
-    setSaveError('');
+    setSaveError("");
     setSearchParams({});
   };
 
   // ── Save ───────────────────────────────────────────────────────────────────
   const handleSave = async () => {
-    if (!roleForm.name.trim()) { setSaveError('Role name is required.'); return; }
+    if (!roleForm.name.trim()) {
+      setSaveError("Role name is required.");
+      return;
+    }
     setSaving(true);
-    setSaveError('');
+    setSaveError("");
     try {
-      const payload = { ...roleForm, permissions: uiToApiPermissions(roleForm.permissions) };
+      const payload = {
+        ...roleForm,
+        permissions: uiToApiPermissions(roleForm.permissions),
+      };
       if (editRoleId !== null) {
         await updateRole(payload, editRoleId);
       } else {
@@ -182,7 +244,7 @@ export default function Roles() {
       await fetchRoles();
       setSearchParams({});
     } catch {
-      setSaveError('Failed to save. Please try again.');
+      setSaveError("Failed to save. Please try again.");
     } finally {
       setSaving(false);
     }
@@ -192,17 +254,17 @@ export default function Roles() {
   const handleDelete = async () => {
     if (!deleteId) return;
     setDeleting(true);
-    setDeleteError('');
+    setDeleteError("");
     try {
       const res = await deleteRole({ ids: [deleteId] });
       if (res?.success === false) {
-        setDeleteError(res.message ?? 'Cannot delete this role.');
+        setDeleteError(res.message ?? "Cannot delete this role.");
         return;
       }
-      setRoles(rs => rs.filter(r => r.id !== deleteId));
+      setRoles((rs) => rs.filter((r) => r.id !== deleteId));
       setDeleteId(null);
     } catch {
-      setDeleteError('Failed to delete. Please try again.');
+      setDeleteError("Failed to delete. Please try again.");
     } finally {
       setDeleting(false);
     }
@@ -210,7 +272,7 @@ export default function Roles() {
 
   // ── Permission toggles ─────────────────────────────────────────────────────
   const togglePermission = (mod: string, perm: Permission) => {
-    setRoleForm(f => ({
+    setRoleForm((f) => ({
       ...f,
       permissions: {
         ...f.permissions,
@@ -220,22 +282,30 @@ export default function Roles() {
   };
 
   const toggleAllModule = (mod: string) => {
-    const allOn = PERMISSIONS.every(p => roleForm.permissions[mod]?.[p]);
-    setRoleForm(f => ({
+    const allOn = PERMISSIONS.every((p) => roleForm.permissions[mod]?.[p]);
+
+    const permissions: ModulePermissions = {
+      create: !allOn,
+      view: !allOn,
+      update: !allOn,
+      delete: !allOn,
+    };
+
+    setRoleForm((f) => ({
       ...f,
       permissions: {
         ...f.permissions,
-        [mod]: Object.fromEntries(PERMISSIONS.map(p => [p, !allOn])) as ModulePermissions,
+        [mod]: permissions,
       },
     }));
   };
 
   const toggleAllPermission = (perm: Permission) => {
-    const allOn = MODULES.every(m => roleForm.permissions[m]?.[perm]);
-    setRoleForm(f => ({
+    const allOn = MODULES.every((m) => roleForm.permissions[m]?.[perm]);
+    setRoleForm((f) => ({
       ...f,
       permissions: Object.fromEntries(
-        MODULES.map(m => [m, { ...f.permissions[m], [perm]: !allOn }])
+        MODULES.map((m) => [m, { ...f.permissions[m], [perm]: !allOn }]),
       ) as Record<string, ModulePermissions>,
     }));
   };
@@ -245,14 +315,19 @@ export default function Roles() {
     <div>
       {/* Header */}
       <div className="flex flex-wrap items-center justify-between gap-3 mb-5">
-        {mode === 'list' ? (
+        {mode === "list" ? (
           <>
             <div>
-              <h1 className="text-xl font-bold text-[#212121]" style={{ fontFamily: 'Poppins, sans-serif' }}>
+              <h1
+                className="text-xl font-bold text-[#212121]"
+                style={{ fontFamily: "Poppins, sans-serif" }}
+              >
                 Role Management
               </h1>
               <p className="text-[#616161] text-xs">
-                {loading ? 'Loading…' : `${roles.length} role${roles.length !== 1 ? 's' : ''}`}
+                {loading
+                  ? "Loading…"
+                  : `${roles.length} role${roles.length !== 1 ? "s" : ""}`}
               </p>
             </div>
             <div className="flex gap-2">
@@ -261,7 +336,10 @@ export default function Roles() {
                 title="Refresh"
                 className="p-2 border border-gray-200 rounded-xl text-[#616161] hover:border-[#D32F2F] hover:text-[#D32F2F] transition-colors"
               >
-                <RefreshCw size={14} className={loading ? 'animate-spin' : ''} />
+                <RefreshCw
+                  size={14}
+                  className={loading ? "animate-spin" : ""}
+                />
               </button>
               <button
                 onClick={openNew}
@@ -272,85 +350,118 @@ export default function Roles() {
             </div>
           </>
         ) : (
-          <button onClick={handleBack} className="flex items-center gap-1.5 text-[#616161] hover:text-[#D32F2F] text-sm font-medium">
+          <button
+            onClick={handleBack}
+            className="flex items-center gap-1.5 text-[#616161] hover:text-[#D32F2F] text-sm font-medium"
+          >
             <ChevronLeft size={15} /> Back to Roles
           </button>
         )}
       </div>
 
       {/* ═══════════════ LIST ═══════════════ */}
-      {mode === 'list' && (
+      {mode === "list" && (
         <>
           {fetchError && (
             <div className="bg-red-50 border border-red-200 rounded-2xl px-4 py-3 text-sm text-red-600 mb-4 flex items-center justify-between">
               {fetchError}
-              <button onClick={fetchRoles} className="text-[#D32F2F] font-semibold text-xs hover:underline">Retry</button>
+              <button
+                onClick={fetchRoles}
+                className="text-[#D32F2F] font-semibold text-xs hover:underline"
+              >
+                Retry
+              </button>
             </div>
           )}
           <div className="space-y-3">
-            {loading
-              ? Array.from({ length: 5 }).map((_, i) => <SkeletonRow key={i} />)
-              : roles.length === 0
-                ? (
-                  <div className="bg-white rounded-2xl border border-gray-100 py-16 text-center">
-                    <Shield size={32} className="mx-auto text-gray-200 mb-3" />
-                    <p className="text-sm text-[#616161]">No roles yet.</p>
-                    <button onClick={openNew} className="mt-3 text-sm text-[#D32F2F] font-semibold hover:underline">Create the first role</button>
+            {loading ? (
+              Array.from({ length: 5 }).map((_, i) => <SkeletonRow key={i} />)
+            ) : roles.length === 0 ? (
+              <div className="bg-white rounded-2xl border border-gray-100 py-16 text-center">
+                <Shield size={32} className="mx-auto text-gray-200 mb-3" />
+                <p className="text-sm text-[#616161]">No roles yet.</p>
+                <button
+                  onClick={openNew}
+                  className="mt-3 text-sm text-[#D32F2F] font-semibold hover:underline"
+                >
+                  Create the first role
+                </button>
+              </div>
+            ) : (
+              roles.map((r) => (
+                <div
+                  key={r.id}
+                  className="bg-white rounded-2xl border border-gray-100 p-5 flex flex-wrap items-start gap-4"
+                >
+                  <div
+                    className="w-10 h-10 rounded-xl flex items-center justify-center flex-shrink-0"
+                    style={{ backgroundColor: (r.color ?? "#D32F2F") + "20" }}
+                  >
+                    <Shield size={18} style={{ color: r.color ?? "#D32F2F" }} />
                   </div>
-                )
-                : roles.map(r => (
-                  <div key={r.id} className="bg-white rounded-2xl border border-gray-100 p-5 flex flex-wrap items-start gap-4">
+                  <div className="flex-1 min-w-0">
                     <div
-                      className="w-10 h-10 rounded-xl flex items-center justify-center flex-shrink-0"
-                      style={{ backgroundColor: (r.color ?? '#D32F2F') + '20' }}
+                      className="font-bold text-[#212121]"
+                      style={{ fontFamily: "Poppins, sans-serif" }}
                     >
-                      <Shield size={18} style={{ color: r.color ?? '#D32F2F' }} />
+                      {r.name}
                     </div>
-                    <div className="flex-1 min-w-0">
-                      <div className="font-bold text-[#212121]" style={{ fontFamily: 'Poppins, sans-serif' }}>{r.name}</div>
-                      <div className="text-xs text-[#616161]">
-                        {r.description || '—'}
-                        {r.usersCount !== undefined && <> · {r.usersCount} user{r.usersCount !== 1 ? 's' : ''}</>}
-                      </div>
-                      {r.permissions && (
-                        <div className="flex flex-wrap gap-1 mt-2">
-                          {MODULES.map(mod => {
-                            const perms = r.permissions[mod];
-                            if (!perms) return null;
-                            const count = PERMISSIONS.filter(p => perms[p]).length;
-                            if (count === 0) return null;
-                            return (
-                              <span key={mod} className="text-[10px] px-2 py-0.5 rounded-full bg-gray-100 text-[#616161]">
-                                {mod} <span className="font-semibold text-[#D32F2F]">{count}/4</span>
-                              </span>
-                            );
-                          })}
-                        </div>
+                    <div className="text-xs text-[#616161]">
+                      {r.description || "—"}
+                      {r.usersCount !== undefined && (
+                        <>
+                          {" "}
+                          · {r.usersCount} user{r.usersCount !== 1 ? "s" : ""}
+                        </>
                       )}
                     </div>
-                    <div className="flex items-center gap-1.5 ml-auto flex-shrink-0">
-                      <button
-                        onClick={() => openEdit(r)}
-                        className="flex items-center gap-1.5 px-3 py-1.5 border border-gray-200 text-[#616161] rounded-xl text-xs font-medium hover:border-[#FBC02D] hover:text-[#FBC02D] transition-colors"
-                      >
-                        <Edit size={12} /> Edit & Permissions
-                      </button>
-                      <button
-                        onClick={() => setDeleteId(r.id)}
-                        className="p-1.5 text-[#D32F2F] hover:bg-red-50 rounded-lg transition-colors"
-                      >
-                        <Trash2 size={13} />
-                      </button>
-                    </div>
+                    {r.permissions && (
+                      <div className="flex flex-wrap gap-1 mt-2">
+                        {MODULES.map((mod) => {
+                          const perms = r.permissions[mod];
+                          if (!perms) return null;
+                          const count = PERMISSIONS.filter(
+                            (p) => perms[p],
+                          ).length;
+                          if (count === 0) return null;
+                          return (
+                            <span
+                              key={mod}
+                              className="text-[10px] px-2 py-0.5 rounded-full bg-gray-100 text-[#616161]"
+                            >
+                              {mod}{" "}
+                              <span className="font-semibold text-[#D32F2F]">
+                                {count}/4
+                              </span>
+                            </span>
+                          );
+                        })}
+                      </div>
+                    )}
                   </div>
-                ))
-            }
+                  <div className="flex items-center gap-1.5 ml-auto flex-shrink-0">
+                    <button
+                      onClick={() => openEdit(r)}
+                      className="flex items-center gap-1.5 px-3 py-1.5 border border-gray-200 text-[#616161] rounded-xl text-xs font-medium hover:border-[#FBC02D] hover:text-[#FBC02D] transition-colors"
+                    >
+                      <Edit size={12} /> Edit & Permissions
+                    </button>
+                    <button
+                      onClick={() => setDeleteId(r.id)}
+                      className="p-1.5 text-[#D32F2F] hover:bg-red-50 rounded-lg transition-colors"
+                    >
+                      <Trash2 size={13} />
+                    </button>
+                  </div>
+                </div>
+              ))
+            )}
           </div>
         </>
       )}
 
       {/* ═══════════════ FORM ═══════════════ */}
-      {mode === 'form' && (
+      {mode === "form" && (
         <div className="max-w-3xl mx-auto space-y-5">
           {formLoading ? (
             <div className="space-y-5">
@@ -361,46 +472,71 @@ export default function Roles() {
             <>
               {/* Page title */}
               <div>
-                <h1 className="text-xl font-bold text-[#212121]" style={{ fontFamily: 'Poppins, sans-serif' }}>
-                  {editRoleId ? 'Edit Role' : 'Create Role'}
+                <h1
+                  className="text-xl font-bold text-[#212121]"
+                  style={{ fontFamily: "Poppins, sans-serif" }}
+                >
+                  {editRoleId ? "Edit Role" : "Create Role"}
                 </h1>
                 <p className="text-xs text-[#616161] mt-0.5">
-                  {editRoleId ? 'Update role details and module permissions' : 'Define a new role and assign module permissions'}
+                  {editRoleId
+                    ? "Update role details and module permissions"
+                    : "Define a new role and assign module permissions"}
                 </p>
               </div>
 
               {/* Role details card */}
               <div className="bg-white rounded-2xl border border-gray-100 p-5">
-                <h3 className="font-bold text-[#212121] mb-4 text-sm" style={{ fontFamily: 'Poppins, sans-serif' }}>Role Details</h3>
+                <h3
+                  className="font-bold text-[#212121] mb-4 text-sm"
+                  style={{ fontFamily: "Poppins, sans-serif" }}
+                >
+                  Role Details
+                </h3>
                 <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                   <div>
-                    <label className="block text-xs font-semibold text-[#616161] uppercase tracking-wider mb-1.5">Role Name *</label>
+                    <label className="block text-xs font-semibold text-[#616161] uppercase tracking-wider mb-1.5">
+                      Role Name *
+                    </label>
                     <input
                       value={roleForm.name}
-                      onChange={e => setRoleForm(f => ({ ...f, name: e.target.value }))}
+                      onChange={(e) =>
+                        setRoleForm((f) => ({ ...f, name: e.target.value }))
+                      }
                       placeholder="e.g. Sales Manager"
                       className="w-full px-3 py-2.5 border border-gray-200 rounded-xl text-sm focus:outline-none focus:border-[#D32F2F]"
                     />
                   </div>
                   <div>
-                    <label className="block text-xs font-semibold text-[#616161] uppercase tracking-wider mb-1.5">Badge Color</label>
+                    <label className="block text-xs font-semibold text-[#616161] uppercase tracking-wider mb-1.5">
+                      Badge Color
+                    </label>
                     <div className="flex gap-2">
-                      {COLOR_OPTIONS.map(c => (
+                      {COLOR_OPTIONS.map((c) => (
                         <button
                           key={c}
                           type="button"
-                          onClick={() => setRoleForm(f => ({ ...f, color: c }))}
-                          className={`w-8 h-8 rounded-full border-2 transition-all ${roleForm.color === c ? 'border-gray-700 scale-110' : 'border-transparent'}`}
+                          onClick={() =>
+                            setRoleForm((f) => ({ ...f, color: c }))
+                          }
+                          className={`w-8 h-8 rounded-full border-2 transition-all ${roleForm.color === c ? "border-gray-700 scale-110" : "border-transparent"}`}
                           style={{ backgroundColor: c }}
                         />
                       ))}
                     </div>
                   </div>
                   <div className="sm:col-span-2">
-                    <label className="block text-xs font-semibold text-[#616161] uppercase tracking-wider mb-1.5">Description</label>
+                    <label className="block text-xs font-semibold text-[#616161] uppercase tracking-wider mb-1.5">
+                      Description
+                    </label>
                     <input
                       value={roleForm.description}
-                      onChange={e => setRoleForm(f => ({ ...f, description: e.target.value }))}
+                      onChange={(e) =>
+                        setRoleForm((f) => ({
+                          ...f,
+                          description: e.target.value,
+                        }))
+                      }
                       placeholder="Brief description of this role"
                       className="w-full px-3 py-2.5 border border-gray-200 rounded-xl text-sm focus:outline-none focus:border-[#D32F2F]"
                     />
@@ -412,16 +548,28 @@ export default function Roles() {
               <div className="bg-white rounded-2xl border border-gray-100 overflow-hidden">
                 <div className="px-5 py-4 border-b border-gray-100 flex items-center gap-2">
                   <Shield size={15} className="text-[#D32F2F]" />
-                  <h3 className="font-bold text-[#212121] text-sm" style={{ fontFamily: 'Poppins, sans-serif' }}>Module Permissions</h3>
-                  <span className="ml-auto text-xs text-[#9E9E9E]">Click column header to toggle all rows</span>
+                  <h3
+                    className="font-bold text-[#212121] text-sm"
+                    style={{ fontFamily: "Poppins, sans-serif" }}
+                  >
+                    Module Permissions
+                  </h3>
+                  <span className="ml-auto text-xs text-[#9E9E9E]">
+                    Click column header to toggle all rows
+                  </span>
                 </div>
                 <div className="overflow-x-auto">
                   <table className="w-full">
                     <thead>
                       <tr className="bg-gray-50 border-b border-gray-100">
-                        <th className="text-left px-5 py-3 text-xs font-semibold text-[#616161] uppercase tracking-wider">Module</th>
-                        {PERMISSIONS.map(p => (
-                          <th key={p} className="text-center px-4 py-3 text-xs font-semibold text-[#616161] uppercase tracking-wider">
+                        <th className="text-left px-5 py-3 text-xs font-semibold text-[#616161] uppercase tracking-wider">
+                          Module
+                        </th>
+                        {PERMISSIONS.map((p) => (
+                          <th
+                            key={p}
+                            className="text-center px-4 py-3 text-xs font-semibold text-[#616161] uppercase tracking-wider"
+                          >
                             <button
                               onClick={() => toggleAllPermission(p)}
                               className="capitalize hover:text-[#D32F2F] transition-colors"
@@ -431,28 +579,45 @@ export default function Roles() {
                             </button>
                           </th>
                         ))}
-                        <th className="text-center px-4 py-3 text-xs font-semibold text-[#616161] uppercase tracking-wider">All</th>
+                        <th className="text-center px-4 py-3 text-xs font-semibold text-[#616161] uppercase tracking-wider">
+                          All
+                        </th>
                       </tr>
                     </thead>
                     <tbody>
-                      {MODULES.map(mod => {
-                        const allOn = PERMISSIONS.every(p => roleForm.permissions[mod]?.[p]);
+                      {MODULES.map((mod) => {
+                        const allOn = PERMISSIONS.every(
+                          (p) => roleForm.permissions[mod]?.[p],
+                        );
                         return (
-                          <tr key={mod} className="border-b border-gray-50 hover:bg-gray-50/50">
-                            <td className="px-5 py-3 text-sm font-medium text-[#212121]">{mod}</td>
-                            {PERMISSIONS.map(perm => {
-                              const has = roleForm.permissions[mod]?.[perm] ?? false;
+                          <tr
+                            key={mod}
+                            className="border-b border-gray-50 hover:bg-gray-50/50"
+                          >
+                            <td className="px-5 py-3 text-sm font-medium text-[#212121]">
+                              {mod}
+                            </td>
+                            {PERMISSIONS.map((perm) => {
+                              const has =
+                                roleForm.permissions[mod]?.[perm] ?? false;
                               return (
-                                <td key={perm} className="px-4 py-3 text-center">
+                                <td
+                                  key={perm}
+                                  className="px-4 py-3 text-center"
+                                >
                                   <button
                                     onClick={() => togglePermission(mod, perm)}
                                     className={`w-7 h-7 rounded-lg mx-auto flex items-center justify-center transition-colors ${
                                       has
-                                        ? 'bg-green-100 text-green-600 hover:bg-green-200'
-                                        : 'bg-gray-100 text-gray-400 hover:bg-gray-200'
+                                        ? "bg-green-100 text-green-600 hover:bg-green-200"
+                                        : "bg-gray-100 text-gray-400 hover:bg-gray-200"
                                     }`}
                                   >
-                                    {has ? <Check size={13} /> : <X size={13} />}
+                                    {has ? (
+                                      <Check size={13} />
+                                    ) : (
+                                      <X size={13} />
+                                    )}
                                   </button>
                                 </td>
                               );
@@ -462,12 +627,16 @@ export default function Roles() {
                                 onClick={() => toggleAllModule(mod)}
                                 className={`w-7 h-7 rounded-lg mx-auto flex items-center justify-center transition-colors ${
                                   allOn
-                                    ? 'bg-[#D32F2F] text-white hover:bg-[#B71C1C]'
-                                    : 'bg-gray-100 text-gray-400 hover:bg-gray-200'
+                                    ? "bg-[#D32F2F] text-white hover:bg-[#B71C1C]"
+                                    : "bg-gray-100 text-gray-400 hover:bg-gray-200"
                                 }`}
-                                title={allOn ? 'Revoke all' : 'Grant all'}
+                                title={allOn ? "Revoke all" : "Grant all"}
                               >
-                                {allOn ? <Check size={13} /> : <Plus size={13} />}
+                                {allOn ? (
+                                  <Check size={13} />
+                                ) : (
+                                  <Plus size={13} />
+                                )}
                               </button>
                             </td>
                           </tr>
@@ -479,7 +648,9 @@ export default function Roles() {
               </div>
 
               {saveError && (
-                <div className="bg-red-50 border border-red-200 rounded-xl px-4 py-2.5 text-sm text-red-600">{saveError}</div>
+                <div className="bg-red-50 border border-red-200 rounded-xl px-4 py-2.5 text-sm text-red-600">
+                  {saveError}
+                </div>
               )}
 
               <div className="flex gap-3">
@@ -495,10 +666,16 @@ export default function Roles() {
                   disabled={saving}
                   className="flex-1 py-2.5 bg-[#D32F2F] text-white rounded-xl text-sm font-semibold flex items-center justify-center gap-2 hover:bg-[#B71C1C] disabled:opacity-60"
                 >
-                  {saving
-                    ? <><RefreshCw size={13} className="animate-spin" /> Saving…</>
-                    : <><Save size={13} /> {editRoleId ? 'Update Role' : 'Create Role'}</>
-                  }
+                  {saving ? (
+                    <>
+                      <RefreshCw size={13} className="animate-spin" /> Saving…
+                    </>
+                  ) : (
+                    <>
+                      <Save size={13} />{" "}
+                      {editRoleId ? "Update Role" : "Create Role"}
+                    </>
+                  )}
                 </button>
               </div>
             </>
@@ -508,17 +685,33 @@ export default function Roles() {
 
       {/* Delete confirm modal */}
       {deleteId !== null && (
-        <div className="fixed inset-0 bg-black/60 z-50 flex items-center justify-center p-4" onClick={() => { if (!deleting) { setDeleteId(null); setDeleteError(''); } }}>
-          <div className="bg-white rounded-2xl max-w-sm w-full p-6 shadow-2xl text-center" onClick={e => e.stopPropagation()}>
+        <div
+          className="fixed inset-0 bg-black/60 z-50 flex items-center justify-center p-4"
+          onClick={() => {
+            if (!deleting) {
+              setDeleteId(null);
+              setDeleteError("");
+            }
+          }}
+        >
+          <div
+            className="bg-white rounded-2xl max-w-sm w-full p-6 shadow-2xl text-center"
+            onClick={(e) => e.stopPropagation()}
+          >
             {deleteError ? (
               <>
                 <div className="w-11 h-11 bg-orange-100 rounded-full flex items-center justify-center mx-auto mb-3">
                   <Shield size={18} className="text-orange-500" />
                 </div>
-                <h3 className="font-bold text-[#212121] mb-2">Cannot Delete Role</h3>
+                <h3 className="font-bold text-[#212121] mb-2">
+                  Cannot Delete Role
+                </h3>
                 <p className="text-sm text-[#616161] mb-5">{deleteError}</p>
                 <button
-                  onClick={() => { setDeleteId(null); setDeleteError(''); }}
+                  onClick={() => {
+                    setDeleteId(null);
+                    setDeleteError("");
+                  }}
                   className="w-full py-2.5 bg-[#D32F2F] text-white rounded-xl text-sm font-semibold hover:bg-[#B71C1C]"
                 >
                   OK
@@ -530,7 +723,10 @@ export default function Roles() {
                   <Trash2 size={18} className="text-[#D32F2F]" />
                 </div>
                 <h3 className="font-bold text-[#212121] mb-2">Delete Role?</h3>
-                <p className="text-sm text-[#616161] mb-5">This action cannot be undone. Users assigned to this role will lose access.</p>
+                <p className="text-sm text-[#616161] mb-5">
+                  This action cannot be undone. Users assigned to this role will
+                  lose access.
+                </p>
                 <div className="flex gap-3">
                   <button
                     onClick={() => setDeleteId(null)}
@@ -544,7 +740,14 @@ export default function Roles() {
                     disabled={deleting}
                     className="flex-1 py-2.5 bg-[#D32F2F] text-white rounded-xl text-sm font-semibold hover:bg-[#B71C1C] disabled:opacity-60 flex items-center justify-center gap-2"
                   >
-                    {deleting ? <><RefreshCw size={13} className="animate-spin" /> Deleting…</> : 'Delete'}
+                    {deleting ? (
+                      <>
+                        <RefreshCw size={13} className="animate-spin" />{" "}
+                        Deleting…
+                      </>
+                    ) : (
+                      "Delete"
+                    )}
                   </button>
                 </div>
               </>

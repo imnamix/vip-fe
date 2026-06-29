@@ -210,7 +210,7 @@ export default function Services() {
             Ready to Transform Your Life?
           </h2>
           <p className="text-white/80 text-lg mb-8">
-            Book a personalised numerology consultation and unlock the power of your numbers today.
+            Book a personalised numerology Number and unlock the power of your numbers today.
           </p>
           <div className="flex flex-wrap gap-4 justify-center">
             <button

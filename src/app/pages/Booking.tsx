@@ -51,7 +51,7 @@ export default function Booking() {
           <div className="w-16 h-16 bg-[#D32F2F] rounded-2xl flex items-center justify-center mx-auto mb-4">
             <Hash size={30} className="text-white" />
           </div>
-          <h1 className="text-3xl font-bold text-[#212121]" style={{ fontFamily: 'Poppins, sans-serif' }}>Book a Consultation</h1>
+          <h1 className="text-3xl font-bold text-[#212121]" style={{ fontFamily: 'Poppins, sans-serif' }}>Book Your Number</h1>
           <p className="text-[#616161] mt-2">Complete the wizard to begin your numerology journey.</p>
         </div>
 
