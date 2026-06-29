@@ -28,37 +28,10 @@ const INDIAN_STATES = [
   'Jammu and Kashmir','Ladakh','Lakshadweep','Puducherry',
 ];
 
-const VI_STORES_BY_STATE: Record<string, string[]> = {
-  'Maharashtra':    ['Vi Store - Andheri West, Mumbai','Vi Store - Thane West','Vi Store - Pune Deccan','Vi Store - Nagpur Sitabuldi','Vi Store - Nashik CBS','Vi Store - Aurangabad'],
-  'Gujarat':        ['Vi Store - Ahmedabad CG Road','Vi Store - Surat Ring Road','Vi Store - Vadodara Alkapuri','Vi Store - Rajkot'],
-  'Karnataka':      ['Vi Store - Bangalore Koramangala','Vi Store - Bangalore MG Road','Vi Store - Mysore'],
-  'Tamil Nadu':     ['Vi Store - Chennai Anna Nagar','Vi Store - Chennai T Nagar','Vi Store - Coimbatore RS Puram'],
-  'Rajasthan':      ['Vi Store - Jaipur MI Road','Vi Store - Jodhpur Sojati Gate','Vi Store - Udaipur'],
-  'Madhya Pradesh': ['Vi Store - Indore Vijay Nagar','Vi Store - Bhopal MP Nagar','Vi Store - Gwalior'],
-  'Uttar Pradesh':  ['Vi Store - Lucknow Hazratganj','Vi Store - Kanpur Civil Lines','Vi Store - Agra Sanjay Place','Vi Store - Varanasi'],
-  'Delhi':          ['Vi Store - Connaught Place','Vi Store - Lajpat Nagar','Vi Store - Janakpuri','Vi Store - Rajouri Garden'],
-  'Haryana':        ['Vi Store - Gurugram DLF Phase 1','Vi Store - Faridabad Sector 15','Vi Store - Ambala'],
-  'Punjab':         ['Vi Store - Chandigarh Sector 17','Vi Store - Ludhiana Feroze Gandhi Mkt','Vi Store - Amritsar'],
-  'Telangana':      ['Vi Store - Hyderabad Banjara Hills','Vi Store - Hyderabad Secunderabad','Vi Store - Warangal'],
-  'West Bengal':    ['Vi Store - Kolkata Park Street','Vi Store - Kolkata Salt Lake','Vi Store - Siliguri'],
-  'Bihar':          ['Vi Store - Patna Boring Road','Vi Store - Gaya'],
-  'Odisha':         ['Vi Store - Bhubaneswar','Vi Store - Cuttack'],
-  'Kerala':         ['Vi Store - Kochi MG Road','Vi Store - Thiruvananthapuram','Vi Store - Kozhikode'],
-  'Goa':            ['Vi Store - Panaji','Vi Store - Vasco da Gama'],
-  'Assam':          ['Vi Store - Guwahati GS Road','Vi Store - Dibrugarh'],
-  'Jharkhand':      ['Vi Store - Ranchi Main Road','Vi Store - Jamshedpur'],
-  'Chhattisgarh':   ['Vi Store - Raipur Pandri','Vi Store - Bhilai Sector 6'],
-  'Andhra Pradesh': ['Vi Store - Visakhapatnam','Vi Store - Vijayawada Eluru Road','Vi Store - Guntur'],
-  'Uttarakhand':    ['Vi Store - Dehradun Rajpur Road','Vi Store - Haridwar'],
-  'Himachal Pradesh':['Vi Store - Shimla Mall Road','Vi Store - Dharamshala'],
-  'Chandigarh':     ['Vi Store - Chandigarh Sector 17','Vi Store - Chandigarh Sector 22'],
-};
-
 const LIMIT = 10;
 
 const inp = 'w-full px-3 py-2 border border-gray-200 rounded-xl text-sm focus:outline-none focus:border-[#D32F2F] bg-gray-50';
 const lbl = 'block text-xs font-semibold text-[#212121] mb-1';
-const sec = 'text-xs font-bold text-[#616161] uppercase tracking-wider mb-2 mt-1';
 
 const emptyForm = {
   inquiryType:          'customer',
@@ -72,6 +45,8 @@ const emptyForm = {
   nearestViStore:       '',
   clientName:           '',
   clientMobile:         '',
+  isVipNumber:          'no' as 'yes' | 'no',
+  vipNumber:            '',
   hasNumerologistRef:   'no' as 'yes' | 'no',
   numerologistRefName:  '',
   numerologistRefMobile:'',
@@ -79,7 +54,7 @@ const emptyForm = {
   notRequireDigits:     '',
   total:                '',
   specialRequirements:  '',
-  source:               '',
+  source:               'Walk-in',
   status:               'Pending' as Status,
 };
 
@@ -96,6 +71,8 @@ function toForm(lead: any): typeof emptyForm {
     nearestViStore:       lead.nearestViStore ?? '',
     clientName:           lead.clientName    ?? '',
     clientMobile:         lead.clientMobile  ?? '',
+    isVipNumber:          lead.isVipNumber ? 'yes' : 'no',
+    vipNumber:            lead.vipNumber ?? '',
     hasNumerologistRef:   lead.hasNumerologistRef ? 'yes' : 'no',
     numerologistRefName:  lead.numerologistRefName  ?? '',
     numerologistRefMobile:lead.numerologistRefMobile ?? '',
@@ -108,55 +85,148 @@ function toForm(lead: any): typeof emptyForm {
   };
 }
 
+const MOBILE_RE = /^[6-9]\d{9}$/;
+const clean = (v: string) => v.replace(/[\s\-+()]/g, '');
+const nowLog = () => new Date().toLocaleString('en-IN', {
+  day: 'numeric', month: 'short', year: 'numeric',
+  hour: '2-digit', minute: '2-digit', hour12: true,
+});
+
 /* ── Add / Edit Modal ──────────────────────────────────────────────────── */
-function LeadFormModal({ initial, editId, onClose, onSaved }: {
-  initial?: typeof emptyForm; editId?: number; onClose: () => void; onSaved: () => void;
+function LeadFormModal({ initial, editId, existingActivityLog, onClose, onSaved }: {
+  initial?: typeof emptyForm; editId?: number; existingActivityLog?: string;
+  onClose: () => void; onSaved: () => void;
 }) {
-  const [form, setForm]       = useState<typeof emptyForm>(initial ?? emptyForm);
-  const [loading, setLoading] = useState(false);
-  const [error, setError]     = useState('');
-  const isEdit                = !!editId;
-  const set = (k: keyof typeof emptyForm) => (e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement | HTMLTextAreaElement>) =>
+  const [form, setForm]           = useState<typeof emptyForm>(initial ?? emptyForm);
+  const [fieldErrors, setFieldErrors] = useState<Record<string, string>>({});
+  const [apiError, setApiError]   = useState('');
+  const [loading, setLoading]     = useState(false);
+  const isEdit                    = !!editId;
+
+  const set = (k: keyof typeof emptyForm) => (e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement | HTMLTextAreaElement>) => {
     setForm(p => ({ ...p, [k]: e.target.value }));
-  const storeOptions = VI_STORES_BY_STATE[form.state] ?? [];
+    if (fieldErrors[k]) setFieldErrors(p => { const n = { ...p }; delete n[k]; return n; });
+  };
+
+  /* Red border + bg when field has an error */
+  const fi = (k: string) => fieldErrors[k]
+    ? 'w-full px-3 py-2 border-2 border-red-400 rounded-xl text-sm focus:outline-none focus:border-red-500 bg-red-50/60'
+    : inp;
+
+  /* Small inline error message */
+  const FE = ({ k }: { k: string }) =>
+    fieldErrors[k] ? <p className="text-xs text-red-500 mt-1 font-medium">{fieldErrors[k]}</p> : null;
 
   const handleSave = async () => {
-    if (!form.name.trim() || !form.mobile.trim()) { setError('Name and Mobile are required.'); return; }
-    if (!form.source) { setError('Please select a source.'); return; }
-    if (form.inquiryType === 'numerologist' && (!form.clientName.trim() || !form.clientMobile.trim())) {
-      setError('Client Name and Client Mobile are required for numerologist type.'); return;
+    const errs: Record<string, string> = {};
+
+    if (!form.name.trim()) errs.name = 'Name is required.';
+
+    const mob = clean(form.mobile);
+    if (!mob) errs.mobile = 'Mobile number is required.';
+    else if (!MOBILE_RE.test(mob)) errs.mobile = 'Must be a valid 10-digit number starting with 6–9.';
+
+    if (!form.source) errs.source = 'Please select a source.';
+
+    if (form.inquiryType === 'numerologist') {
+      if (!form.clientName.trim()) errs.clientName = 'Client name is required.';
+      const cm = clean(form.clientMobile);
+      if (!cm) errs.clientMobile = 'Client mobile is required.';
+      else if (!MOBILE_RE.test(cm)) errs.clientMobile = 'Must be a valid 10-digit number starting with 6–9.';
     }
-    if (form.hasNumerologistRef === 'yes' && (!form.numerologistRefName.trim() || !form.numerologistRefMobile.trim())) {
-      setError('Numerologist name and mobile are required when reference is Yes.'); return;
+
+    if (form.isVipNumber === 'yes') {
+      if (!form.vipNumber.trim()) errs.vipNumber = 'VIP number is required.';
+      else if (!/^\d{10}$/.test(clean(form.vipNumber))) errs.vipNumber = 'Must be exactly 10 digits.';
     }
-    setLoading(true); setError('');
+
+    if (form.hasNumerologistRef === 'yes') {
+      if (!form.numerologistRefName.trim()) errs.numerologistRefName = 'Numerologist name is required.';
+      const nm = clean(form.numerologistRefMobile);
+      if (!nm) errs.numerologistRefMobile = 'Numerologist mobile is required.';
+      else if (!MOBILE_RE.test(nm)) errs.numerologistRefMobile = 'Must be a valid 10-digit number starting with 6–9.';
+    }
+
+    if (Object.keys(errs).length > 0) { setFieldErrors(errs); return; }
+
+    setFieldErrors({});
+    setLoading(true); setApiError('');
     try {
+      const isVip = form.isVipNumber === 'yes';
+
+      let activityLog: string | undefined;
+      if (isVip) {
+        const prev = (() => { try { return JSON.parse(existingActivityLog ?? '[]'); } catch { return []; } })();
+        activityLog = JSON.stringify([...prev, {
+          date: nowLog(),
+          action: `Number confirmed: ${form.vipNumber}`,
+          user: 'Admin',
+          status: 'Number Confirmed',
+        }]);
+      }
+
       const payload = {
         ...form,
-        hasNumerologistRef: form.hasNumerologistRef === 'yes',
+        isVipNumber:           isVip,
+        vipNumber:             isVip ? form.vipNumber : '',
+        status:                isVip ? 'Number Confirmed' : form.status,
+        requireDigits:         isVip ? '' : form.requireDigits,
+        notRequireDigits:      isVip ? '' : form.notRequireDigits,
+        total:                 isVip ? '' : form.total,
+        hasNumerologistRef:    form.hasNumerologistRef === 'yes',
         numerologistRefName:   form.hasNumerologistRef === 'yes' ? form.numerologistRefName   : '',
         numerologistRefMobile: form.hasNumerologistRef === 'yes' ? form.numerologistRefMobile : '',
+        ...(isVip ? { confirmedNumber: form.vipNumber, activityLog } : {}),
       };
       if (isEdit) await updateEnquiry(editId!, payload);
       else        await createInquiry(payload);
       onSaved(); onClose();
     } catch {
-      setError('Something went wrong. Please try again.');
+      setApiError('Something went wrong. Please try again.');
     } finally {
       setLoading(false);
     }
   };
 
+  const cardCls = 'rounded-2xl p-4 border space-y-3';
+  const secLbl  = 'text-[10px] font-bold uppercase tracking-widest mb-3 block';
+
   return (
-    <div className="fixed inset-0 bg-black/60 z-50 flex items-center justify-center p-4 overflow-y-auto" onClick={onClose}>
-      <div className="bg-white rounded-2xl max-w-lg w-full my-4 shadow-2xl" onClick={e => e.stopPropagation()}>
-        <div className="flex items-center justify-between px-6 py-4 border-b border-gray-100">
-          <h3 className="text-base font-bold text-[#212121]" style={{ fontFamily: 'Poppins, sans-serif' }}>{isEdit ? 'Edit Lead' : 'Add New Lead'}</h3>
-          <button onClick={onClose} className="w-8 h-8 bg-gray-100 rounded-xl flex items-center justify-center text-gray-500 hover:bg-gray-200"><X size={15} /></button>
+    <div
+      className="fixed inset-0 bg-black/55 z-50 flex items-center justify-center p-4 overflow-y-auto backdrop-blur-xs"
+      onClick={onClose}
+    >
+      <div
+        className="bg-white rounded-2xl max-w-lg w-full my-4 shadow-2xl overflow-hidden"
+        onClick={(e) => e.stopPropagation()}
+      >
+        {/* ── Gradient Header ── */}
+        <div className="bg-gradient-to-r from-[#D32F2F] to-[#B71C1C] px-6 py-5">
+          <div className="flex items-center justify-between">
+            <div className="flex items-center gap-3">
+              <div className="w-10 h-10 bg-white/20 rounded-xl flex items-center justify-center">
+                {isEdit ? <Edit size={18} className="text-white" /> : <Plus size={18} className="text-white" />}
+              </div>
+              <div>
+                <h3 className="text-base font-bold text-white" style={{ fontFamily: 'Poppins, sans-serif' }}>
+                  {isEdit ? 'Edit Lead' : 'Add New Lead'}
+                </h3>
+                <p className="text-red-200 text-xs mt-0.5">
+                  {isEdit ? 'Update inquiry details' : 'Fill in the details below'}
+                </p>
+              </div>
+            </div>
+            <button onClick={onClose} className="w-8 h-8 bg-white/20 rounded-xl flex items-center justify-center text-white hover:bg-white/30 transition-colors">
+              <X size={15} />
+            </button>
+          </div>
         </div>
-        <div className="px-6 py-4 max-h-[78vh] overflow-y-auto space-y-4">
+
+        <div className="px-6 py-5 max-h-[72vh] overflow-y-auto space-y-4">
+
+          {/* ── Inquiry Type ── */}
           <div>
-            <p className={sec}>Inquiry Type</p>
+            <span className={secLbl + ' text-[#9E9E9E]'}>Inquiry Type</span>
             <div className="flex gap-3">
               {(['customer', 'numerologist'] as const).map(t => (
                 <label key={t} className={`flex-1 flex items-center gap-2 px-3 py-2.5 rounded-xl border-2 cursor-pointer transition-all ${form.inquiryType === t ? 'border-[#D32F2F] bg-red-50' : 'border-gray-200 hover:border-gray-300'}`}>
@@ -166,109 +236,219 @@ function LeadFormModal({ initial, editId, onClose, onSaved }: {
               ))}
             </div>
           </div>
-          <div>
-            <p className={sec}>{form.inquiryType === 'customer' ? 'Customer Details' : 'Numerologist Details'}</p>
-            <div className="space-y-3">
-              <div className="grid grid-cols-2 gap-3">
-                <div>
-                  <label className={lbl}>{form.inquiryType === 'customer' ? 'Customer' : 'Numerologist'} Name *</label>
-                  <input type="text" value={form.name} onChange={set('name')} placeholder="Full name" className={inp} />
-                </div>
-                <div>
-                  <label className={lbl}>Mobile Number *</label>
-                  <input type="tel" value={form.mobile} onChange={set('mobile')} placeholder="+91 98765 43210" className={inp} />
-                </div>
-              </div>
-              {form.inquiryType === 'numerologist' && (
-                <div className="grid grid-cols-2 gap-3">
-                  <div><label className={lbl}>Client Name *</label><input type="text" value={form.clientName} onChange={set('clientName')} placeholder="Client's full name" className={inp} /></div>
-                  <div><label className={lbl}>Client Mobile *</label><input type="tel" value={form.clientMobile} onChange={set('clientMobile')} placeholder="+91 98765 43210" className={inp} /></div>
-                </div>
-              )}
-              <div><label className={lbl}>Address</label><input type="text" value={form.address} onChange={set('address')} placeholder="House/Flat no., Street" className={inp} /></div>
-              {form.inquiryType === 'customer' && (
-                <div className="grid grid-cols-2 gap-3">
-                  <div><label className={lbl}>Taluka</label><input type="text" value={form.taluka} onChange={set('taluka')} placeholder="Taluka" className={inp} /></div>
-                  <div><label className={lbl}>District</label><input type="text" value={form.district} onChange={set('district')} placeholder="District" className={inp} /></div>
-                </div>
-              )}
-              {form.inquiryType === 'numerologist' && (
-                <div><label className={lbl}>District</label><input type="text" value={form.district} onChange={set('district')} placeholder="District" className={inp} /></div>
-              )}
-              <div className="grid grid-cols-2 gap-3">
-                <div>
-                  <label className={lbl}>State</label>
-                  <select value={form.state} onChange={e => setForm(p => ({ ...p, state: e.target.value, nearestViStore: '' }))} className={inp}>
-                    <option value="">Select State</option>
-                    {INDIAN_STATES.map(s => <option key={s}>{s}</option>)}
-                  </select>
-                </div>
-                <div><label className={lbl}>Pin Code</label><input type="text" maxLength={6} value={form.pinCode} onChange={set('pinCode')} placeholder="400001" className={inp} /></div>
+
+          {/* ── Contact Details ── */}
+          <div className={cardCls + ' bg-blue-50/40 border-blue-100'}>
+            <span className={secLbl + ' text-blue-600'}>
+              {form.inquiryType === 'customer' ? 'Customer Details' : 'Numerologist Details'}
+            </span>
+
+            <div className="grid grid-cols-2 gap-3">
+              <div>
+                <label className={lbl}>{form.inquiryType === 'customer' ? 'Customer' : 'Numerologist'} Name *</label>
+                <input type="text" value={form.name} onChange={set('name')} placeholder="Full name" className={fi('name')} />
+                <FE k="name" />
               </div>
               <div>
-                <label className={lbl}>Nearest Vi Store</label>
-                <select value={form.nearestViStore} onChange={set('nearestViStore')} disabled={!form.state} className={inp}>
-                  <option value="">{form.state ? 'Select nearest store' : 'Select state first'}</option>
-                  {storeOptions.map(s => <option key={s}>{s}</option>)}
+                <label className={lbl}>Mobile Number *</label>
+                <input type="tel" value={form.mobile} onChange={set('mobile')} placeholder="98765 43210" className={fi('mobile')} />
+                <FE k="mobile" />
+              </div>
+            </div>
+
+            {form.inquiryType === 'numerologist' && (
+              <div className="grid grid-cols-2 gap-3">
+                <div>
+                  <label className={lbl}>Client Name *</label>
+                  <input type="text" value={form.clientName} onChange={set('clientName')} placeholder="Client's full name" className={fi('clientName')} />
+                  <FE k="clientName" />
+                </div>
+                <div>
+                  <label className={lbl}>Client Mobile *</label>
+                  <input type="tel" value={form.clientMobile} onChange={set('clientMobile')} placeholder="98765 43210" className={fi('clientMobile')} />
+                  <FE k="clientMobile" />
+                </div>
+              </div>
+            )}
+
+            <div>
+              <label className={lbl}>Address</label>
+              <input type="text" value={form.address} onChange={set('address')} placeholder="House/Flat no., Street" className={inp} />
+            </div>
+
+            {form.inquiryType === 'customer' && (
+              <div className="grid grid-cols-2 gap-3">
+                <div>
+                  <label className={lbl}>Taluka</label>
+                  <input type="text" value={form.taluka} onChange={set('taluka')} placeholder="Taluka" className={inp} />
+                </div>
+                <div>
+                  <label className={lbl}>District</label>
+                  <input type="text" value={form.district} onChange={set('district')} placeholder="District" className={inp} />
+                </div>
+              </div>
+            )}
+
+            {form.inquiryType === 'numerologist' && (
+              <div>
+                <label className={lbl}>District</label>
+                <input type="text" value={form.district} onChange={set('district')} placeholder="District" className={inp} />
+              </div>
+            )}
+
+            <div className="grid grid-cols-2 gap-3">
+              <div>
+                <label className={lbl}>State</label>
+                <select value={form.state} onChange={e => setForm(p => ({ ...p, state: e.target.value }))} className={inp}>
+                  <option value="">Select State</option>
+                  {INDIAN_STATES.map(s => <option key={s}>{s}</option>)}
                 </select>
               </div>
-            </div>
-          </div>
-          <div>
-            <p className={sec}>Requirements</p>
-            <div className="space-y-3">
-              {form.inquiryType === 'customer' && (
-                <div>
-                  <label className={lbl}>Numerologist Reference?</label>
-                  <div className="flex gap-6">
-                    {(['yes', 'no'] as const).map(v => (
-                      <label key={v} className="flex items-center gap-2 cursor-pointer">
-                        <input type="radio" name="numRef" value={v} checked={form.hasNumerologistRef === v}
-                          onChange={() => setForm(p => ({ ...p, hasNumerologistRef: v, numerologistRefName: '', numerologistRefMobile: '' }))}
-                          className="accent-[#D32F2F] w-4 h-4" />
-                        <span className="text-sm font-medium capitalize text-[#212121]">{v}</span>
-                      </label>
-                    ))}
-                  </div>
-                  {form.hasNumerologistRef === 'yes' && (
-                    <div className="grid grid-cols-2 gap-3 mt-2">
-                      <div><label className={lbl}>Numerologist Name *</label><input type="text" value={form.numerologistRefName} onChange={set('numerologistRefName')} placeholder="Name" className={inp} /></div>
-                      <div><label className={lbl}>Numerologist Mobile *</label><input type="tel" value={form.numerologistRefMobile} onChange={set('numerologistRefMobile')} placeholder="+91 98765 43210" className={inp} /></div>
-                    </div>
-                  )}
-                </div>
-              )}
-              <div className="grid grid-cols-2 gap-3">
-                <div><label className={lbl}>Require Digits</label><input type="text" value={form.requireDigits} onChange={set('requireDigits')} placeholder="e.g. 8, 1, 5" className={inp} /></div>
-                <div><label className={lbl}>Not Require Digits</label><input type="text" value={form.notRequireDigits} onChange={set('notRequireDigits')} placeholder="e.g. 4, 8" className={inp} /></div>
+              <div>
+                <label className={lbl}>Pin Code</label>
+                <input type="text" maxLength={6} value={form.pinCode} onChange={set('pinCode')} placeholder="400001" className={inp} />
               </div>
-              <div><label className={lbl}>Total</label><input type="text" value={form.total} onChange={set('total')} placeholder="e.g. 5, 9" className={inp} /></div>
-              <div><label className={lbl}>Any Special Requirements</label><textarea rows={2} value={form.specialRequirements} onChange={set('specialRequirements')} placeholder="Describe any special requirements..." className={inp + ' resize-none'} /></div>
+            </div>
+
+            <div>
+              <label className={lbl}>Nearest Vi Store (km)</label>
+              <input type="text" value={form.nearestViStore} onChange={set('nearestViStore')} placeholder="e.g. Andheri West — 5 km" className={inp} />
             </div>
           </div>
-          <div>
-            <p className={sec}>Source & Status</p>
+
+          {/* ── Requirements ── */}
+          <div className={cardCls + ' bg-amber-50/40 border-amber-100'}>
+            <span className={secLbl + ' text-amber-600'}>Requirements</span>
+
+            {/* VIP Number */}
+            <div className="pb-1">
+              <label className={lbl}>VIP Number?</label>
+              <div className="flex gap-6">
+                {(['yes', 'no'] as const).map(v => (
+                  <label key={v} className="flex items-center gap-2 cursor-pointer">
+                    <input
+                      type="radio" name="isVipNumber" value={v}
+                      checked={form.isVipNumber === v}
+                      onChange={() => setForm(p => ({
+                        ...p, isVipNumber: v, vipNumber: '',
+                        ...(v === 'yes' ? { status: 'Number Confirmed' as Status } : {}),
+                      }))}
+                      className="accent-[#D32F2F] w-4 h-4"
+                    />
+                    <span className="text-sm font-medium capitalize text-[#212121]">{v}</span>
+                  </label>
+                ))}
+              </div>
+            </div>
+
+            {form.isVipNumber === 'yes' && (
+              <div className="bg-green-50 rounded-xl p-3 border border-green-100">
+                <label className={lbl}>Enter VIP Number *</label>
+                <input
+                  type="text" value={form.vipNumber} onChange={set('vipNumber')}
+                  placeholder="e.g. 9876543210"
+                  className={fi('vipNumber')}
+                />
+                <FE k="vipNumber" />
+                {!fieldErrors.vipNumber && (
+                  <p className="text-xs text-green-700 mt-2 font-medium">Status will be auto-set to <strong>Number Confirmed</strong></p>
+                )}
+              </div>
+            )}
+
+            {/* Numerologist Reference — customers only */}
+            {form.inquiryType === 'customer' && (
+              <div>
+                <label className={lbl}>Numerologist Reference?</label>
+                <div className="flex gap-6">
+                  {(['yes', 'no'] as const).map(v => (
+                    <label key={v} className="flex items-center gap-2 cursor-pointer">
+                      <input
+                        type="radio" name="numRef" value={v}
+                        checked={form.hasNumerologistRef === v}
+                        onChange={() => setForm(p => ({ ...p, hasNumerologistRef: v, numerologistRefName: '', numerologistRefMobile: '' }))}
+                        className="accent-[#D32F2F] w-4 h-4"
+                      />
+                      <span className="text-sm font-medium capitalize text-[#212121]">{v}</span>
+                    </label>
+                  ))}
+                </div>
+                {form.hasNumerologistRef === 'yes' && (
+                  <div className="grid grid-cols-2 gap-3 mt-2">
+                    <div>
+                      <label className={lbl}>Numerologist Name *</label>
+                      <input type="text" value={form.numerologistRefName} onChange={set('numerologistRefName')} placeholder="Name" className={fi('numerologistRefName')} />
+                      <FE k="numerologistRefName" />
+                    </div>
+                    <div>
+                      <label className={lbl}>Numerologist Mobile *</label>
+                      <input type="tel" value={form.numerologistRefMobile} onChange={set('numerologistRefMobile')} placeholder="98765 43210" className={fi('numerologistRefMobile')} />
+                      <FE k="numerologistRefMobile" />
+                    </div>
+                  </div>
+                )}
+              </div>
+            )}
+
+            {/* Digits — hidden when VIP Number selected */}
+            {form.isVipNumber !== 'yes' && (
+              <>
+                <div className="grid grid-cols-2 gap-3">
+                  <div>
+                    <label className={lbl}>Require Digits</label>
+                    <input type="text" value={form.requireDigits} onChange={set('requireDigits')} placeholder="e.g. 8, 1, 5" className={inp} />
+                  </div>
+                  <div>
+                    <label className={lbl}>Not Require Digits</label>
+                    <input type="text" value={form.notRequireDigits} onChange={set('notRequireDigits')} placeholder="e.g. 4, 8" className={inp} />
+                  </div>
+                </div>
+                <div>
+                  <label className={lbl}>Total</label>
+                  <input type="text" value={form.total} onChange={set('total')} placeholder="e.g. 5, 9" className={inp} />
+                </div>
+              </>
+            )}
+
+            <div>
+              <label className={lbl}>Any Special Requirements</label>
+              <textarea rows={2} value={form.specialRequirements} onChange={set('specialRequirements')} placeholder="Describe any special requirements..." className={inp + ' resize-none'} />
+            </div>
+          </div>
+
+          {/* ── Source & Status ── */}
+          <div className={cardCls + ' bg-gray-50 border-gray-100'}>
+            <span className={secLbl + ' text-[#9E9E9E]'}>Source & Status</span>
             <div className="grid grid-cols-2 gap-3">
               <div>
                 <label className={lbl}>Source *</label>
-                <select value={form.source} onChange={set('source')} className={inp}>
+                <select value={form.source} onChange={set('source')} className={fi('source')}>
                   <option value="">Select source</option>
                   {SOURCE_OPTIONS.map(s => <option key={s}>{s}</option>)}
                 </select>
+                <FE k="source" />
               </div>
               <div>
                 <label className={lbl}>Status</label>
-                <select value={form.status} onChange={set('status')} className={inp}>
+                <select value={form.isVipNumber === 'yes' ? 'Number Confirmed' : form.status} onChange={set('status')} disabled={form.isVipNumber === 'yes'} className={inp + (form.isVipNumber === 'yes' ? ' opacity-60 cursor-not-allowed' : '')}>
                   {STATUSES.map(s => <option key={s}>{s}</option>)}
                 </select>
               </div>
             </div>
           </div>
-          {error && <p className="text-red-500 text-xs text-center">{error}</p>}
+
+          {apiError && (
+            <p className="text-red-500 text-xs text-center bg-red-50 py-2 px-3 rounded-xl border border-red-100">
+              {apiError}
+            </p>
+          )}
         </div>
+
         <div className="px-6 py-4 border-t border-gray-100 flex gap-3">
-          <button onClick={onClose} className="flex-1 py-2.5 border border-gray-200 text-[#616161] rounded-xl text-sm font-semibold hover:border-[#D32F2F] hover:text-[#D32F2F]">Cancel</button>
-          <button onClick={handleSave} disabled={loading} className="flex-1 py-2.5 bg-[#D32F2F] text-white rounded-xl text-sm font-semibold hover:bg-[#B71C1C] disabled:opacity-50">
+          <button onClick={onClose} className="flex-1 py-2.5 border-2 border-gray-200 text-[#616161] rounded-xl text-sm font-semibold hover:border-[#D32F2F] hover:text-[#D32F2F] transition-colors">
+            Cancel
+          </button>
+          <button onClick={handleSave} disabled={loading} className="flex-1 py-2.5 bg-gradient-to-r from-[#D32F2F] to-[#B71C1C] text-white rounded-xl text-sm font-semibold hover:from-[#B71C1C] hover:to-[#C62828] disabled:opacity-50 transition-all shadow-sm">
             {loading ? 'Saving…' : isEdit ? 'Save Changes' : 'Add Lead'}
           </button>
         </div>
@@ -466,7 +646,7 @@ export default function Inquiries() {
           >
             <RefreshCw size={14} className={loading ? "animate-spin" : ""} />
           </button>
-          <div className="flex bg-gray-100 rounded-xl p-1 gap-1">
+          {/* <div className="flex bg-gray-100 rounded-xl p-1 gap-1">
             <button
               onClick={() => setView("kanban")}
               className={`p-1.5 rounded-lg transition-colors ${view === "kanban" ? "bg-white text-[#D32F2F] shadow-sm" : "text-[#616161]"}`}
@@ -479,7 +659,7 @@ export default function Inquiries() {
             >
               <List size={15} />
             </button>
-          </div>
+          </div> */}
           <button
             onClick={openAdd}
             className="flex items-center gap-2 px-4 py-2 bg-[#D32F2F] text-white rounded-xl text-sm font-semibold hover:bg-[#B71C1C] transition-colors"
@@ -820,6 +1000,7 @@ export default function Inquiries() {
         <LeadFormModal
           initial={modalState.lead ? toForm(modalState.lead) : undefined}
           editId={modalState.lead?.id}
+          existingActivityLog={modalState.lead?.activityLog}
           onClose={closeModal}
           onSaved={onSaved}
         />

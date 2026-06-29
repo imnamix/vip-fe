@@ -116,6 +116,7 @@ interface FormState {
   description: string;
   price: string;
   tag: Tag;
+  rating: number;
   status: number;
 }
 
@@ -126,6 +127,7 @@ const EMPTY: FormState = {
   description: '',
   price: '',
   tag: '',
+  rating: 10,
   status: 1,
 };
 
@@ -155,6 +157,7 @@ export default function VipNumberForm() {
             description: d.description ?? '',
             price: d.price != null ? String(d.price) : '',
             tag: (d.tag ?? '') as Tag,
+            rating: d.rating != null ? Number(d.rating) : 10,
             status: d.status ?? 1,
           });
         }
@@ -199,6 +202,7 @@ export default function VipNumberForm() {
         description: form.description || null,
         price: form.price ? Number(form.price) : null,
         tag: form.tag || null,
+        rating: form.rating,
         status: form.status,
       };
       if (isEdit) {
@@ -331,6 +335,35 @@ export default function VipNumberForm() {
                   </button>
                 );
               })}
+            </div>
+          </div>
+
+          {/* Rating */}
+          <div>
+            <div className="flex items-center justify-between mb-1.5">
+              <label className="text-xs font-semibold text-[#212121]">Rating Score</label>
+              <span className="text-sm font-bold text-[#D32F2F]" style={{ fontFamily: 'Poppins, sans-serif' }}>
+                {parseFloat(form.rating.toFixed(1))}<span className="text-[#9E9E9E] font-normal text-xs">/10</span>
+              </span>
+            </div>
+            <div className="relative py-1">
+              <input
+                type="range"
+                min={0}
+                max={10}
+                step={0.5}
+                value={form.rating}
+                onChange={e => set('rating', parseFloat(e.target.value))}
+                className="w-full h-1.5 rounded-full appearance-none cursor-pointer accent-[#D32F2F]"
+                style={{ background: `linear-gradient(to right, #D32F2F ${form.rating * 10}%, #E5E7EB ${form.rating * 10}%)` }}
+              />
+              <div className="flex justify-between text-[10px] text-[#9E9E9E] mt-1.5 px-0.5">
+                <span>0</span>
+                <span>2.5</span>
+                <span>5</span>
+                <span>7.5</span>
+                <span>10</span>
+              </div>
             </div>
           </div>
 

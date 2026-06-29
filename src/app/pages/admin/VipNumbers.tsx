@@ -31,6 +31,7 @@ interface VipNumberItem {
   description: string;
   price: number;
   tag: string | null;
+  rating: number | null;
   status: number;
 }
 
@@ -174,7 +175,7 @@ export default function VipNumbers() {
           <table className="w-full text-sm">
             <thead>
               <tr className="border-b border-gray-100 bg-gray-50">
-                {['Sr No', 'Icon', 'VIP Number', 'Category', 'Tag', 'Price', 'Status', 'Actions'].map(h => (
+                {['Sr No', 'Icon', 'VIP Number', 'Category', 'Tag', 'Price', 'Rating', 'Status', 'Actions'].map(h => (
                   <th key={h} className="text-left px-4 py-3 text-xs font-semibold text-[#9E9E9E] uppercase tracking-wide whitespace-nowrap">
                     {h}
                   </th>
@@ -184,7 +185,7 @@ export default function VipNumbers() {
             <tbody>
               {loading ? (
                 <tr>
-                  <td colSpan={8} className="px-4 py-12 text-center text-[#9E9E9E] text-sm">
+                  <td colSpan={9} className="px-4 py-12 text-center text-[#9E9E9E] text-sm">
                     <div className="flex items-center justify-center gap-2">
                       <Loader2 size={16} className="animate-spin" /> Loading…
                     </div>
@@ -192,7 +193,7 @@ export default function VipNumbers() {
                 </tr>
               ) : items.length === 0 ? (
                 <tr>
-                  <td colSpan={8} className="px-4 py-12 text-center text-[#9E9E9E] text-sm">
+                  <td colSpan={9} className="px-4 py-12 text-center text-[#9E9E9E] text-sm">
                     <div className="flex flex-col items-center gap-2">
                       <Hash size={28} className="text-gray-300" />
                       <span>No VIP numbers found</span>
@@ -233,6 +234,13 @@ export default function VipNumbers() {
                     </td>
                     <td className="px-4 py-3 font-medium text-[#212121]">
                       {item.price != null ? `₹${Number(item.price).toLocaleString('en-IN')}` : '—'}
+                    </td>
+                    <td className="px-4 py-3">
+                      {item.rating != null ? (
+                        <span className="inline-flex items-center gap-0.5 px-2 py-0.5 rounded-full bg-[#FFF8E1] text-[#D32F2F] text-xs font-bold">
+                          {parseFloat(Number(item.rating).toFixed(1))}<span className="text-[#9E9E9E] font-normal">/10</span>
+                        </span>
+                      ) : <span className="text-gray-300 text-xs">—</span>}
                     </td>
                     <td className="px-4 py-3">
                       <span className={`px-2.5 py-1 rounded-lg text-xs font-semibold ${

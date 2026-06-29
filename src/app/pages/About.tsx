@@ -323,7 +323,7 @@ export default function About() {
                   className="px-6 py-3 bg-[#D32F2F] text-white rounded-xl font-semibold hover:bg-[#B71C1C] transition-colors"
                   style={{ fontFamily: 'Poppins, sans-serif' }}
                 >
-                  Book a Consultation
+                  Book 
                 </button>
               </div>
 

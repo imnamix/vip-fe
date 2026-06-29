@@ -15,32 +15,6 @@ const INDIAN_STATES = [
   'Ladakh', 'Lakshadweep', 'Puducherry',
 ];
 
-const VI_STORES_BY_STATE: Record<string, string[]> = {
-  'Maharashtra': ['Vi Store - Andheri West, Mumbai', 'Vi Store - Thane West', 'Vi Store - Pune Deccan', 'Vi Store - Nagpur Sitabuldi', 'Vi Store - Nashik CBS', 'Vi Store - Aurangabad'],
-  'Gujarat': ['Vi Store - Ahmedabad CG Road', 'Vi Store - Surat Ring Road', 'Vi Store - Vadodara Alkapuri', 'Vi Store - Rajkot'],
-  'Karnataka': ['Vi Store - Bangalore Koramangala', 'Vi Store - Bangalore MG Road', 'Vi Store - Mysore'],
-  'Tamil Nadu': ['Vi Store - Chennai Anna Nagar', 'Vi Store - Chennai T Nagar', 'Vi Store - Coimbatore RS Puram'],
-  'Rajasthan': ['Vi Store - Jaipur MI Road', 'Vi Store - Jodhpur Sojati Gate', 'Vi Store - Udaipur'],
-  'Madhya Pradesh': ['Vi Store - Indore Vijay Nagar', 'Vi Store - Bhopal MP Nagar', 'Vi Store - Gwalior'],
-  'Uttar Pradesh': ['Vi Store - Lucknow Hazratganj', 'Vi Store - Kanpur Civil Lines', 'Vi Store - Agra Sanjay Place', 'Vi Store - Varanasi'],
-  'Delhi': ['Vi Store - Connaught Place', 'Vi Store - Lajpat Nagar', 'Vi Store - Janakpuri', 'Vi Store - Rajouri Garden'],
-  'Haryana': ['Vi Store - Gurugram DLF Phase 1', 'Vi Store - Faridabad Sector 15', 'Vi Store - Ambala'],
-  'Punjab': ['Vi Store - Chandigarh Sector 17', 'Vi Store - Ludhiana Feroze Gandhi Mkt', 'Vi Store - Amritsar'],
-  'Telangana': ['Vi Store - Hyderabad Banjara Hills', 'Vi Store - Hyderabad Secunderabad', 'Vi Store - Warangal'],
-  'West Bengal': ['Vi Store - Kolkata Park Street', 'Vi Store - Kolkata Salt Lake', 'Vi Store - Siliguri'],
-  'Bihar': ['Vi Store - Patna Boring Road', 'Vi Store - Gaya'],
-  'Odisha': ['Vi Store - Bhubaneswar', 'Vi Store - Cuttack'],
-  'Kerala': ['Vi Store - Kochi MG Road', 'Vi Store - Thiruvananthapuram', 'Vi Store - Kozhikode'],
-  'Goa': ['Vi Store - Panaji', 'Vi Store - Vasco da Gama'],
-  'Assam': ['Vi Store - Guwahati GS Road', 'Vi Store - Dibrugarh'],
-  'Jharkhand': ['Vi Store - Ranchi Main Road', 'Vi Store - Jamshedpur'],
-  'Chhattisgarh': ['Vi Store - Raipur Pandri', 'Vi Store - Bhilai Sector 6'],
-  'Andhra Pradesh': ['Vi Store - Visakhapatnam', 'Vi Store - Vijayawada Eluru Road', 'Vi Store - Guntur'],
-  'Uttarakhand': ['Vi Store - Dehradun Rajpur Road', 'Vi Store - Haridwar'],
-  'Himachal Pradesh': ['Vi Store - Shimla Mall Road', 'Vi Store - Dharamshala'],
-  'Chandigarh': ['Vi Store - Chandigarh Sector 17', 'Vi Store - Chandigarh Sector 22'],
-};
-
 const STEP_LABELS = ['User Type', 'Details', 'Requirements', 'Confirmation'];
 
 interface BookingModalProps {
@@ -78,9 +52,6 @@ export default function BookingModal({ onClose }: BookingModalProps) {
   const [requirements, setRequirements] = useState(emptyRequirements);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState('');
-
-  const activeState = userType === 'customer' ? customerForm.state : numForm.state;
-  const storeOptions = VI_STORES_BY_STATE[activeState] ?? [];
 
   const handleFinalSubmit = async () => {
     setLoading(true);
@@ -139,9 +110,9 @@ export default function BookingModal({ onClose }: BookingModalProps) {
             <div>
               <h2
                 className="font-bold text-[#212121] text-lg leading-tight"
-                style={{ fontFamily: 'Poppins, sans-serif' }}
+                style={{ fontFamily: "Poppins, sans-serif" }}
               >
-                Book a Consultation
+                Book Your Number
               </h2>
               <p className="text-[#616161] text-xs">
                 Step {step} of 4 — {STEP_LABELS[step - 1]}
@@ -164,17 +135,17 @@ export default function BookingModal({ onClose }: BookingModalProps) {
                 {i < 3 && (
                   <div
                     className={`absolute top-4 left-1/2 w-full h-0.5 transition-colors ${
-                      step > s ? 'bg-[#D32F2F]' : 'bg-gray-200'
+                      step > s ? "bg-[#D32F2F]" : "bg-gray-200"
                     }`}
                   />
                 )}
                 <div
                   className={`relative z-10 w-8 h-8 rounded-full flex items-center justify-center font-bold text-xs border-2 transition-all ${
                     step > s
-                      ? 'bg-[#FBC02D] border-[#FBC02D] text-white'
+                      ? "bg-[#FBC02D] border-[#FBC02D] text-white"
                       : step === s
-                      ? 'bg-[#D32F2F] border-[#D32F2F] text-white'
-                      : 'bg-white border-gray-300 text-gray-400'
+                        ? "bg-[#D32F2F] border-[#D32F2F] text-white"
+                        : "bg-white border-gray-300 text-gray-400"
                   }`}
                 >
                   {step > s ? <CheckCircle size={13} /> : s}
@@ -187,7 +158,7 @@ export default function BookingModal({ onClose }: BookingModalProps) {
               <span
                 key={label}
                 className={`text-[10px] font-medium leading-tight px-0.5 ${
-                  step === i + 1 ? 'text-[#D32F2F] font-bold' : 'text-[#9E9E9E]'
+                  step === i + 1 ? "text-[#D32F2F] font-bold" : "text-[#9E9E9E]"
                 }`}
               >
                 {label}
@@ -206,16 +177,16 @@ export default function BookingModal({ onClose }: BookingModalProps) {
               <div className="grid grid-cols-2 gap-3 mb-5">
                 {[
                   {
-                    type: 'customer' as const,
+                    type: "customer" as const,
                     icon: User,
-                    title: 'Customer',
-                    desc: 'I want to book a VIP number for myself.',
+                    title: "Customer",
+                    desc: "I want to book a VIP number for myself.",
                   },
                   {
-                    type: 'numerologist' as const,
+                    type: "numerologist" as const,
                     icon: Briefcase,
-                    title: 'Numerologist',
-                    desc: 'I am a numerologist booking for my client.',
+                    title: "Numerologist",
+                    desc: "I am a numerologist booking for my client.",
                   },
                 ].map((opt) => {
                   const Icon = opt.icon;
@@ -226,29 +197,32 @@ export default function BookingModal({ onClose }: BookingModalProps) {
                       onClick={() => setUserType(opt.type)}
                       className={`p-4 rounded-2xl border-2 text-left transition-all ${
                         selected
-                          ? 'border-[#D32F2F] bg-red-50'
-                          : 'border-gray-200 hover:border-[#D32F2F]/40'
+                          ? "border-[#D32F2F] bg-red-50"
+                          : "border-gray-200 hover:border-[#D32F2F]/40"
                       }`}
                     >
                       <div
                         className={`w-10 h-10 rounded-xl flex items-center justify-center mb-3 ${
-                          selected ? 'bg-[#D32F2F]' : 'bg-gray-100'
+                          selected ? "bg-[#D32F2F]" : "bg-gray-100"
                         }`}
                       >
                         <Icon
                           size={18}
-                          className={selected ? 'text-white' : 'text-gray-500'}
+                          className={selected ? "text-white" : "text-gray-500"}
                         />
                       </div>
                       <div
                         className="font-bold text-[#212121] text-sm mb-1"
-                        style={{ fontFamily: 'Poppins, sans-serif' }}
+                        style={{ fontFamily: "Poppins, sans-serif" }}
                       >
                         {opt.title}
                       </div>
                       <div className="text-[#616161] text-xs">{opt.desc}</div>
                       {selected && (
-                        <CheckCircle size={14} className="text-[#D32F2F] mt-2" />
+                        <CheckCircle
+                          size={14}
+                          className="text-[#D32F2F] mt-2"
+                        />
                       )}
                     </button>
                   );
@@ -268,7 +242,7 @@ export default function BookingModal({ onClose }: BookingModalProps) {
           {step === 2 && (
             <div>
               <div className="max-h-[58vh] overflow-y-auto pr-1 space-y-3">
-                {userType === 'customer' ? (
+                {userType === "customer" ? (
                   <>
                     {/* Customer details */}
                     <div className="grid grid-cols-2 gap-3">
@@ -278,7 +252,10 @@ export default function BookingModal({ onClose }: BookingModalProps) {
                           type="text"
                           value={customerForm.name}
                           onChange={(e) =>
-                            setCustomerForm((p) => ({ ...p, name: e.target.value }))
+                            setCustomerForm((p) => ({
+                              ...p,
+                              name: e.target.value,
+                            }))
                           }
                           placeholder="Full name"
                           className={inputCls}
@@ -290,7 +267,10 @@ export default function BookingModal({ onClose }: BookingModalProps) {
                           type="tel"
                           value={customerForm.mobile}
                           onChange={(e) =>
-                            setCustomerForm((p) => ({ ...p, mobile: e.target.value }))
+                            setCustomerForm((p) => ({
+                              ...p,
+                              mobile: e.target.value,
+                            }))
                           }
                           placeholder="98765 43210"
                           className={inputCls}
@@ -303,7 +283,10 @@ export default function BookingModal({ onClose }: BookingModalProps) {
                         type="text"
                         value={customerForm.address}
                         onChange={(e) =>
-                          setCustomerForm((p) => ({ ...p, address: e.target.value }))
+                          setCustomerForm((p) => ({
+                            ...p,
+                            address: e.target.value,
+                          }))
                         }
                         placeholder="House/Flat no., Street"
                         className={inputCls}
@@ -316,7 +299,10 @@ export default function BookingModal({ onClose }: BookingModalProps) {
                           type="text"
                           value={customerForm.taluka}
                           onChange={(e) =>
-                            setCustomerForm((p) => ({ ...p, taluka: e.target.value }))
+                            setCustomerForm((p) => ({
+                              ...p,
+                              taluka: e.target.value,
+                            }))
                           }
                           placeholder="Taluka"
                           className={inputCls}
@@ -328,7 +314,10 @@ export default function BookingModal({ onClose }: BookingModalProps) {
                           type="text"
                           value={customerForm.district}
                           onChange={(e) =>
-                            setCustomerForm((p) => ({ ...p, district: e.target.value }))
+                            setCustomerForm((p) => ({
+                              ...p,
+                              district: e.target.value,
+                            }))
                           }
                           placeholder="District"
                           className={inputCls}
@@ -344,7 +333,7 @@ export default function BookingModal({ onClose }: BookingModalProps) {
                             setCustomerForm((p) => ({
                               ...p,
                               state: e.target.value,
-                              nearestViStore: '',
+                              nearestViStore: "",
                             }))
                           }
                           className={inputCls}
@@ -362,7 +351,10 @@ export default function BookingModal({ onClose }: BookingModalProps) {
                           maxLength={6}
                           value={customerForm.pinCode}
                           onChange={(e) =>
-                            setCustomerForm((p) => ({ ...p, pinCode: e.target.value }))
+                            setCustomerForm((p) => ({
+                              ...p,
+                              pinCode: e.target.value,
+                            }))
                           }
                           placeholder="400001"
                           className={inputCls}
@@ -370,8 +362,9 @@ export default function BookingModal({ onClose }: BookingModalProps) {
                       </div>
                     </div>
                     <div>
-                      <label className={labelCls}>Nearest Vi Store</label>
-                      <select
+                      <label className={labelCls}>Nearest Vi Store (km)</label>
+                      <input
+                        type="text"
                         value={customerForm.nearestViStore}
                         onChange={(e) =>
                           setCustomerForm((p) => ({
@@ -379,18 +372,9 @@ export default function BookingModal({ onClose }: BookingModalProps) {
                             nearestViStore: e.target.value,
                           }))
                         }
-                        disabled={!customerForm.state}
+                        placeholder="e.g. Andheri West - 5km"
                         className={inputCls}
-                      >
-                        <option value="">
-                          {customerForm.state
-                            ? 'Select nearest store'
-                            : 'Select state first'}
-                        </option>
-                        {storeOptions.map((s) => (
-                          <option key={s}>{s}</option>
-                        ))}
-                      </select>
+                      />
                     </div>
                   </>
                 ) : (
@@ -410,12 +394,17 @@ export default function BookingModal({ onClose }: BookingModalProps) {
                         />
                       </div>
                       <div>
-                        <label className={labelCls}>Numerologist Mobile *</label>
+                        <label className={labelCls}>
+                          Numerologist Mobile *
+                        </label>
                         <input
                           type="tel"
                           value={numForm.mobile}
                           onChange={(e) =>
-                            setNumForm((p) => ({ ...p, mobile: e.target.value }))
+                            setNumForm((p) => ({
+                              ...p,
+                              mobile: e.target.value,
+                            }))
                           }
                           placeholder="98765 43210"
                           className={inputCls}
@@ -429,7 +418,10 @@ export default function BookingModal({ onClose }: BookingModalProps) {
                           type="text"
                           value={numForm.clientName}
                           onChange={(e) =>
-                            setNumForm((p) => ({ ...p, clientName: e.target.value }))
+                            setNumForm((p) => ({
+                              ...p,
+                              clientName: e.target.value,
+                            }))
                           }
                           placeholder="Client's full name"
                           className={inputCls}
@@ -441,7 +433,10 @@ export default function BookingModal({ onClose }: BookingModalProps) {
                           type="tel"
                           value={numForm.clientMobile}
                           onChange={(e) =>
-                            setNumForm((p) => ({ ...p, clientMobile: e.target.value }))
+                            setNumForm((p) => ({
+                              ...p,
+                              clientMobile: e.target.value,
+                            }))
                           }
                           placeholder="98765 43210"
                           className={inputCls}
@@ -467,7 +462,10 @@ export default function BookingModal({ onClose }: BookingModalProps) {
                           type="text"
                           value={numForm.district}
                           onChange={(e) =>
-                            setNumForm((p) => ({ ...p, district: e.target.value }))
+                            setNumForm((p) => ({
+                              ...p,
+                              district: e.target.value,
+                            }))
                           }
                           placeholder="District"
                           className={inputCls}
@@ -481,7 +479,7 @@ export default function BookingModal({ onClose }: BookingModalProps) {
                             setNumForm((p) => ({
                               ...p,
                               state: e.target.value,
-                              nearestViStore: '',
+                              nearestViStore: "",
                             }))
                           }
                           className={inputCls}
@@ -501,15 +499,21 @@ export default function BookingModal({ onClose }: BookingModalProps) {
                           maxLength={6}
                           value={numForm.pinCode}
                           onChange={(e) =>
-                            setNumForm((p) => ({ ...p, pinCode: e.target.value }))
+                            setNumForm((p) => ({
+                              ...p,
+                              pinCode: e.target.value,
+                            }))
                           }
                           placeholder="400001"
                           className={inputCls}
                         />
                       </div>
                       <div>
-                        <label className={labelCls}>Nearest Vi Store</label>
-                        <select
+                        <label className={labelCls}>
+                          Nearest Vi Store (km)
+                        </label>
+                        <input
+                          type="text"
                           value={numForm.nearestViStore}
                           onChange={(e) =>
                             setNumForm((p) => ({
@@ -517,16 +521,9 @@ export default function BookingModal({ onClose }: BookingModalProps) {
                               nearestViStore: e.target.value,
                             }))
                           }
-                          disabled={!numForm.state}
+                          placeholder="e.g. Andheri West - 5km"
                           className={inputCls}
-                        >
-                          <option value="">
-                            {numForm.state ? 'Select nearest store' : 'Select state first'}
-                          </option>
-                          {storeOptions.map((s) => (
-                            <option key={s}>{s}</option>
-                          ))}
-                        </select>
+                        />
                       </div>
                     </div>
                   </>
@@ -546,17 +543,17 @@ export default function BookingModal({ onClose }: BookingModalProps) {
                   type="button"
                   onClick={() => {
                     const nameOk =
-                      userType === 'customer'
+                      userType === "customer"
                         ? customerForm.name.trim() && customerForm.mobile.trim()
                         : numForm.name.trim() &&
                           numForm.mobile.trim() &&
                           numForm.clientName.trim() &&
                           numForm.clientMobile.trim();
                     if (!nameOk) {
-                      setError('Please fill in all required fields (*).');
+                      setError("Please fill in all required fields (*).");
                       return;
                     }
-                    setError('');
+                    setError("");
                     setStep(3);
                   }}
                   className="flex-1 py-2.5 bg-[#D32F2F] text-white rounded-xl text-sm font-semibold flex items-center justify-center gap-1 hover:bg-[#B71C1C]"
@@ -564,7 +561,9 @@ export default function BookingModal({ onClose }: BookingModalProps) {
                   Next <ChevronRight size={14} />
                 </button>
               </div>
-              {error && <p className="text-red-500 text-xs mt-2 text-center">{error}</p>}
+              {error && (
+                <p className="text-red-500 text-xs mt-2 text-center">{error}</p>
+              )}
             </div>
           )}
 
@@ -572,16 +571,18 @@ export default function BookingModal({ onClose }: BookingModalProps) {
           {step === 3 && (
             <div>
               <div className="max-h-[58vh] overflow-y-auto pr-1 space-y-4">
-
                 {/* Numerologist reference — customers only */}
-                {userType === 'customer' && (
+                {userType === "customer" && (
                   <div className="bg-gray-50 rounded-2xl p-4 border border-gray-100">
                     <p className="text-xs font-bold text-[#212121] uppercase tracking-wider mb-3">
                       Numerologist Reference
                     </p>
                     <div className="flex gap-6 mb-3">
-                      {(['yes', 'no'] as const).map((v) => (
-                        <label key={v} className="flex items-center gap-2 cursor-pointer">
+                      {(["yes", "no"] as const).map((v) => (
+                        <label
+                          key={v}
+                          className="flex items-center gap-2 cursor-pointer"
+                        >
                           <input
                             type="radio"
                             name="hasNumerologistRef"
@@ -591,8 +592,8 @@ export default function BookingModal({ onClose }: BookingModalProps) {
                               setRequirements((p) => ({
                                 ...p,
                                 hasNumerologistRef: v,
-                                numerologistRefName: '',
-                                numerologistRefMobile: '',
+                                numerologistRefName: "",
+                                numerologistRefMobile: "",
                               }))
                             }
                             className="accent-[#D32F2F] w-4 h-4"
@@ -604,10 +605,12 @@ export default function BookingModal({ onClose }: BookingModalProps) {
                       ))}
                     </div>
 
-                    {requirements.hasNumerologistRef === 'yes' && (
+                    {requirements.hasNumerologistRef === "yes" && (
                       <div className="grid grid-cols-2 gap-3">
                         <div>
-                          <label className={labelCls}>Numerologist Name *</label>
+                          <label className={labelCls}>
+                            Numerologist Name *
+                          </label>
                           <input
                             type="text"
                             value={requirements.numerologistRefName}
@@ -622,7 +625,9 @@ export default function BookingModal({ onClose }: BookingModalProps) {
                           />
                         </div>
                         <div>
-                          <label className={labelCls}>Numerologist Mobile *</label>
+                          <label className={labelCls}>
+                            Numerologist Mobile *
+                          </label>
                           <input
                             type="tel"
                             value={requirements.numerologistRefMobile}
@@ -685,14 +690,19 @@ export default function BookingModal({ onClose }: BookingModalProps) {
                         type="text"
                         value={requirements.total}
                         onChange={(e) =>
-                          setRequirements((p) => ({ ...p, total: e.target.value }))
+                          setRequirements((p) => ({
+                            ...p,
+                            total: e.target.value,
+                          }))
                         }
                         placeholder="e.g. 5, 9"
                         className={inputCls}
                       />
                     </div>
                     <div>
-                      <label className={labelCls}>Any Special Requirements</label>
+                      <label className={labelCls}>
+                        Any Special Requirements
+                      </label>
                       <textarea
                         rows={3}
                         value={requirements.specialRequirements}
@@ -703,20 +713,25 @@ export default function BookingModal({ onClose }: BookingModalProps) {
                           }))
                         }
                         placeholder="Describe any special requirements..."
-                        className={inputCls + ' resize-none'}
+                        className={inputCls + " resize-none"}
                       />
                     </div>
                   </div>
                 </div>
               </div>
 
-              {error && <p className="text-red-500 text-xs mt-2 text-center">{error}</p>}
+              {error && (
+                <p className="text-red-500 text-xs mt-2 text-center">{error}</p>
+              )}
 
               {/* Step 3 nav */}
               <div className="flex gap-2 pt-4">
                 <button
                   type="button"
-                  onClick={() => { setError(''); setStep(2); }}
+                  onClick={() => {
+                    setError("");
+                    setStep(2);
+                  }}
                   className="flex-1 py-2.5 border-2 border-gray-200 text-[#616161] rounded-xl text-sm font-semibold flex items-center justify-center gap-1 hover:border-[#D32F2F] hover:text-[#D32F2F]"
                 >
                   <ChevronLeft size={14} /> Back
@@ -726,20 +741,26 @@ export default function BookingModal({ onClose }: BookingModalProps) {
                   disabled={loading}
                   onClick={() => {
                     if (
-                      userType === 'customer' &&
-                      requirements.hasNumerologistRef === 'yes' &&
+                      userType === "customer" &&
+                      requirements.hasNumerologistRef === "yes" &&
                       (!requirements.numerologistRefName.trim() ||
                         !requirements.numerologistRefMobile.trim())
                     ) {
-                      setError('Please fill in numerologist name and mobile.');
+                      setError("Please fill in numerologist name and mobile.");
                       return;
                     }
-                    setError('');
+                    setError("");
                     handleFinalSubmit();
                   }}
                   className="flex-1 py-2.5 bg-[#D32F2F] text-white rounded-xl text-sm font-semibold flex items-center justify-center gap-1 hover:bg-[#B71C1C] disabled:opacity-50"
                 >
-                  {loading ? 'Submitting…' : <>Submit <ChevronRight size={14} /></>}
+                  {loading ? (
+                    "Submitting…"
+                  ) : (
+                    <>
+                      Submit <ChevronRight size={14} />
+                    </>
+                  )}
                 </button>
               </div>
             </div>
@@ -753,14 +774,13 @@ export default function BookingModal({ onClose }: BookingModalProps) {
               </div>
               <h3
                 className="text-xl font-bold text-[#212121] mb-2"
-                style={{ fontFamily: 'Poppins, sans-serif' }}
+                style={{ fontFamily: "Poppins, sans-serif" }}
               >
                 Inquiry Submitted!
               </h3>
               <p className="text-[#616161] text-sm mb-6">
-                Thank you,{' '}
-                <strong>{displayName || 'Valued Client'}</strong>! Our team
-                will contact you within 24 hours.
+                Thank you, <strong>{displayName || "Valued Client"}</strong>!
+                Our team will contact you within 24 hours.
               </p>
               <button
                 onClick={onClose}

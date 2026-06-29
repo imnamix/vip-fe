@@ -1,8 +1,8 @@
 import { useState, useEffect } from 'react';
 import { useNavigate, useParams } from 'react-router';
 import {
-  ChevronLeft, Edit, Hash, Tag, IndianRupee, Loader2, AlertCircle,
-  TrendingUp, Users, Building2, Award, Star, Target, BarChart2, Clock, Globe,
+  ChevronLeft, Edit, Hash, Tag, IndianRupee, Loader2, AlertCircle, Star,
+  TrendingUp, Users, Building2, Award, Target, BarChart2, Clock, Globe,
   Shield, Zap, Heart, ThumbsUp, Lightbulb, Trophy, Gem, Rocket, Wrench,
   DollarSign, Phone, Crown,
 } from 'lucide-react';
@@ -26,6 +26,7 @@ interface VipNumber {
   category: string;
   description: string;
   price: number;
+  rating: number | null;
   status: number;
   created_at: string;
   updated_at: string;
@@ -153,7 +154,7 @@ export default function VipNumberView() {
             </div>
           </div>
 
-          <div className="bg-white rounded-2xl border border-gray-100 p-5 flex items-start gap-3 col-span-2">
+          <div className="bg-white rounded-2xl border border-gray-100 p-5 flex items-start gap-3">
             <div className="w-9 h-9 rounded-xl bg-green-50 flex items-center justify-center flex-shrink-0">
               <IndianRupee size={16} className="text-green-600" />
             </div>
@@ -161,6 +162,20 @@ export default function VipNumberView() {
               <div className="text-xs text-[#9E9E9E] font-medium mb-0.5">Price</div>
               <div className="text-2xl font-bold text-[#212121]">
                 {item.price != null ? `₹${Number(item.price).toLocaleString('en-IN')}` : '—'}
+              </div>
+            </div>
+          </div>
+
+          <div className="bg-white rounded-2xl border border-gray-100 p-5 flex items-start gap-3">
+            <div className="w-9 h-9 rounded-xl bg-[#FFF8E1] flex items-center justify-center flex-shrink-0">
+              <Star size={16} className="text-[#D32F2F]" />
+            </div>
+            <div>
+              <div className="text-xs text-[#9E9E9E] font-medium mb-0.5">Rating Score</div>
+              <div className="text-2xl font-bold text-[#D32F2F]" style={{ fontFamily: 'Poppins, sans-serif' }}>
+                {item.rating != null ? (
+                  <>{parseFloat(Number(item.rating).toFixed(1))}<span className="text-base text-[#9E9E9E] font-normal">/10</span></>
+                ) : '—'}
               </div>
             </div>
           </div>

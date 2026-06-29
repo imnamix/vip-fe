@@ -47,6 +47,7 @@ interface VipNumber {
   price: number | null;
   tag: string | null;
   icon: string | null;
+  rating: number | null;
   status: number;
 }
 
@@ -477,7 +478,7 @@ export default function Home() {
                         className="px-8 py-3.5 bg-[#D32F2F] text-white rounded-xl font-semibold hover:bg-[#B71C1C] transition-colors shadow-lg"
                         style={{ fontFamily: 'Poppins, sans-serif' }}
                       >
-                        Book Consultation
+                        Book Your Number
                       </button>
                       <button
                         onClick={() => navigate('/about')}
@@ -626,10 +627,22 @@ export default function Home() {
                   <VipIcon name={n.icon} size={22} />
                 </div>
 
-                {/* Number */}
-                <div className="font-bold text-lg text-[#212121] tracking-wider mb-1 pr-10" style={{ fontFamily: 'Poppins, sans-serif' }}>
-                  {n.vipNumber?.replace(/(\d{5})(\d{5})/, '$1 $2')}
-                </div>
+                {/* Number + Rating */}
+              <div className="flex items-center justify-between mb-1">
+  <div
+    className="flex-1 font-bold text-lg text-[#212121] tracking-wider truncate"
+    style={{ fontFamily: "Poppins, sans-serif" }}
+  >
+    {n.vipNumber?.replace(/(\d{5})(\d{5})/, "$1 $2")}
+  </div>
+
+  {n.rating != null && (
+    <div className="ml-3 flex items-center gap-1 text-xs font-semibold text-[#D32F2F] flex-shrink-0">
+      <span>{parseFloat(Number(n.rating).toFixed(1))}/10</span>
+      <Star size={11} className="fill-[#D32F2F] text-[#D32F2F]" />
+    </div>
+  )}
+</div>
 
                 {/* Category */}
                 <div className="inline-block bg-[#FFF8E1] text-[#D32F2F] text-xs font-semibold px-2 py-0.5 rounded-full mb-3 self-start">{n.category}</div>
@@ -898,10 +911,10 @@ export default function Home() {
       <section className="py-20 bg-gradient-to-r from-[#212121] to-[#B71C1C]">
         <div className="max-w-4xl mx-auto px-4 text-center">
           <h2 className="text-4xl font-bold text-white mb-4" style={{ fontFamily: 'Poppins, sans-serif' }}>Ready to Unlock Your Destiny?</h2>
-          <p className="text-white/80 text-lg mb-8">Book a free 15-minute numerology consultation today and discover your life path number.</p>
+          <p className="text-white/80 text-lg mb-8">Book Your Personalised Numerology Number</p>
           <div className="flex flex-wrap gap-4 justify-center">
             <button onClick={openBooking} className="px-8 py-4 bg-[#FBC02D] text-black rounded-xl font-bold text-lg hover:bg-yellow-400 transition-colors" style={{ fontFamily: 'Poppins, sans-serif' }}>
-              Book Free Consultation
+              Book Your Number
             </button>
             <button onClick={() => navigate('/contact')} className="px-8 py-4 bg-white/10 border border-white/30 text-white rounded-xl font-semibold text-lg hover:bg-white/20 transition-colors">
               Contact Us

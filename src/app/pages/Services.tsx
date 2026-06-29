@@ -218,7 +218,7 @@ export default function Services() {
               className="px-8 py-4 bg-[#FBC02D] text-black rounded-xl font-bold text-lg hover:bg-yellow-400 transition-colors"
               style={{ fontFamily: 'Poppins, sans-serif' }}
             >
-              Book Consultation
+              Book Your Number
             </button>
             <button
               onClick={() => navigate('/contact')}
