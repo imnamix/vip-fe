@@ -3,6 +3,7 @@ import {
   Save, CheckCircle, AlertCircle, Loader2, Plus, Trash2, ChevronDown,
 } from 'lucide-react';
 import { getAllFaqs, createFaq, updateFaq, deleteFaq } from '../../../services/FaqService';
+import { usePermission } from '../../../hooks/usePermission';
 
 // ─── Types ────────────────────────────────────────────────────────────────────
 
@@ -26,6 +27,10 @@ export default function FaqsSection() {
   const [error, setError] = useState<string | null>(null);
   const [fieldErrors, setFieldErrors] = useState<FieldErrors>({});
   const [expandedIds, setExpandedIds] = useState<Set<number>>(new Set());
+  const { can } = usePermission();
+  const canWrite  = can('Content', 'write');
+  const canUpdate = can('Content', 'update');
+  const canDelete = can('Content', 'delete');
 
   // ── Load ──────────────────────────────────────────────────────────────────
 
@@ -187,13 +192,15 @@ export default function FaqsSection() {
                 >
                   {expandedIds.has(item.localId) ? 'Collapse' : 'Expand'}
                 </button>
-                <button
-                  type="button"
-                  onClick={() => removeItem(item.localId, item.serverId)}
-                  className="p-1.5 text-[#D32F2F] hover:bg-red-50 rounded-lg transition-colors"
-                >
-                  <Trash2 size={13} />
-                </button>
+                {canDelete && (
+                  <button
+                    type="button"
+                    onClick={() => removeItem(item.localId, item.serverId)}
+                    className="p-1.5 text-[#D32F2F] hover:bg-red-50 rounded-lg transition-colors"
+                  >
+                    <Trash2 size={13} />
+                  </button>
+                )}
               </div>
             </div>
 
@@ -239,13 +246,15 @@ export default function FaqsSection() {
           </div>
         ))}
 
-        <button
-          type="button"
-          onClick={addItem}
-          className="w-full py-3 border-2 border-dashed border-[#D32F2F]/40 text-[#D32F2F] rounded-xl text-sm font-medium hover:border-[#D32F2F] hover:bg-red-50 transition-colors flex items-center justify-center gap-2"
-        >
-          <Plus size={14} /> Add FAQ
-        </button>
+        {canWrite && (
+          <button
+            type="button"
+            onClick={addItem}
+            className="w-full py-3 border-2 border-dashed border-[#D32F2F]/40 text-[#D32F2F] rounded-xl text-sm font-medium hover:border-[#D32F2F] hover:bg-red-50 transition-colors flex items-center justify-center gap-2"
+          >
+            <Plus size={14} /> Add FAQ
+          </button>
+        )}
       </div>
 
       {/* Save */}
@@ -255,15 +264,17 @@ export default function FaqsSection() {
             <CheckCircle size={14} /> Saved successfully
           </div>
         )}
-        <button
-          type="button"
-          onClick={handleSave}
-          disabled={saving}
-          className="flex items-center gap-2 px-5 py-2.5 bg-[#D32F2F] text-white rounded-xl text-sm font-semibold hover:bg-[#B71C1C] transition-colors disabled:opacity-60 disabled:cursor-not-allowed"
-        >
-          <Save size={14} />
-          {saving ? 'Saving…' : 'Save Changes'}
-        </button>
+        {canUpdate && (
+          <button
+            type="button"
+            onClick={handleSave}
+            disabled={saving}
+            className="flex items-center gap-2 px-5 py-2.5 bg-[#D32F2F] text-white rounded-xl text-sm font-semibold hover:bg-[#B71C1C] transition-colors disabled:opacity-60 disabled:cursor-not-allowed"
+          >
+            <Save size={14} />
+            {saving ? 'Saving…' : 'Save Changes'}
+          </button>
+        )}
       </div>
     </div>
   );

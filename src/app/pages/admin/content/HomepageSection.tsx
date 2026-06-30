@@ -1,6 +1,7 @@
 import { useEffect, useState } from 'react';
 import { Save, CheckCircle, AlertCircle, Loader2 } from 'lucide-react';
 import { getAllHomepage, addHomepage, updateHomepage } from '../../../services/HomepageService';
+import { usePermission } from '../../../hooks/usePermission';
 import type { Slide } from './types';
 import SlideEditor from './SlideEditor';
 
@@ -14,6 +15,10 @@ export default function HomepageSection() {
   const [saved, setSaved] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [slideShowErrors, setSlideShowErrors] = useState(false);
+  const { can } = usePermission();
+  const canWrite  = can('Content', 'write');
+  const canUpdate = can('Content', 'update');
+  const canDelete = can('Content', 'delete');
 
   useEffect(() => {
     const load = async () => {
@@ -109,7 +114,7 @@ export default function HomepageSection() {
         >
           Hero Banner Slides
         </h3>
-        <SlideEditor slides={slides} setSlides={setSlides} label="Slide" showErrors={slideShowErrors} />
+        <SlideEditor slides={slides} setSlides={setSlides} label="Slide" showErrors={slideShowErrors} canWrite={canWrite} canDelete={canDelete} />
       </div>
 
       <div className="flex items-center justify-end gap-3 pt-2">
@@ -118,15 +123,17 @@ export default function HomepageSection() {
             <CheckCircle size={14} /> Saved successfully
           </div>
         )}
-        <button
-          type="button"
-          onClick={handleSave}
-          disabled={saving}
-          className="flex items-center gap-2 px-5 py-2.5 bg-[#D32F2F] text-white rounded-xl text-sm font-semibold hover:bg-[#B71C1C] transition-colors disabled:opacity-60 disabled:cursor-not-allowed"
-        >
-          <Save size={14} />
-          {saving ? "Saving…" : "Save Changes"}
-        </button>
+        {canUpdate && (
+          <button
+            type="button"
+            onClick={handleSave}
+            disabled={saving}
+            className="flex items-center gap-2 px-5 py-2.5 bg-[#D32F2F] text-white rounded-xl text-sm font-semibold hover:bg-[#B71C1C] transition-colors disabled:opacity-60 disabled:cursor-not-allowed"
+          >
+            <Save size={14} />
+            {saving ? "Saving…" : "Save Changes"}
+          </button>
+        )}
       </div>
     </div>
   );

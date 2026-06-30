@@ -5,6 +5,7 @@ import {
 } from 'lucide-react';
 import { getAllTestimonials, createTestimonial, updateTestimonial, deleteTestimonial } from '../../../services/TestimonialService';
 import { uploadFiles } from '../../../services/MediaService';
+import { usePermission } from '../../../hooks/usePermission';
 import ImagePreviewPopup from '../../../components/ImagePreviewPopup';
 
 // ─── Types ────────────────────────────────────────────────────────────────────
@@ -49,7 +50,7 @@ function StarRating({ value, onChange }: { value: number; onChange: (v: number) 
 
 // ─── Image upload (gallery style) ────────────────────────────────────────────
 
-function SingleImageUpload({ value, onChange, label }: { value: string; onChange: (url: string) => void; label: string }) {
+function SingleImageUpload({ value, onChange, label, canDelete = true }: { value: string; onChange: (url: string) => void; label: string; canDelete?: boolean }) {
   const [uploading, setUploading] = useState(false);
   const [imgPreview, setImgPreview] = useState(false);
 
@@ -80,13 +81,15 @@ function SingleImageUpload({ value, onChange, label }: { value: string; onChange
             <span className="text-white text-xs font-medium bg-black/50 px-3 py-1.5 rounded-full">Click to preview</span>
           </div>
         </div>
-        <button
-          type="button"
-          onClick={() => onChange('')}
-          className="mt-2 flex items-center gap-1 px-3 py-1.5 text-xs text-red-600 border border-red-200 rounded-lg hover:bg-red-50 transition-colors"
-        >
-          <Trash2 size={12} /> Remove
-        </button>
+        {canDelete && (
+          <button
+            type="button"
+            onClick={() => onChange('')}
+            className="mt-2 flex items-center gap-1 px-3 py-1.5 text-xs text-red-600 border border-red-200 rounded-lg hover:bg-red-50 transition-colors"
+          >
+            <Trash2 size={12} /> Remove
+          </button>
+        )}
         <ImagePreviewPopup open={imgPreview} onClose={() => setImgPreview(false)} imageUrl={value} title={label} />
       </div>
     );
@@ -109,6 +112,10 @@ export default function TestimonialsSection() {
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
   const [saved, setSaved] = useState(false);
+  const { can } = usePermission();
+  const canWrite  = can('Content', 'write');
+  const canUpdate = can('Content', 'update');
+  const canDelete = can('Content', 'delete');
   const [error, setError] = useState<string | null>(null);
   const [fieldErrors, setFieldErrors] = useState<Record<number, { name?: string; review?: string }>>({});
   const [expandedIds, setExpandedIds] = useState<Set<number>>(new Set());
@@ -284,13 +291,15 @@ export default function TestimonialsSection() {
                 >
                   {expandedIds.has(item.localId) ? 'Collapse' : 'Expand'}
                 </button>
-                <button
-                  type="button"
-                  onClick={() => removeItem(item.localId, item.serverId)}
-                  className="p-1.5 text-[#D32F2F] hover:bg-red-50 rounded-lg transition-colors"
-                >
-                  <Trash2 size={13} />
-                </button>
+                {canDelete && (
+                  <button
+                    type="button"
+                    onClick={() => removeItem(item.localId, item.serverId)}
+                    className="p-1.5 text-[#D32F2F] hover:bg-red-50 rounded-lg transition-colors"
+                  >
+                    <Trash2 size={13} />
+                  </button>
+                )}
               </div>
             </div>
 
@@ -304,6 +313,7 @@ export default function TestimonialsSection() {
                     value={item.image}
                     onChange={url => updateItem(item.localId, 'image', url)}
                     label="Customer Photo"
+                    canDelete={canDelete}
                   />
                 </div>
 
@@ -357,13 +367,15 @@ export default function TestimonialsSection() {
           </div>
         ))}
 
-        <button
-          type="button"
-          onClick={addItem}
-          className="w-full py-3 border-2 border-dashed border-[#D32F2F]/40 text-[#D32F2F] rounded-xl text-sm font-medium hover:border-[#D32F2F] hover:bg-red-50 transition-colors flex items-center justify-center gap-2"
-        >
-          <Plus size={14} /> Add Review
-        </button>
+        {canWrite && (
+          <button
+            type="button"
+            onClick={addItem}
+            className="w-full py-3 border-2 border-dashed border-[#D32F2F]/40 text-[#D32F2F] rounded-xl text-sm font-medium hover:border-[#D32F2F] hover:bg-red-50 transition-colors flex items-center justify-center gap-2"
+          >
+            <Plus size={14} /> Add Review
+          </button>
+        )}
       </div>
 
       {/* Save */}
@@ -373,15 +385,17 @@ export default function TestimonialsSection() {
             <CheckCircle size={14} /> Saved successfully
           </div>
         )}
-        <button
-          type="button"
-          onClick={handleSave}
-          disabled={saving}
-          className="flex items-center gap-2 px-5 py-2.5 bg-[#D32F2F] text-white rounded-xl text-sm font-semibold hover:bg-[#B71C1C] transition-colors disabled:opacity-60 disabled:cursor-not-allowed"
-        >
-          <Save size={14} />
-          {saving ? 'Saving…' : 'Save Changes'}
-        </button>
+        {canUpdate && (
+          <button
+            type="button"
+            onClick={handleSave}
+            disabled={saving}
+            className="flex items-center gap-2 px-5 py-2.5 bg-[#D32F2F] text-white rounded-xl text-sm font-semibold hover:bg-[#B71C1C] transition-colors disabled:opacity-60 disabled:cursor-not-allowed"
+          >
+            <Save size={14} />
+            {saving ? 'Saving…' : 'Save Changes'}
+          </button>
+        )}
       </div>
     </div>
   );

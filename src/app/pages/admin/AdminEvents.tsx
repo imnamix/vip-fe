@@ -5,6 +5,7 @@ import {
   ChevronLeft, ChevronRight, Search, Loader2, AlertCircle, ImageOff, LayoutTemplate,
 } from 'lucide-react';
 import { getAllEvents, deleteEvents } from '../../services/EventsService';
+import { usePermission } from '../../hooks/usePermission';
 
 const PAGE_SIZE = 8;
 
@@ -62,6 +63,11 @@ function getPageNumbers(current: number, total: number): (number | '...')[] {
 
 export default function AdminEvents() {
   const navigate = useNavigate();
+  const { can }      = usePermission();
+  const canView       = can('Events', 'read');
+  const canEdit        = can('Events', 'update');
+  const canDelete       = can('Events', 'delete');
+  const showActions      = canView || canEdit || canDelete;
 
   const [events, setEvents] = useState<EventItem[]>([]);
   const [totalCount, setTotalCount] = useState(0);
@@ -166,18 +172,22 @@ export default function AdminEvents() {
           </p>
         </div>
         <div className="flex items-center gap-2">
-          <button
-            onClick={() => navigate('/admin/events/banner')}
-            className="flex items-center gap-2 px-4 py-2 border border-gray-200 text-[#616161] rounded-xl text-sm font-semibold hover:border-[#D32F2F] hover:text-[#D32F2F] transition-colors"
-          >
-            <LayoutTemplate size={13} /> Banner Slides
-          </button>
-          <button
-            onClick={() => navigate('/admin/events/new')}
-            className="flex items-center gap-2 px-4 py-2 bg-[#D32F2F] text-white rounded-xl text-sm font-semibold hover:bg-[#B71C1C] transition-colors"
-          >
-            <Plus size={13} /> Create Event
-          </button>
+          {can('Events', 'write') && (
+            <>
+              <button
+                onClick={() => navigate('/admin/events/banner')}
+                className="flex items-center gap-2 px-4 py-2 border border-gray-200 text-[#616161] rounded-xl text-sm font-semibold hover:border-[#D32F2F] hover:text-[#D32F2F] transition-colors"
+              >
+                <LayoutTemplate size={13} /> Banner Slides
+              </button>
+              <button
+                onClick={() => navigate('/admin/events/new')}
+                className="flex items-center gap-2 px-4 py-2 bg-[#D32F2F] text-white rounded-xl text-sm font-semibold hover:bg-[#B71C1C] transition-colors"
+              >
+                <Plus size={13} /> Create Event
+              </button>
+            </>
+          )}
         </div>
       </div>
 
@@ -242,7 +252,7 @@ export default function AdminEvents() {
           <table className="w-full min-w-[620px]">
             <thead>
               <tr className="bg-gray-50 border-b border-gray-100">
-                {['Sr No', 'Event', 'Date', 'Venue', 'Seats', 'Fees', 'Type', 'Status', 'Actions'].map(h => (
+                {['Sr No', 'Event', 'Date', 'Venue', 'Seats', 'Fees', 'Type', 'Status', ...(showActions ? ['Actions'] : [])].map(h => (
                   <th
                     key={h}
                     className="text-left px-4 py-3 text-xs font-semibold text-[#616161] uppercase tracking-wider whitespace-nowrap"
@@ -255,7 +265,7 @@ export default function AdminEvents() {
             <tbody>
               {loading ? (
                 <tr>
-                  <td colSpan={9} className="px-4 py-16 text-center">
+                  <td colSpan={showActions ? 9 : 8} className="px-4 py-16 text-center">
                     <div className="flex items-center justify-center gap-2 text-[#616161] text-sm">
                       <Loader2 size={16} className="animate-spin" /> Loading events…
                     </div>
@@ -263,7 +273,7 @@ export default function AdminEvents() {
                 </tr>
               ) : events.length === 0 ? (
                 <tr>
-                  <td colSpan={9} className="px-4 py-16 text-center">
+                  <td colSpan={showActions ? 9 : 8} className="px-4 py-16 text-center">
                     <div className="flex flex-col items-center gap-2 text-[#9E9E9E]">
                       <Calendar size={28} className="opacity-30" />
                       <span className="text-sm">No events found</span>
@@ -353,31 +363,39 @@ export default function AdminEvents() {
                       </td>
 
                       {/* Actions */}
-                      <td className="px-4 py-3">
-                        <div className="flex gap-1.5">
-                          <button
-                            onClick={() => navigate(`/admin/events/${e.id}`)}
-                            className="p-2 text-blue-500 hover:bg-blue-50 rounded-lg transition-colors"
-                            title="View"
-                          >
-                            <Eye size={16} />
-                          </button>
-                          <button
-                            onClick={() => navigate(`/admin/events/${e.id}/edit`)}
-                            className="p-2 text-[#FBC02D] hover:bg-yellow-50 rounded-lg transition-colors"
-                            title="Edit"
-                          >
-                            <Edit size={16} />
-                          </button>
-                          <button
-                            onClick={() => setDeleteId(e.id)}
-                            className="p-2 text-[#D32F2F] hover:bg-red-50 rounded-lg transition-colors"
-                            title="Delete"
-                          >
-                            <Trash2 size={16} />
-                          </button>
-                        </div>
-                      </td>
+                      {showActions && (
+                        <td className="px-4 py-3">
+                          <div className="flex gap-1.5">
+                            {canView && (
+                              <button
+                                onClick={() => navigate(`/admin/events/${e.id}`)}
+                                className="p-2 text-blue-500 hover:bg-blue-50 rounded-lg transition-colors"
+                                title="View"
+                              >
+                                <Eye size={16} />
+                              </button>
+                            )}
+                            {canEdit && (
+                              <button
+                                onClick={() => navigate(`/admin/events/${e.id}/edit`)}
+                                className="p-2 text-[#FBC02D] hover:bg-yellow-50 rounded-lg transition-colors"
+                                title="Edit"
+                              >
+                                <Edit size={16} />
+                              </button>
+                            )}
+                            {canDelete && (
+                              <button
+                                onClick={() => setDeleteId(e.id)}
+                                className="p-2 text-[#D32F2F] hover:bg-red-50 rounded-lg transition-colors"
+                                title="Delete"
+                              >
+                                <Trash2 size={16} />
+                              </button>
+                            )}
+                          </div>
+                        </td>
+                      )}
                     </tr>
                   );
                 })

@@ -1,6 +1,10 @@
 import { useState, useEffect, useRef } from 'react';
 import { Outlet, Link, useLocation, useNavigate } from 'react-router';
+import { useDispatch, useSelector } from 'react-redux';
 import { AdminThemeContext } from '../context/AdminThemeContext';
+import { clearAuth } from '../store/slice/PermissionSlice';
+import { usePermission } from '../hooks/usePermission';
+import type { AppDispatch, RootState } from '../store/Store';
 import {
   LayoutDashboard, Users, MessageSquare, Calendar,
   FileText, Shield, Truck, Bell, Menu, Search,
@@ -9,16 +13,16 @@ import {
 } from 'lucide-react';
 
 const menuItems = [
-  { label: 'Dashboard',         path: '/admin',                   icon: LayoutDashboard },
-  { label: 'Inquiries',         path: '/admin/inquiries',         icon: MessageSquare   },
-  { label: 'General Inquiries', path: '/admin/general-inquiries', icon: MessageSquare   },
-  { label: 'Events',            path: '/admin/events',            icon: Calendar        },
-  { label: 'Top VIP Numbers',   path: '/admin/vip-numbers',       icon: Hash            },
-  { label: 'Content',           path: '/admin/content',           icon: FileText        },
-  { label: 'Roles',             path: '/admin/roles',             icon: Shield          },
-  { label: 'Users',             path: '/admin/users',             icon: Users           },
-  { label: 'Delivery',          path: '/admin/delivery',          icon: Truck           },
-  { label: 'Settings',          path: '/admin/settings',          icon: Settings        },
+  { label: 'Dashboard',         path: '/admin',                   icon: LayoutDashboard, module: 'Dashboard'        },
+  { label: 'Inquiries',         path: '/admin/inquiries',         icon: MessageSquare,   module: 'Inquiry'          },
+  { label: 'General Inquiries', path: '/admin/general-inquiries', icon: MessageSquare,   module: 'General Inquiry'  },
+  { label: 'Events',            path: '/admin/events',            icon: Calendar,        module: 'Events'           },
+  { label: 'Top VIP Numbers',   path: '/admin/vip-numbers',       icon: Hash,            module: 'Top VIP Numbers'  },
+  { label: 'Content',           path: '/admin/content',           icon: FileText,        module: 'Content'     },
+  { label: 'Roles',             path: '/admin/roles',             icon: Shield,          module: 'Roles'       },
+  { label: 'Users',             path: '/admin/users',             icon: Users,           module: 'Users'       },
+  { label: 'Delivery',          path: '/admin/delivery',          icon: Truck,           module: 'Delivery'    },
+  { label: 'Settings',          path: '/admin/settings',          icon: Settings,        module: 'Settings'    },
 ];
 
 const SEARCH_MODULES = [
@@ -64,6 +68,9 @@ export default function AdminLayout() {
 
   const location = useLocation();
   const navigate  = useNavigate();
+  const dispatch  = useDispatch<AppDispatch>();
+  const { can }   = usePermission();
+  const authUser  = useSelector((state: RootState) => state.permission.user);
 
   useEffect(() => {
     const token = localStorage.getItem('token');
@@ -92,19 +99,14 @@ export default function AdminLayout() {
   };
 
   const handleLogout = () => {
-    localStorage.removeItem('token');
-    localStorage.removeItem('admin_user');
+    dispatch(clearAuth());
     setProfileOpen(false);
     navigate('/admin/login', { replace: true });
   };
 
-  const adminUser = (() => {
-    try { const raw = localStorage.getItem('admin_user'); return raw ? JSON.parse(raw) : null; } catch { return null; }
-  })();
-
-  const displayName     = adminUser?.name || 'Admin';
+  const displayName     = authUser?.name || 'Admin';
   const displayInitials = displayName.split(' ').map((w: string) => w[0]).join('').toUpperCase().slice(0, 2);
-  const profilePicture  = adminUser?.profilePicture || null;
+  const profilePicture  = authUser?.profilePicture || null;
 
   const isActive = (path: string) =>
     path === '/admin' ? location.pathname === '/admin' : location.pathname.startsWith(path);
@@ -164,7 +166,7 @@ export default function AdminLayout() {
 
       {/* Nav items */}
       <nav className="flex-1 py-3 px-2 space-y-0.5 overflow-y-auto">
-        {menuItems.map(item => {
+        {menuItems.filter(item => can(item.module, 'read')).map(item => {
           const Icon   = item.icon;
           const active = isActive(item.path);
           return (
@@ -370,7 +372,7 @@ export default function AdminLayout() {
                         {avatar('w-9 h-9')}
                         <div className="min-w-0 flex-1">
                           <div className="text-sm font-semibold text-[#212121] dark:text-white truncate">{displayName}</div>
-                          <div className="text-xs text-gray-400 dark:text-gray-500 truncate">{adminUser?.email || ''}</div>
+                          <div className="text-xs text-gray-400 dark:text-gray-500 truncate">{authUser?.email || ''}</div>
                         </div>
                       </div>
                       <button

@@ -7,6 +7,7 @@ import {
 } from 'lucide-react';
 import { getAllServices, createService, updateService, deleteService } from '../../../services/ServicesService';
 import { getServicePage, saveServicePage } from '../../../services/ServicePageService';
+import { usePermission } from '../../../hooks/usePermission';
 import { uploadFiles } from '../../../services/MediaService';
 import ImagePreviewPopup from '../../../components/ImagePreviewPopup';
 import SlideEditor from './SlideEditor';
@@ -112,7 +113,7 @@ function IconPicker({ value, onChange }: { value: string; onChange: (name: strin
   );
 }
 
-function SingleImageUpload({ value, onChange, label }: { value: string; onChange: (url: string) => void; label: string }) {
+function SingleImageUpload({ value, onChange, label, canDelete = true }: { value: string; onChange: (url: string) => void; label: string; canDelete?: boolean }) {
   const [uploading, setUploading] = useState(false);
   const [imgPreview, setImgPreview] = useState(false);
 
@@ -143,13 +144,15 @@ function SingleImageUpload({ value, onChange, label }: { value: string; onChange
             <span className="text-white text-xs font-medium bg-black/50 px-3 py-1.5 rounded-full">Click to preview</span>
           </div>
         </div>
-        <button
-          type="button"
-          onClick={() => onChange('')}
-          className="mt-2 flex items-center gap-1 px-3 py-1.5 text-xs text-red-600 border border-red-200 rounded-lg hover:bg-red-50 transition-colors"
-        >
-          <Trash2 size={12} /> Remove
-        </button>
+        {canDelete && (
+          <button
+            type="button"
+            onClick={() => onChange('')}
+            className="mt-2 flex items-center gap-1 px-3 py-1.5 text-xs text-red-600 border border-red-200 rounded-lg hover:bg-red-50 transition-colors"
+          >
+            <Trash2 size={12} /> Remove
+          </button>
+        )}
         <ImagePreviewPopup open={imgPreview} onClose={() => setImgPreview(false)} imageUrl={value} title={label} />
       </div>
     );
@@ -174,6 +177,10 @@ export default function ServicesSection() {
   const [savedBanner, setSavedBanner] = useState(false);
   const [bannerError, setBannerError] = useState<string | null>(null);
   const [bannerSlideShowErrors, setBannerSlideShowErrors] = useState(false);
+  const { can } = usePermission();
+  const canWrite  = can('Content', 'write');
+  const canUpdate = can('Content', 'update');
+  const canDelete = can('Content', 'delete');
 
   // ── Services state ────────────────────────────────────────────────────────
   const [items, setItems] = useState<ServiceFormItem[]>([]);
@@ -377,22 +384,24 @@ export default function ServicesSection() {
             <AlertCircle size={14} /> {bannerError}
           </div>
         )}
-        <SlideEditor slides={slides} setSlides={setSlides} label="Slide" showErrors={bannerSlideShowErrors} />
+        <SlideEditor slides={slides} setSlides={setSlides} label="Slide" showErrors={bannerSlideShowErrors} canWrite={canWrite} canDelete={canDelete} />
         <div className="flex items-center justify-end gap-3 pt-3 mt-3 border-t border-gray-100">
           {savedBanner && (
             <div className="flex items-center gap-1.5 text-green-600 text-sm font-medium">
               <CheckCircle size={14} /> Saved successfully
             </div>
           )}
-          <button
-            type="button"
-            onClick={handleSaveBanner}
-            disabled={savingBanner}
-            className="flex items-center gap-2 px-5 py-2.5 bg-[#D32F2F] text-white rounded-xl text-sm font-semibold hover:bg-[#B71C1C] transition-colors disabled:opacity-60 disabled:cursor-not-allowed"
-          >
-            <Save size={14} />
-            {savingBanner ? 'Saving…' : 'Save Slides'}
-          </button>
+          {canUpdate && (
+            <button
+              type="button"
+              onClick={handleSaveBanner}
+              disabled={savingBanner}
+              className="flex items-center gap-2 px-5 py-2.5 bg-[#D32F2F] text-white rounded-xl text-sm font-semibold hover:bg-[#B71C1C] transition-colors disabled:opacity-60 disabled:cursor-not-allowed"
+            >
+              <Save size={14} />
+              {savingBanner ? 'Saving…' : 'Save Slides'}
+            </button>
+          )}
         </div>
       </div>
 
@@ -439,13 +448,15 @@ export default function ServicesSection() {
                 >
                   {expandedIds.has(svc.localId) ? 'Collapse' : 'Expand'}
                 </button>
-                <button
-                  type="button"
-                  onClick={() => removeItem(svc.localId, svc.serverId)}
-                  className="p-1.5 text-[#D32F2F] hover:bg-red-50 rounded-lg transition-colors"
-                >
-                  <Trash2 size={13} />
-                </button>
+                {canDelete && (
+                  <button
+                    type="button"
+                    onClick={() => removeItem(svc.localId, svc.serverId)}
+                    className="p-1.5 text-[#D32F2F] hover:bg-red-50 rounded-lg transition-colors"
+                  >
+                    <Trash2 size={13} />
+                  </button>
+                )}
               </div>
             </div>
 
@@ -457,6 +468,7 @@ export default function ServicesSection() {
                   value={svc.image}
                   onChange={url => updateItem(svc.localId, 'image', url)}
                   label="Service Image"
+                  canDelete={canDelete}
                 />
                 {fieldErrors[svc.localId]?.image && (
                   <p className="mt-1 text-xs text-red-500 flex items-center gap-1"><AlertCircle size={11} />{fieldErrors[svc.localId].image}</p>
@@ -514,13 +526,15 @@ export default function ServicesSection() {
           </div>
         ))}
 
-        <button
-          type="button"
-          onClick={addItem}
-          className="w-full py-3 border-2 border-dashed border-[#D32F2F]/40 text-[#D32F2F] rounded-xl text-sm font-medium hover:border-[#D32F2F] hover:bg-red-50 transition-colors flex items-center justify-center gap-2"
-        >
-          <Plus size={14} /> Add Service
-        </button>
+        {canWrite && (
+          <button
+            type="button"
+            onClick={addItem}
+            className="w-full py-3 border-2 border-dashed border-[#D32F2F]/40 text-[#D32F2F] rounded-xl text-sm font-medium hover:border-[#D32F2F] hover:bg-red-50 transition-colors flex items-center justify-center gap-2"
+          >
+            <Plus size={14} /> Add Service
+          </button>
+        )}
       </div>
 
       {/* Save services */}
@@ -530,15 +544,17 @@ export default function ServicesSection() {
             <CheckCircle size={14} /> Saved successfully
           </div>
         )}
-        <button
-          type="button"
-          onClick={handleSave}
-          disabled={saving}
-          className="flex items-center gap-2 px-5 py-2.5 bg-[#D32F2F] text-white rounded-xl text-sm font-semibold hover:bg-[#B71C1C] transition-colors disabled:opacity-60 disabled:cursor-not-allowed"
-        >
-          <Save size={14} />
-          {saving ? 'Saving…' : 'Save Changes'}
-        </button>
+        {canUpdate && (
+          <button
+            type="button"
+            onClick={handleSave}
+            disabled={saving}
+            className="flex items-center gap-2 px-5 py-2.5 bg-[#D32F2F] text-white rounded-xl text-sm font-semibold hover:bg-[#B71C1C] transition-colors disabled:opacity-60 disabled:cursor-not-allowed"
+          >
+            <Save size={14} />
+            {saving ? 'Saving…' : 'Save Changes'}
+          </button>
+        )}
       </div>
       </div>{/* end Service Items wrapper */}
     </div>

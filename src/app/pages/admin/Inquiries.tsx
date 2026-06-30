@@ -2,6 +2,7 @@ import { useState, useEffect, useRef } from 'react';
 import { useNavigate } from 'react-router';
 import { Search, LayoutGrid, List, Eye, Edit, Clock, Plus, X, RefreshCw, ChevronLeft, ChevronRight } from 'lucide-react';
 import { getAllEnquires, createInquiry, updateEnquiry, getStatusCounts } from '../../services/EnquiresService';
+import { usePermission } from '../../hooks/usePermission';
 
 type Status = 'Pending' | 'Number Suggested' | 'Number Confirmed' | 'Awaiting Payment' | 'Paid' | 'Dispatched' | 'Delivered';
 
@@ -537,6 +538,10 @@ export default function Inquiries() {
   const [statusCounts, setStatusCounts] = useState<Record<string, number>>({});
   const searchTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
   const navigate    = useNavigate();
+  const { can }     = usePermission();
+  const canView     = can('Inquiry', 'read');
+  const canEdit     = can('Inquiry', 'update');
+  const showActions = canView || canEdit;
 
   const fetchLeads = async (p: number, q: string, s: string | null) => {
     setLoading(true); setFetchError('');
@@ -660,12 +665,14 @@ export default function Inquiries() {
               <List size={15} />
             </button>
           </div> */}
-          <button
-            onClick={openAdd}
-            className="flex items-center gap-2 px-4 py-2 bg-[#D32F2F] text-white rounded-xl text-sm font-semibold hover:bg-[#B71C1C] transition-colors"
-          >
-            <Plus size={14} /> Add Lead
-          </button>
+          {can('Inquiry', 'write') && (
+            <button
+              onClick={openAdd}
+              className="flex items-center gap-2 px-4 py-2 bg-[#D32F2F] text-white rounded-xl text-sm font-semibold hover:bg-[#B71C1C] transition-colors"
+            >
+              <Plus size={14} /> Add Lead
+            </button>
+          )}
         </div>
       </div>
 
@@ -795,7 +802,7 @@ export default function Inquiries() {
                         "Source",
                         "Status",
                         "Date",
-                        "Actions",
+                        ...(showActions ? ["Actions"] : []),
                       ].map((h) => (
                         <th
                           key={h}
@@ -864,26 +871,32 @@ export default function Inquiries() {
                               {date}
                             </span>
                           </td>
-                          <td className="px-4 py-3">
-                            <div className="flex gap-1">
-                              <button
-                                className="p-1.5 text-blue-500 hover:bg-blue-50 rounded-lg"
-                                title="View"
-                                onClick={() =>
-                                  navigate(`/admin/inquiries/${inq.id}`)
-                                }
-                              >
-                                <Eye size={13} />
-                              </button>
-                              <button
-                                className="p-1.5 text-amber-500 hover:bg-amber-50 rounded-lg"
-                                title="Edit"
-                                onClick={() => openEdit(inq)}
-                              >
-                                <Edit size={13} />
-                              </button>
-                            </div>
-                          </td>
+                          {showActions && (
+                            <td className="px-4 py-3">
+                              <div className="flex gap-1">
+                                {canView && (
+                                  <button
+                                    className="p-1.5 text-blue-500 hover:bg-blue-50 rounded-lg"
+                                    title="View"
+                                    onClick={() =>
+                                      navigate(`/admin/inquiries/${inq.id}`)
+                                    }
+                                  >
+                                    <Eye size={13} />
+                                  </button>
+                                )}
+                                {canEdit && (
+                                  <button
+                                    className="p-1.5 text-amber-500 hover:bg-amber-50 rounded-lg"
+                                    title="Edit"
+                                    onClick={() => openEdit(inq)}
+                                  >
+                                    <Edit size={13} />
+                                  </button>
+                                )}
+                              </div>
+                            </td>
+                          )}
                         </tr>
                       );
                     })}

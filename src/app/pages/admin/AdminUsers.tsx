@@ -1,8 +1,9 @@
 import { useState, useEffect, useRef, useCallback } from 'react';
 import { useSearchParams } from 'react-router';
-import { Plus, Edit, Trash2, Users, ChevronLeft, ChevronRight, Search, Save, RefreshCw, X, Eye, EyeOff, Send } from 'lucide-react';
+import { Plus, Edit, Trash2, Users, ChevronLeft, ChevronRight, Search, Save, RefreshCw, X, Eye, EyeOff } from 'lucide-react';
 import { getAllUsers, getUserByID, addUser, updateUser, deleteUsers } from '../../services/UserService';
 import { getAllRoles } from '../../services/RoleService';
+import { usePermission } from '../../hooks/usePermission';
 
 // ─── Types ────────────────────────────────────────────────────────────────────
 interface AdminUser {
@@ -93,6 +94,11 @@ export default function AdminUsers() {
   const [userForm, setUserForm] = useState(emptyForm);
   const [deleteId, setDeleteId] = useState<string | number | null>(null);
   const [deleting, setDeleting] = useState(false);
+  const { can }      = usePermission();
+  const canCreate      = can('Users', 'write');
+  const canEdit          = can('Users', 'update');
+  const canDelete          = can('Users', 'delete');
+  const showActions          = canEdit || canDelete;
 
   const [previewPic, setPreviewPic] = useState<string | null>(null);
 
@@ -120,7 +126,11 @@ export default function AdminUsers() {
     try {
       const res = await getAllRoles();
       const list: any[] = res?.data ?? res ?? [];
-      setRoleOptions(list.map((r: any) => r.name).filter(Boolean));
+      setRoleOptions(
+        list
+          .map((r: any) => r.name)
+          .filter((name: string) => Boolean(name) && name.trim().toLowerCase() !== 'super admin'),
+      );
     } catch {
       // non-critical
     }
@@ -237,6 +247,12 @@ export default function AdminUsers() {
 
   const totalPages = Math.ceil(total / LIMIT);
 
+  const isSuperAdminUser = (roleName: string) => roleName?.trim().toLowerCase() === 'super admin';
+  const isSuperAdminEdit = Boolean(editUserId) && isSuperAdminUser(userForm.roleName);
+  const displayRoleOptions = !userForm.roleName || roleOptions.includes(userForm.roleName)
+    ? roleOptions
+    : [...roleOptions, userForm.roleName];
+
   // ── Render ─────────────────────────────────────────────────────────────────
   return (
     <div>
@@ -258,12 +274,14 @@ export default function AdminUsers() {
               >
                 <RefreshCw size={14} className={loading ? 'animate-spin' : ''} />
               </button>
-              <button
-                onClick={openNew}
-                className="flex items-center gap-2 px-4 py-2 bg-[#D32F2F] text-white rounded-xl text-sm font-semibold hover:bg-[#B71C1C] transition-colors"
-              >
-                <Plus size={13} /> Add User
-              </button>
+              {canCreate && (
+                <button
+                  onClick={openNew}
+                  className="flex items-center gap-2 px-4 py-2 bg-[#D32F2F] text-white rounded-xl text-sm font-semibold hover:bg-[#B71C1C] transition-colors"
+                >
+                  <Plus size={13} /> Add User
+                </button>
+              )}
             </div>
           </>
         ) : (
@@ -310,7 +328,7 @@ export default function AdminUsers() {
               <table className="w-full min-w-[560px]">
                 <thead>
                   <tr className="bg-gray-50 border-b border-gray-100">
-                    {['User', 'Email', 'Mobile', 'Role', 'Status', 'Joined', 'Actions'].map(h => (
+                    {['User', 'Email', 'Mobile', 'Role', 'Status', 'Joined', ...(showActions ? ['Actions'] : [])].map(h => (
                       <th key={h} className="text-left px-4 py-3 text-xs font-semibold text-[#616161] uppercase tracking-wider whitespace-nowrap">{h}</th>
                     ))}
                   </tr>
@@ -321,11 +339,11 @@ export default function AdminUsers() {
                     : users.length === 0
                       ? (
                         <tr>
-                          <td colSpan={7} className="px-4 py-16 text-center">
+                          <td colSpan={showActions ? 7 : 6} className="px-4 py-16 text-center">
                             <div className="flex flex-col items-center gap-2 text-[#9E9E9E]">
                               <Users size={28} className="opacity-30" />
                               <span className="text-sm">{search ? 'No users found' : 'No users yet'}</span>
-                              {!search && <button onClick={openNew} className="text-sm text-[#D32F2F] font-semibold hover:underline mt-1">Add the first user</button>}
+                              {!search && canCreate && <button onClick={openNew} className="text-sm text-[#D32F2F] font-semibold hover:underline mt-1">Add the first user</button>}
                             </div>
                           </td>
                         </tr>
@@ -371,12 +389,18 @@ export default function AdminUsers() {
                               </span>
                             </td>
                             <td className="px-4 py-3 text-xs text-[#616161] whitespace-nowrap">{joined}</td>
-                            <td className="px-4 py-3">
-                              <div className="flex gap-1">
-                                <button onClick={() => openEdit(u)} className="p-1.5 text-[#FBC02D] hover:bg-yellow-50 rounded-lg transition-colors"><Edit size={13} /></button>
-                                <button onClick={() => setDeleteId(u.id)} className="p-1.5 text-[#D32F2F] hover:bg-red-50 rounded-lg transition-colors"><Trash2 size={13} /></button>
-                              </div>
-                            </td>
+                            {showActions && (
+                              <td className="px-4 py-3">
+                                <div className="flex gap-1">
+                                  {canEdit && (
+                                    <button onClick={() => openEdit(u)} className="p-1.5 text-[#FBC02D] hover:bg-yellow-50 rounded-lg transition-colors"><Edit size={13} /></button>
+                                  )}
+                                  {canDelete && !isSuperAdminUser(u.roleName) && (
+                                    <button onClick={() => setDeleteId(u.id)} className="p-1.5 text-[#D32F2F] hover:bg-red-50 rounded-lg transition-colors"><Trash2 size={13} /></button>
+                                  )}
+                                </div>
+                              </td>
+                            )}
                           </tr>
                         );
                       })
@@ -438,7 +462,8 @@ export default function AdminUsers() {
                     value={userForm.name}
                     onChange={e => setUserForm(f => ({ ...f, name: e.target.value }))}
                     placeholder="e.g. Anita Sharma"
-                    className="w-full px-3 py-2.5 border border-gray-200 rounded-xl text-sm focus:outline-none focus:border-[#D32F2F]"
+                    disabled={isSuperAdminEdit}
+                    className="w-full px-3 py-2.5 border border-gray-200 rounded-xl text-sm focus:outline-none focus:border-[#D32F2F] disabled:bg-gray-50 disabled:text-gray-400 disabled:cursor-not-allowed"
                   />
                 </div>
 
@@ -450,7 +475,8 @@ export default function AdminUsers() {
                     value={userForm.email}
                     onChange={e => setUserForm(f => ({ ...f, email: e.target.value }))}
                     placeholder="user@vipnumerology.com"
-                    className="w-full px-3 py-2.5 border border-gray-200 rounded-xl text-sm focus:outline-none focus:border-[#D32F2F]"
+                    disabled={isSuperAdminEdit}
+                    className="w-full px-3 py-2.5 border border-gray-200 rounded-xl text-sm focus:outline-none focus:border-[#D32F2F] disabled:bg-gray-50 disabled:text-gray-400 disabled:cursor-not-allowed"
                   />
                 </div>
 
@@ -462,7 +488,8 @@ export default function AdminUsers() {
                     value={userForm.mobile}
                     onChange={e => setUserForm(f => ({ ...f, mobile: e.target.value }))}
                     placeholder="+91 98000 00000"
-                    className="w-full px-3 py-2.5 border border-gray-200 rounded-xl text-sm focus:outline-none focus:border-[#D32F2F]"
+                    disabled={isSuperAdminEdit}
+                    className="w-full px-3 py-2.5 border border-gray-200 rounded-xl text-sm focus:outline-none focus:border-[#D32F2F] disabled:bg-gray-50 disabled:text-gray-400 disabled:cursor-not-allowed"
                   />
                 </div>
 
@@ -477,12 +504,14 @@ export default function AdminUsers() {
                       value={userForm.password}
                       onChange={e => setUserForm(f => ({ ...f, password: e.target.value }))}
                       placeholder={editUserId ? '••••••••' : 'Min. 8 characters'}
-                      className="w-full px-3 py-2.5 pr-10 border border-gray-200 rounded-xl text-sm focus:outline-none focus:border-[#D32F2F]"
+                      disabled={isSuperAdminEdit}
+                      className="w-full px-3 py-2.5 pr-10 border border-gray-200 rounded-xl text-sm focus:outline-none focus:border-[#D32F2F] disabled:bg-gray-50 disabled:text-gray-400 disabled:cursor-not-allowed"
                     />
                     <button
                       type="button"
                       onClick={() => setShowPassword(v => !v)}
-                      className="absolute right-3 top-1/2 -translate-y-1/2 text-gray-400 hover:text-[#616161] transition-colors"
+                      disabled={isSuperAdminEdit}
+                      className="absolute right-3 top-1/2 -translate-y-1/2 text-gray-400 hover:text-[#616161] transition-colors disabled:cursor-not-allowed disabled:opacity-50"
                     >
                       {showPassword ? <EyeOff size={15} /> : <Eye size={15} />}
                     </button>
@@ -493,14 +522,15 @@ export default function AdminUsers() {
                 <div className="grid grid-cols-2 gap-4">
                   <div>
                     <label className="block text-xs font-semibold text-[#616161] uppercase tracking-wider mb-1.5">Role</label>
-                    {roleOptions.length > 0 ? (
+                    {displayRoleOptions.length > 0 ? (
                       <select
                         value={userForm.roleName}
                         onChange={e => setUserForm(f => ({ ...f, roleName: e.target.value }))}
-                        className="w-full px-3 py-2.5 border border-gray-200 rounded-xl text-sm focus:outline-none focus:border-[#D32F2F] bg-white"
+                        disabled={isSuperAdminEdit}
+                        className="w-full px-3 py-2.5 border border-gray-200 rounded-xl text-sm focus:outline-none focus:border-[#D32F2F] bg-white disabled:bg-gray-50 disabled:text-gray-400 disabled:cursor-not-allowed"
                       >
                         <option value="">Select a role</option>
-                        {roleOptions.map(r => <option key={r} value={r}>{r}</option>)}
+                        {displayRoleOptions.map(r => <option key={r} value={r}>{r}</option>)}
                       </select>
                     ) : (
                       <input
@@ -508,7 +538,8 @@ export default function AdminUsers() {
                         value={userForm.roleName}
                         onChange={e => setUserForm(f => ({ ...f, roleName: e.target.value }))}
                         placeholder="Role name"
-                        className="w-full px-3 py-2.5 border border-gray-200 rounded-xl text-sm focus:outline-none focus:border-[#D32F2F]"
+                        disabled={isSuperAdminEdit}
+                        className="w-full px-3 py-2.5 border border-gray-200 rounded-xl text-sm focus:outline-none focus:border-[#D32F2F] disabled:bg-gray-50 disabled:text-gray-400 disabled:cursor-not-allowed"
                       />
                     )}
                   </div>
@@ -517,7 +548,8 @@ export default function AdminUsers() {
                     <select
                       value={userForm.status}
                       onChange={e => setUserForm(f => ({ ...f, status: e.target.value }))}
-                      className="w-full px-3 py-2.5 border border-gray-200 rounded-xl text-sm focus:outline-none focus:border-[#D32F2F] bg-white"
+                      disabled={isSuperAdminEdit}
+                      className="w-full px-3 py-2.5 border border-gray-200 rounded-xl text-sm focus:outline-none focus:border-[#D32F2F] bg-white disabled:bg-gray-50 disabled:text-gray-400 disabled:cursor-not-allowed"
                     >
                       {['Active', 'Inactive'].map(s => <option key={s}>{s}</option>)}
                     </select>
@@ -525,31 +557,36 @@ export default function AdminUsers() {
                 </div>
               </div>
 
+              {isSuperAdminEdit && (
+                <div className="mt-4 bg-amber-50 border border-amber-200 rounded-xl px-4 py-2.5 text-sm text-amber-700">
+                  The Super Admin account cannot be modified from here.
+                </div>
+              )}
+
               {saveError && (
                 <div className="mt-4 bg-red-50 border border-red-200 rounded-xl px-4 py-2.5 text-sm text-red-600">{saveError}</div>
               )}
 
               <div className="flex gap-3 mt-7">
                 <button
-                  onClick={() => handleSave(false)}
+                  onClick={handleBack}
                   disabled={saving}
-                  className="flex-1 py-2.5 bg-[#D32F2F] text-white rounded-xl text-sm font-semibold flex items-center justify-center gap-2 hover:bg-[#B71C1C] disabled:opacity-60 transition-colors"
+                  className="flex-1 py-2.5 border border-gray-200 text-[#616161] rounded-xl text-sm font-semibold hover:border-[#D32F2F] hover:text-[#D32F2F] disabled:opacity-60 transition-colors"
                 >
-                  {saving
-                    ? <><RefreshCw size={13} className="animate-spin" /> Saving…</>
-                    : <><Save size={13} /> {editUserId ? 'Update' : 'Save'}</>
-                  }
+                  Cancel
                 </button>
-                <button
-                  onClick={() => handleSave(true)}
-                  disabled={saving}
-                  className="flex-1 py-2.5 border-2 border-[#D32F2F] text-[#D32F2F] rounded-xl text-sm font-semibold flex items-center justify-center gap-2 hover:bg-red-50 disabled:opacity-60 transition-colors"
-                >
-                  {saving
-                    ? <><RefreshCw size={13} className="animate-spin" /> Saving…</>
-                    : <><Send size={13} /> Save & Send</>
-                  }
-                </button>
+                {!isSuperAdminEdit && (
+                  <button
+                    onClick={() => handleSave(!editUserId)}
+                    disabled={saving}
+                    className="flex-1 py-2.5 bg-[#D32F2F] text-white rounded-xl text-sm font-semibold flex items-center justify-center gap-2 hover:bg-[#B71C1C] disabled:opacity-60 transition-colors"
+                  >
+                    {saving
+                      ? <><RefreshCw size={13} className="animate-spin" /> Saving…</>
+                      : <><Save size={13} /> {editUserId ? 'Update' : 'Create'}</>
+                    }
+                  </button>
+                )}
               </div>
             </div>
           )}

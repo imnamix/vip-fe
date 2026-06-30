@@ -6,6 +6,7 @@ import {
   DollarSign, ChevronDown,
 } from 'lucide-react';
 import { getAllAboutUs, addAboutUs, updateAboutUs } from '../../../services/AboutusService';
+import { usePermission } from '../../../hooks/usePermission';
 import { uploadFiles } from '../../../services/MediaService';
 import SlideEditor from './SlideEditor';
 import ImagePreviewPopup from '../../../components/ImagePreviewPopup';
@@ -105,7 +106,7 @@ function IconPicker({ value, onChange }: { value: string; onChange: (name: strin
 
 // ─── Single image upload ──────────────────────────────────────────────────────
 
-function SingleImageUpload({ value, onChange, label }: { value: string; onChange: (url: string) => void; label: string }) {
+function SingleImageUpload({ value, onChange, label, canDelete = true }: { value: string; onChange: (url: string) => void; label: string; canDelete?: boolean }) {
   const [uploading, setUploading] = useState(false);
   const [imgPreview, setImgPreview] = useState(false);
 
@@ -136,13 +137,15 @@ function SingleImageUpload({ value, onChange, label }: { value: string; onChange
             <span className="text-white text-xs font-medium bg-black/50 px-3 py-1.5 rounded-full">Click to preview</span>
           </div>
         </div>
-        <button
-          type="button"
-          onClick={() => onChange('')}
-          className="mt-2 flex items-center gap-1 px-3 py-1.5 text-xs text-red-600 border border-red-200 rounded-lg hover:bg-red-50 transition-colors"
-        >
-          <Trash2 size={12} /> Remove
-        </button>
+        {canDelete && (
+          <button
+            type="button"
+            onClick={() => onChange('')}
+            className="mt-2 flex items-center gap-1 px-3 py-1.5 text-xs text-red-600 border border-red-200 rounded-lg hover:bg-red-50 transition-colors"
+          >
+            <Trash2 size={12} /> Remove
+          </button>
+        )}
         <ImagePreviewPopup open={imgPreview} onClose={() => setImgPreview(false)} imageUrl={value} title={label} />
       </div>
     );
@@ -179,6 +182,10 @@ export default function AboutUsSection() {
   const [savedBanner, setSavedBanner] = useState(false);
   const [bannerError, setBannerError] = useState<string | null>(null);
   const [slideShowErrors, setSlideShowErrors] = useState(false);
+  const { can } = usePermission();
+  const canWrite  = can('Content', 'write');
+  const canUpdate = can('Content', 'update');
+  const canDelete = can('Content', 'delete');
 
   // Banner slides
   const [slides, setSlides] = useState<Slide[]>([
@@ -397,22 +404,24 @@ export default function AboutUsSection() {
             <AlertCircle size={14} /> {bannerError}
           </div>
         )}
-        <SlideEditor slides={slides} setSlides={setSlides} label="Slide" showErrors={slideShowErrors} />
+        <SlideEditor slides={slides} setSlides={setSlides} label="Slide" showErrors={slideShowErrors} canWrite={canWrite} canDelete={canDelete} />
         <div className="flex items-center justify-end gap-3 pt-3 mt-3 border-t border-gray-100">
           {savedBanner && (
             <div className="flex items-center gap-1.5 text-green-600 text-sm font-medium">
               <CheckCircle size={14} /> Saved successfully
             </div>
           )}
-          <button
-            type="button"
-            onClick={handleSaveBanner}
-            disabled={savingBanner}
-            className="flex items-center gap-2 px-5 py-2.5 bg-[#D32F2F] text-white rounded-xl text-sm font-semibold hover:bg-[#B71C1C] transition-colors disabled:opacity-60 disabled:cursor-not-allowed"
-          >
-            <Save size={14} />
-            {savingBanner ? 'Saving…' : 'Save Slides'}
-          </button>
+          {canUpdate && (
+            <button
+              type="button"
+              onClick={handleSaveBanner}
+              disabled={savingBanner}
+              className="flex items-center gap-2 px-5 py-2.5 bg-[#D32F2F] text-white rounded-xl text-sm font-semibold hover:bg-[#B71C1C] transition-colors disabled:opacity-60 disabled:cursor-not-allowed"
+            >
+              <Save size={14} />
+              {savingBanner ? 'Saving…' : 'Save Slides'}
+            </button>
+          )}
         </div>
       </div>
 
@@ -451,7 +460,7 @@ export default function AboutUsSection() {
           </div>
           <div>
             <label className="block text-xs font-semibold text-[#616161] mb-1">Image</label>
-            <SingleImageUpload value={hpImage} onChange={setHpImage} label="Homepage About Us Image" />
+            <SingleImageUpload value={hpImage} onChange={setHpImage} label="Homepage About Us Image" canDelete={canDelete} />
           </div>
           <label className="flex items-center gap-2 cursor-pointer select-none mt-1">
             <input
@@ -501,7 +510,7 @@ export default function AboutUsSection() {
           </div>
           <div>
             <label className="block text-xs font-semibold text-[#616161] mb-1">Image</label>
-            <SingleImageUpload value={apImage} onChange={setApImage} label="About Page Image" />
+            <SingleImageUpload value={apImage} onChange={setApImage} label="About Page Image" canDelete={canDelete} />
           </div>
         </div>
       </div>
@@ -529,13 +538,15 @@ export default function AboutUsSection() {
             <div key={stat.id} className="border border-gray-200 rounded-xl">
               <div className="flex items-center justify-between bg-gray-50 px-4 py-2.5 rounded-t-xl">
                 <span className="font-semibold text-[#212121] text-sm">Statistic {idx + 1}</span>
-                <button
-                  type="button"
-                  onClick={() => removeStat(stat.id)}
-                  className="p-1.5 text-[#D32F2F] hover:bg-red-50 rounded-lg transition-colors"
-                >
-                  <Trash2 size={13} />
-                </button>
+                {canDelete && (
+                  <button
+                    type="button"
+                    onClick={() => removeStat(stat.id)}
+                    className="p-1.5 text-[#D32F2F] hover:bg-red-50 rounded-lg transition-colors"
+                  >
+                    <Trash2 size={13} />
+                  </button>
+                )}
               </div>
               <div className="p-4 grid grid-cols-1 sm:grid-cols-3 gap-3">
                 <div>
@@ -563,13 +574,15 @@ export default function AboutUsSection() {
               </div>
             </div>
           ))}
-          <button
-            type="button"
-            onClick={addStat}
-            className="w-full py-3 border-2 border-dashed border-[#D32F2F]/40 text-[#D32F2F] rounded-xl text-sm font-medium hover:border-[#D32F2F] hover:bg-red-50 transition-colors flex items-center justify-center gap-2"
-          >
-            <Plus size={14} /> Add Statistic
-          </button>
+          {canWrite && (
+            <button
+              type="button"
+              onClick={addStat}
+              className="w-full py-3 border-2 border-dashed border-[#D32F2F]/40 text-[#D32F2F] rounded-xl text-sm font-medium hover:border-[#D32F2F] hover:bg-red-50 transition-colors flex items-center justify-center gap-2"
+            >
+              <Plus size={14} /> Add Statistic
+            </button>
+          )}
         </div>
       </div>
 
@@ -581,13 +594,15 @@ export default function AboutUsSection() {
             <div key={item.id} className="border border-gray-200 rounded-xl">
               <div className="flex items-center justify-between bg-gray-50 px-4 py-2.5 rounded-t-xl">
                 <span className="font-semibold text-[#212121] text-sm">Reason {idx + 1}</span>
-                <button
-                  type="button"
-                  onClick={() => removeWhy(item.id)}
-                  className="p-1.5 text-[#D32F2F] hover:bg-red-50 rounded-lg transition-colors"
-                >
-                  <Trash2 size={13} />
-                </button>
+                {canDelete && (
+                  <button
+                    type="button"
+                    onClick={() => removeWhy(item.id)}
+                    className="p-1.5 text-[#D32F2F] hover:bg-red-50 rounded-lg transition-colors"
+                  >
+                    <Trash2 size={13} />
+                  </button>
+                )}
               </div>
               <div className="p-4 grid grid-cols-1 sm:grid-cols-3 gap-3">
                 <div>
@@ -615,13 +630,15 @@ export default function AboutUsSection() {
               </div>
             </div>
           ))}
-          <button
-            type="button"
-            onClick={addWhy}
-            className="w-full py-3 border-2 border-dashed border-[#D32F2F]/40 text-[#D32F2F] rounded-xl text-sm font-medium hover:border-[#D32F2F] hover:bg-red-50 transition-colors flex items-center justify-center gap-2"
-          >
-            <Plus size={14} /> Add Reason
-          </button>
+          {canWrite && (
+            <button
+              type="button"
+              onClick={addWhy}
+              className="w-full py-3 border-2 border-dashed border-[#D32F2F]/40 text-[#D32F2F] rounded-xl text-sm font-medium hover:border-[#D32F2F] hover:bg-red-50 transition-colors flex items-center justify-center gap-2"
+            >
+              <Plus size={14} /> Add Reason
+            </button>
+          )}
         </div>
       </div>
 
@@ -669,15 +686,17 @@ export default function AboutUsSection() {
             <CheckCircle size={14} /> Saved successfully
           </div>
         )}
-        <button
-          type="button"
-          onClick={handleSave}
-          disabled={saving}
-          className="flex items-center gap-2 px-5 py-2.5 bg-[#D32F2F] text-white rounded-xl text-sm font-semibold hover:bg-[#B71C1C] transition-colors disabled:opacity-60 disabled:cursor-not-allowed"
-        >
-          <Save size={14} />
-          {saving ? 'Saving…' : 'Save Changes'}
-        </button>
+        {canUpdate && (
+          <button
+            type="button"
+            onClick={handleSave}
+            disabled={saving}
+            className="flex items-center gap-2 px-5 py-2.5 bg-[#D32F2F] text-white rounded-xl text-sm font-semibold hover:bg-[#B71C1C] transition-colors disabled:opacity-60 disabled:cursor-not-allowed"
+          >
+            <Save size={14} />
+            {saving ? 'Saving…' : 'Save Changes'}
+          </button>
+        )}
       </div>
     </div>
   );

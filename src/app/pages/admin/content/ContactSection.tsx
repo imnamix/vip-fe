@@ -13,6 +13,7 @@ import {
 import type { RootState, AppDispatch } from '../../../store/Store';
 import type { BannerSlide, Address, SocialLinks } from '../../../store/slice/ContactSlice';
 import { uploadFiles } from '../../../services/MediaService';
+import { usePermission } from '../../../hooks/usePermission';
 import ImagePreviewPopup from '../../../components/ImagePreviewPopup';
 
 // ─── Shared UI helpers ────────────────────────────────────────────────────────
@@ -53,8 +54,8 @@ function TextInput({ value, onChange, placeholder, type = 'text' }: {
   );
 }
 
-function SaveBar({ saving, saved, onSave, label = 'Save Changes' }: {
-  saving: boolean; saved: boolean; onSave: () => void; label?: string;
+function SaveBar({ saving, saved, onSave, label = 'Save Changes', canUpdate = true }: {
+  saving: boolean; saved: boolean; onSave: () => void; label?: string; canUpdate?: boolean;
 }) {
   return (
     <div className="flex items-center justify-end gap-3 pt-3 mt-3 border-t border-gray-100">
@@ -63,25 +64,29 @@ function SaveBar({ saving, saved, onSave, label = 'Save Changes' }: {
           <CheckCircle size={14} /> Saved successfully
         </div>
       )}
-      <button
-        type="button"
-        onClick={onSave}
-        disabled={saving}
-        className="flex items-center gap-2 px-5 py-2.5 bg-[#D32F2F] text-white rounded-xl text-sm font-semibold hover:bg-[#B71C1C] transition-colors disabled:opacity-60 disabled:cursor-not-allowed"
-      >
-        <Save size={14} />
-        {saving ? 'Saving…' : label}
-      </button>
+      {canUpdate && (
+        <button
+          type="button"
+          onClick={onSave}
+          disabled={saving}
+          className="flex items-center gap-2 px-5 py-2.5 bg-[#D32F2F] text-white rounded-xl text-sm font-semibold hover:bg-[#B71C1C] transition-colors disabled:opacity-60 disabled:cursor-not-allowed"
+        >
+          <Save size={14} />
+          {saving ? 'Saving…' : label}
+        </button>
+      )}
     </div>
   );
 }
 
 // ─── Banner Slide Editor ──────────────────────────────────────────────────────
 
-function BannerSlideEditor({ slides, setSlidesFn, showErrors = false }: {
+function BannerSlideEditor({ slides, setSlidesFn, showErrors = false, canWrite = true, canDelete = true }: {
   slides: BannerSlide[];
   setSlidesFn: (s: BannerSlide[]) => void;
   showErrors?: boolean;
+  canWrite?: boolean;
+  canDelete?: boolean;
 }) {
   const [uploadingId, setUploadingId] = useState<number | null>(null);
   const [preview, setPreview] = useState<{ url: string; title: string } | null>(null);
@@ -113,13 +118,15 @@ function BannerSlideEditor({ slides, setSlidesFn, showErrors = false }: {
         <div key={slide.id} className="border border-gray-200 rounded-xl overflow-hidden">
           <div className="flex items-center justify-between bg-gray-50 px-4 py-2.5">
             <span className="font-semibold text-[#212121] text-sm">Slide {idx + 1}</span>
-            <button
-              type="button"
-              onClick={() => setSlidesFn(slides.filter(s => s.id !== slide.id))}
-              className="p-1.5 text-[#D32F2F] hover:bg-red-50 rounded-lg transition-colors"
-            >
-              <Trash2 size={13} />
-            </button>
+            {canDelete && (
+              <button
+                type="button"
+                onClick={() => setSlidesFn(slides.filter(s => s.id !== slide.id))}
+                className="p-1.5 text-[#D32F2F] hover:bg-red-50 rounded-lg transition-colors"
+              >
+                <Trash2 size={13} />
+              </button>
+            )}
           </div>
           <div className="p-4 space-y-3">
             <Field label="Banner Image" required>
@@ -131,13 +138,15 @@ function BannerSlideEditor({ slides, setSlidesFn, showErrors = false }: {
                       <span className="text-white text-xs font-medium bg-black/50 px-3 py-1.5 rounded-full">Click to preview</span>
                     </div>
                   </div>
-                  <button
-                    type="button"
-                    onClick={() => update(slide.id, 'image', '')}
-                    className="mt-2 flex items-center gap-1 px-3 py-1.5 text-xs text-red-600 border border-red-200 rounded-lg hover:bg-red-50 transition-colors"
-                  >
-                    <Trash2 size={12} /> Remove
-                  </button>
+                  {canDelete && (
+                    <button
+                      type="button"
+                      onClick={() => update(slide.id, 'image', '')}
+                      className="mt-2 flex items-center gap-1 px-3 py-1.5 text-xs text-red-600 border border-red-200 rounded-lg hover:bg-red-50 transition-colors"
+                    >
+                      <Trash2 size={12} /> Remove
+                    </button>
+                  )}
                 </div>
               ) : (
                 <>
@@ -177,13 +186,15 @@ function BannerSlideEditor({ slides, setSlidesFn, showErrors = false }: {
           </div>
         </div>
       ))}
-      <button
-        type="button"
-        onClick={() => setSlidesFn([...slides, { id: Date.now(), image: '', title: '', description: '' }])}
-        className="w-full py-3 border-2 border-dashed border-[#D32F2F]/40 text-[#D32F2F] rounded-xl text-sm font-medium hover:border-[#D32F2F] hover:bg-red-50 transition-colors flex items-center justify-center gap-2"
-      >
-        <Plus size={14} /> Add Slide
-      </button>
+      {canWrite && (
+        <button
+          type="button"
+          onClick={() => setSlidesFn([...slides, { id: Date.now(), image: '', title: '', description: '' }])}
+          className="w-full py-3 border-2 border-dashed border-[#D32F2F]/40 text-[#D32F2F] rounded-xl text-sm font-medium hover:border-[#D32F2F] hover:bg-red-50 transition-colors flex items-center justify-center gap-2"
+        >
+          <Plus size={14} /> Add Slide
+        </button>
+      )}
       <ImagePreviewPopup open={!!preview} onClose={() => setPreview(null)} imageUrl={preview?.url ?? ''} title={preview?.title} />
     </div>
   );
@@ -205,6 +216,10 @@ export default function ContactSection() {
   } = useSelector((state: RootState) => state.contact);
 
   const [slideShowErrors, setSlideShowErrors] = useState(false);
+  const { can } = usePermission();
+  const canWrite  = can('Content', 'write');
+  const canUpdate = can('Content', 'update');
+  const canDelete = can('Content', 'delete');
 
   useEffect(() => {
     dispatch(fetchContact());
@@ -274,8 +289,10 @@ export default function ContactSection() {
           slides={data.slides}
           setSlidesFn={s => dispatch(setSlides(s))}
           showErrors={slideShowErrors}
+          canWrite={canWrite}
+          canDelete={canDelete}
         />
-        <SaveBar saving={savingSlides} saved={savedSlides} onSave={handleSaveSlides} label="Save Slides" />
+        <SaveBar saving={savingSlides} saved={savedSlides} onSave={handleSaveSlides} label="Save Slides" canUpdate={canUpdate} />
       </div>
 
       {/* ── Contact Numbers ── */}
@@ -431,7 +448,7 @@ export default function ContactSection() {
       </div>
 
       {/* ── Save All ── */}
-      <SaveBar saving={saving} saved={saved} onSave={handleSave} />
+      <SaveBar saving={saving} saved={saved} onSave={handleSave} canUpdate={canUpdate} />
     </div>
   );
 }

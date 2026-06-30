@@ -4,9 +4,9 @@ import type { Slide } from './types';
 import { uploadFiles } from '../../../services/MediaService';
 import ImagePreviewPopup from '../../../components/ImagePreviewPopup';
 
-interface Props { slides: Slide[]; setSlides: (s: Slide[]) => void; label?: string; showErrors?: boolean }
+interface Props { slides: Slide[]; setSlides: (s: Slide[]) => void; label?: string; showErrors?: boolean; canWrite?: boolean; canDelete?: boolean }
 
-export default function SlideEditor({ slides, setSlides, label = 'Slide', showErrors = false }: Props) {
+export default function SlideEditor({ slides, setSlides, label = 'Slide', showErrors = false, canWrite = true, canDelete = true }: Props) {
   const [uploadingId, setUploadingId] = useState<number | null>(null);
     const [preview, setPreview] = useState<{
       url: string;
@@ -52,12 +52,14 @@ export default function SlideEditor({ slides, setSlides, label = 'Slide', showEr
             <span className="font-semibold text-[#212121] text-sm">
               {label} {idx + 1}
             </span>
-            <button
-              onClick={() => remove(slide.id)}
-              className="p-1.5 text-[#D32F2F] hover:bg-red-50 rounded-lg transition-colors"
-            >
-              <Trash2 size={13} />
-            </button>
+            {canDelete && (
+              <button
+                onClick={() => remove(slide.id)}
+                className="p-1.5 text-[#D32F2F] hover:bg-red-50 rounded-lg transition-colors"
+              >
+                <Trash2 size={13} />
+              </button>
+            )}
           </div>
           <div className="p-4 space-y-3">
             {/* Background Image */}
@@ -81,13 +83,15 @@ export default function SlideEditor({ slides, setSlides, label = 'Slide', showEr
                         <span className="text-white text-xs font-medium bg-black/50 px-3 py-1.5 rounded-full">Click to preview</span>
                       </div>
                     </div>
-                    <button
-                      type="button"
-                      onClick={() => update(slide.id, "image", "")}
-                      className="mt-2 flex items-center gap-1 px-3 py-1.5 text-xs text-red-600 border border-red-200 rounded-lg hover:bg-red-50 transition-colors"
-                    >
-                      <Trash2 size={12} /> Remove
-                    </button>
+                    {canDelete && (
+                      <button
+                        type="button"
+                        onClick={() => update(slide.id, "image", "")}
+                        className="mt-2 flex items-center gap-1 px-3 py-1.5 text-xs text-red-600 border border-red-200 rounded-lg hover:bg-red-50 transition-colors"
+                      >
+                        <Trash2 size={12} /> Remove
+                      </button>
+                    )}
                   </div>
                 ) : (
                   <>
@@ -153,12 +157,14 @@ export default function SlideEditor({ slides, setSlides, label = 'Slide', showEr
           </div>
         </div>
       ))}
-      <button
-        onClick={add}
-        className="w-full py-3 border-2 border-dashed border-[#D32F2F]/40 text-[#D32F2F] rounded-xl text-sm font-medium hover:border-[#D32F2F] hover:bg-red-50 transition-colors flex items-center justify-center gap-2"
-      >
-        <Plus size={14} /> Add {label}
-      </button>
+      {canWrite && (
+        <button
+          onClick={add}
+          className="w-full py-3 border-2 border-dashed border-[#D32F2F]/40 text-[#D32F2F] rounded-xl text-sm font-medium hover:border-[#D32F2F] hover:bg-red-50 transition-colors flex items-center justify-center gap-2"
+        >
+          <Plus size={14} /> Add {label}
+        </button>
+      )}
          <ImagePreviewPopup
               open={!!preview}
               onClose={() => setPreview(null)}

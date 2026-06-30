@@ -1,7 +1,10 @@
 import { useState, useRef, useEffect } from 'react';
 import { useNavigate } from 'react-router';
+import { useDispatch } from 'react-redux';
 import { Hash, Eye, EyeOff, LogIn, Shield, Mail, KeyRound, RotateCcw, CheckCircle2, ArrowLeft } from 'lucide-react';
 import { LoginPage, ForgetPasswordOTP, verifyOtp, ResetPassword } from '../../services/LoginService';
+import { setAuth } from '../../store/slice/PermissionSlice';
+import type { AppDispatch } from '../../store/Store';
 
 type Step = 'login' | 'forgot' | 'verify' | 'reset';
 
@@ -49,6 +52,7 @@ function SuccessBox({ message }: { message: string }) {
 
 export default function AdminLogin() {
   const navigate = useNavigate();
+  const dispatch = useDispatch<AppDispatch>();
 
   useEffect(() => {
     if (localStorage.getItem('token')) {
@@ -97,12 +101,13 @@ export default function AdminLogin() {
     try {
       const res = await LoginPage({ email: loginEmail, password: loginPassword });
       const data = res.data;
-      if (data?.success && data?.data?.token) {
-        localStorage.setItem('token', data.data.token);
-        localStorage.setItem('admin_user', JSON.stringify({
-          id: data.data.id,
-          name: data.data.name,
-          email: data.data.email,
+      if (data?.success && data?.data?.accessToken) {
+        dispatch(setAuth({
+          accessToken: data.data.accessToken,
+          refreshToken: data.data.refreshToken,
+          user: data.data.user,
+          permissions: data.data.permissions ?? {},
+          permissionVersion: data.data.permissionVersion ?? null,
         }));
         navigate('/admin');
       } else {

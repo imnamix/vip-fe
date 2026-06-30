@@ -19,6 +19,7 @@ function renderIcon(name: string) {
   return Comp ? <Comp size={16} /> : <Hash size={16} />;
 }
 import { getAllVipNumbers, deleteVipNumber } from '../../services/VipNumbersService';
+import { usePermission } from '../../hooks/usePermission';
 
 const PAGE_SIZE = 10;
 const CATEGORIES = ['All', 'Premium', 'Gold', 'Silver', 'Platinum', 'Diamond', 'Bronze'];
@@ -50,6 +51,11 @@ function getPageNumbers(current: number, total: number): (number | '...')[] {
 
 export default function VipNumbers() {
   const navigate = useNavigate();
+  const { can }      = usePermission();
+  const canView       = can('Top VIP Numbers', 'read');
+  const canEdit        = can('Top VIP Numbers', 'update');
+  const canDelete       = can('Top VIP Numbers', 'delete');
+  const showActions      = canView || canEdit || canDelete;
 
   const [items, setItems] = useState<VipNumberItem[]>([]);
   const [totalCount, setTotalCount] = useState(0);
@@ -121,12 +127,14 @@ export default function VipNumbers() {
           </h1>
           <p className="text-xs text-[#9E9E9E] mt-0.5">{totalCount} numbers total</p>
         </div>
-        <button
-          onClick={() => navigate('/admin/vip-numbers/new')}
-          className="flex items-center gap-2 px-4 py-2 bg-[#D32F2F] text-white rounded-xl text-sm font-semibold hover:bg-[#B71C1C] transition-colors"
-        >
-          <Plus size={13} /> Add VIP Number
-        </button>
+        {can('Top VIP Numbers', 'write') && (
+          <button
+            onClick={() => navigate('/admin/vip-numbers/new')}
+            className="flex items-center gap-2 px-4 py-2 bg-[#D32F2F] text-white rounded-xl text-sm font-semibold hover:bg-[#B71C1C] transition-colors"
+          >
+            <Plus size={13} /> Add VIP Number
+          </button>
+        )}
       </div>
 
       {/* Filters & Search */}
@@ -175,7 +183,7 @@ export default function VipNumbers() {
           <table className="w-full text-sm">
             <thead>
               <tr className="border-b border-gray-100 bg-gray-50">
-                {['Sr No', 'Icon', 'VIP Number', 'Category', 'Tag', 'Price', 'Rating', 'Status', 'Actions'].map(h => (
+                {['Sr No', 'Icon', 'VIP Number', 'Category', 'Tag', 'Price', 'Rating', 'Status', ...(showActions ? ['Actions'] : [])].map(h => (
                   <th key={h} className="text-left px-4 py-3 text-xs font-semibold text-[#9E9E9E] uppercase tracking-wide whitespace-nowrap">
                     {h}
                   </th>
@@ -185,7 +193,7 @@ export default function VipNumbers() {
             <tbody>
               {loading ? (
                 <tr>
-                  <td colSpan={9} className="px-4 py-12 text-center text-[#9E9E9E] text-sm">
+                  <td colSpan={showActions ? 9 : 8} className="px-4 py-12 text-center text-[#9E9E9E] text-sm">
                     <div className="flex items-center justify-center gap-2">
                       <Loader2 size={16} className="animate-spin" /> Loading…
                     </div>
@@ -193,7 +201,7 @@ export default function VipNumbers() {
                 </tr>
               ) : items.length === 0 ? (
                 <tr>
-                  <td colSpan={9} className="px-4 py-12 text-center text-[#9E9E9E] text-sm">
+                  <td colSpan={showActions ? 9 : 8} className="px-4 py-12 text-center text-[#9E9E9E] text-sm">
                     <div className="flex flex-col items-center gap-2">
                       <Hash size={28} className="text-gray-300" />
                       <span>No VIP numbers found</span>
@@ -249,31 +257,39 @@ export default function VipNumbers() {
                         {item.status === 1 ? 'Active' : 'Inactive'}
                       </span>
                     </td>
-                    <td className="px-4 py-3">
-                      <div className="flex items-center gap-1">
-                        <button
-                          onClick={() => navigate(`/admin/vip-numbers/${item.id}`)}
-                          className="p-2 rounded-lg text-[#9E9E9E] hover:bg-blue-50 hover:text-blue-600 transition-colors"
-                          title="View"
-                        >
-                          <Eye size={16} />
-                        </button>
-                        <button
-                          onClick={() => navigate(`/admin/vip-numbers/${item.id}/edit`)}
-                          className="p-2 rounded-lg text-[#9E9E9E] hover:bg-amber-50 hover:text-amber-600 transition-colors"
-                          title="Edit"
-                        >
-                          <Edit size={16} />
-                        </button>
-                        <button
-                          onClick={() => setDeleteId(item.id)}
-                          className="p-2 rounded-lg text-[#9E9E9E] hover:bg-red-50 hover:text-[#D32F2F] transition-colors"
-                          title="Delete"
-                        >
-                          <Trash2 size={16} />
-                        </button>
-                      </div>
-                    </td>
+                    {showActions && (
+                      <td className="px-4 py-3">
+                        <div className="flex items-center gap-1">
+                          {canView && (
+                            <button
+                              onClick={() => navigate(`/admin/vip-numbers/${item.id}`)}
+                              className="p-2 rounded-lg text-[#9E9E9E] hover:bg-blue-50 hover:text-blue-600 transition-colors"
+                              title="View"
+                            >
+                              <Eye size={16} />
+                            </button>
+                          )}
+                          {canEdit && (
+                            <button
+                              onClick={() => navigate(`/admin/vip-numbers/${item.id}/edit`)}
+                              className="p-2 rounded-lg text-[#9E9E9E] hover:bg-amber-50 hover:text-amber-600 transition-colors"
+                              title="Edit"
+                            >
+                              <Edit size={16} />
+                            </button>
+                          )}
+                          {canDelete && (
+                            <button
+                              onClick={() => setDeleteId(item.id)}
+                              className="p-2 rounded-lg text-[#9E9E9E] hover:bg-red-50 hover:text-[#D32F2F] transition-colors"
+                              title="Delete"
+                            >
+                              <Trash2 size={16} />
+                            </button>
+                          )}
+                        </div>
+                      </td>
+                    )}
                   </tr>
                 ))
               )}

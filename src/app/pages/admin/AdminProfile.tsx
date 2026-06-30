@@ -151,7 +151,7 @@ export default function AdminProfile() {
   // ── Skeleton ────────────────────────────────────────────────────────────────
   if (loading) {
     return (
-      <div className="max-w-2xl animate-pulse space-y-5">
+      <div className="max-w-2xl mx-auto animate-pulse space-y-5">
         <div className="h-8 w-32 bg-gray-100 rounded-xl" />
         <div className="bg-white rounded-2xl border border-gray-100 p-6 space-y-4">
           <div className="flex gap-5">
@@ -169,215 +169,270 @@ export default function AdminProfile() {
 
   // ── Render ──────────────────────────────────────────────────────────────────
   return (
-    <div className="max-w-2xl">
+    <>
+      <button
+        onClick={() => navigate(-1)}
+        className="flex items-center gap-1.5 text-[#616161] hover:text-[#D32F2F] text-sm font-medium transition-colors"
+      >
+        <ChevronLeft size={16} /> Back
+      </button>
 
-      {/* Hidden file input */}
-      <input
-        ref={fileInputRef}
-        type="file"
-        accept="image/*"
-        className="hidden"
-        onChange={handlePhotoChange}
-      />
+      <div className="max-w-2xl mx-auto">
+        {/* Hidden file input */}
+        <input
+          ref={fileInputRef}
+          type="file"
+          accept="image/*"
+          className="hidden"
+          onChange={handlePhotoChange}
+        />
 
-      {/* ── Header ── */}
-      <div className="flex items-center gap-3 mb-6">
-        <button
-          onClick={() => navigate(-1)}
-          className="flex items-center gap-1.5 text-[#616161] hover:text-[#D32F2F] text-sm font-medium transition-colors"
-        >
-          <ChevronLeft size={16} /> Back
-        </button>
-        <h1 className="text-xl font-bold text-[#212121]" style={{ fontFamily: 'Poppins, sans-serif' }}>
-          My Profile
-        </h1>
-      </div>
+        {/* ── Header ── */}
+        <div className="flex items-center gap-3 mb-6">
+          <h1
+            className="text-xl font-bold text-[#212121]"
+            style={{ fontFamily: "Poppins, sans-serif" }}
+          >
+            My Profile
+          </h1>
+        </div>
 
-      <div className="space-y-5">
+        <div className="space-y-5">
+          {/* ── Profile Card ── */}
+          <div className="bg-white rounded-2xl border border-gray-100 p-6">
+            {/* Avatar + meta */}
+            <div className="flex items-start gap-5 mb-6">
+              <div className="relative flex-shrink-0">
+                {/* Avatar */}
+                <div className="w-20 h-20 rounded-2xl overflow-hidden shadow-lg">
+                  {profileForm.profilePicture ? (
+                    <img
+                      src={profileForm.profilePicture}
+                      alt="Profile"
+                      className="w-full h-full object-cover"
+                    />
+                  ) : (
+                    <div className="w-full h-full bg-gradient-to-br from-[#D32F2F] to-[#FBC02D] flex items-center justify-center text-white text-2xl font-bold select-none">
+                      {getInitials(profileForm.name)}
+                    </div>
+                  )}
+                </div>
 
-        {/* ── Profile Card ── */}
-        <div className="bg-white rounded-2xl border border-gray-100 p-6">
-
-          {/* Avatar + meta */}
-          <div className="flex items-start gap-5 mb-6">
-            <div className="relative flex-shrink-0">
-              {/* Avatar */}
-              <div className="w-20 h-20 rounded-2xl overflow-hidden shadow-lg">
-                {profileForm.profilePicture ? (
-                  <img
-                    src={profileForm.profilePicture}
-                    alt="Profile"
-                    className="w-full h-full object-cover"
-                  />
-                ) : (
-                  <div className="w-full h-full bg-gradient-to-br from-[#D32F2F] to-[#FBC02D] flex items-center justify-center text-white text-2xl font-bold select-none">
-                    {getInitials(profileForm.name)}
-                  </div>
-                )}
+                {/* Camera button */}
+                <button
+                  onClick={() => fileInputRef.current?.click()}
+                  disabled={uploadingPhoto}
+                  className="absolute -bottom-2 -right-2 w-7 h-7 bg-[#D32F2F] rounded-full flex items-center justify-center text-white shadow-md hover:bg-[#B71C1C] disabled:opacity-70 transition-colors"
+                  title="Change photo"
+                >
+                  {uploadingPhoto ? (
+                    <Loader2 size={11} className="animate-spin" />
+                  ) : (
+                    <Camera size={12} />
+                  )}
+                </button>
               </div>
 
-              {/* Camera button */}
-              <button
-                onClick={() => fileInputRef.current?.click()}
-                disabled={uploadingPhoto}
-                className="absolute -bottom-2 -right-2 w-7 h-7 bg-[#D32F2F] rounded-full flex items-center justify-center text-white shadow-md hover:bg-[#B71C1C] disabled:opacity-70 transition-colors"
-                title="Change photo"
-              >
-                {uploadingPhoto
-                  ? <Loader2 size={11} className="animate-spin" />
-                  : <Camera size={12} />
-                }
-              </button>
-            </div>
-
-            <div>
-              <h2 className="text-xl font-bold text-[#212121]" style={{ fontFamily: 'Poppins, sans-serif' }}>
-                {profileForm.name || 'Admin'}
-              </h2>
-              {profileForm.roleName && (
-                <span className="inline-block bg-red-50 text-[#D32F2F] text-xs font-semibold px-2.5 py-0.5 rounded-full mt-1">
-                  {profileForm.roleName}
-                </span>
-              )}
-              <p className="text-xs text-[#9E9E9E] mt-2">{profileForm.email}</p>
-            </div>
-          </div>
-
-          {/* Fields */}
-          <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-
-            <div className="sm:col-span-2">
-              <label className="block text-xs font-semibold text-[#616161] uppercase tracking-wider mb-1.5">Full Name *</label>
-              <input
-                type="text"
-                value={profileForm.name}
-                onChange={e => setProfileForm(f => ({ ...f, name: e.target.value }))}
-                className="w-full px-3 py-2.5 border border-gray-200 rounded-xl text-sm focus:outline-none focus:border-[#D32F2F] transition-colors bg-white"
-              />
-            </div>
-
-            <div>
-              <label className="block text-xs font-semibold text-[#616161] uppercase tracking-wider mb-1.5">Phone Number</label>
-              <input
-                type="tel"
-                value={profileForm.phone}
-                onChange={e => setProfileForm(f => ({ ...f, phone: e.target.value }))}
-                placeholder="+91 98000 00000"
-                className="w-full px-3 py-2.5 border border-gray-200 rounded-xl text-sm focus:outline-none focus:border-[#D32F2F] transition-colors bg-white"
-              />
-            </div>
-
-            <div>
-              <label className="block text-xs font-semibold text-[#616161] uppercase tracking-wider mb-1.5">
-                Email Address
-                <span className="ml-1.5 text-[10px] normal-case font-normal text-gray-400">(cannot change)</span>
-              </label>
-              <input
-                type="email"
-                value={profileForm.email}
-                disabled
-                className="w-full px-3 py-2.5 border border-gray-200 rounded-xl text-sm bg-gray-50 text-gray-400 cursor-not-allowed"
-              />
-            </div>
-
-            {profileForm.roleName && (
               <div>
+                <h2
+                  className="text-xl font-bold text-[#212121]"
+                  style={{ fontFamily: "Poppins, sans-serif" }}
+                >
+                  {profileForm.name || "Admin"}
+                </h2>
+                {profileForm.roleName && (
+                  <span className="inline-block bg-red-50 text-[#D32F2F] text-xs font-semibold px-2.5 py-0.5 rounded-full mt-1">
+                    {profileForm.roleName}
+                  </span>
+                )}
+                <p className="text-xs text-[#9E9E9E] mt-2">
+                  {profileForm.email}
+                </p>
+              </div>
+            </div>
+
+            {/* Fields */}
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+              <div className="sm:col-span-2">
                 <label className="block text-xs font-semibold text-[#616161] uppercase tracking-wider mb-1.5">
-                  Role
-                  <span className="ml-1.5 text-[10px] normal-case font-normal text-gray-400">(cannot change)</span>
+                  Full Name *
                 </label>
                 <input
                   type="text"
-                  value={profileForm.roleName}
+                  value={profileForm.name}
+                  onChange={(e) =>
+                    setProfileForm((f) => ({ ...f, name: e.target.value }))
+                  }
+                  className="w-full px-3 py-2.5 border border-gray-200 rounded-xl text-sm focus:outline-none focus:border-[#D32F2F] transition-colors bg-white"
+                />
+              </div>
+
+              <div>
+                <label className="block text-xs font-semibold text-[#616161] uppercase tracking-wider mb-1.5">
+                  Phone Number
+                </label>
+                <input
+                  type="tel"
+                  value={profileForm.phone}
+                  onChange={(e) =>
+                    setProfileForm((f) => ({ ...f, phone: e.target.value }))
+                  }
+                  placeholder="+91 98000 00000"
+                  className="w-full px-3 py-2.5 border border-gray-200 rounded-xl text-sm focus:outline-none focus:border-[#D32F2F] transition-colors bg-white"
+                />
+              </div>
+
+              <div>
+                <label className="block text-xs font-semibold text-[#616161] uppercase tracking-wider mb-1.5">
+                  Email Address
+                  <span className="ml-1.5 text-[10px] normal-case font-normal text-gray-400">
+                    (cannot change)
+                  </span>
+                </label>
+                <input
+                  type="email"
+                  value={profileForm.email}
                   disabled
                   className="w-full px-3 py-2.5 border border-gray-200 rounded-xl text-sm bg-gray-50 text-gray-400 cursor-not-allowed"
                 />
               </div>
-            )}
-          </div>
 
-          {profileMsg && (
-            <div className={`mt-4 flex items-center gap-2 px-4 py-2.5 rounded-xl text-sm ${profileMsg.ok ? 'bg-green-50 border border-green-200 text-green-700' : 'bg-red-50 border border-red-200 text-red-600'}`}>
-              {profileMsg.ok ? <CheckCircle size={14} /> : <AlertCircle size={14} />}
-              {profileMsg.text}
-            </div>
-          )}
-
-          <div className="mt-5 flex justify-end">
-            <button
-              onClick={handleSaveProfile}
-              disabled={saving}
-              className="flex items-center gap-2 px-5 py-2.5 bg-[#D32F2F] text-white rounded-xl font-semibold text-sm hover:bg-[#B71C1C] disabled:opacity-60 transition-colors"
-            >
-              {saving
-                ? <><RefreshCw size={13} className="animate-spin" /> Saving…</>
-                : <><Save size={14} /> Save Changes</>
-              }
-            </button>
-          </div>
-        </div>
-
-        {/* ── Change Password ── */}
-        <div className="bg-white rounded-2xl border border-gray-100 p-6">
-          <div className="flex items-center gap-2 mb-5">
-            <div className="w-8 h-8 bg-red-50 rounded-xl flex items-center justify-center">
-              <Lock size={15} className="text-[#D32F2F]" />
-            </div>
-            <h3 className="font-bold text-[#212121]" style={{ fontFamily: 'Poppins, sans-serif' }}>Change Password</h3>
-          </div>
-
-          <div className="space-y-3">
-            {(
-              [
-                ['current', 'Current Password'],
-                ['newPass', 'New Password'],
-                ['confirm', 'Confirm New Password'],
-              ] as const
-            ).map(([key, label]) => (
-              <div key={key}>
-                <label className="block text-xs font-semibold text-[#616161] uppercase tracking-wider mb-1.5">{label}</label>
-                <div className="relative">
+              {profileForm.roleName && (
+                <div>
+                  <label className="block text-xs font-semibold text-[#616161] uppercase tracking-wider mb-1.5">
+                    Role
+                    <span className="ml-1.5 text-[10px] normal-case font-normal text-gray-400">
+                      (cannot change)
+                    </span>
+                  </label>
                   <input
-                    type={showPw[key] ? 'text' : 'password'}
-                    value={passwordForm[key]}
-                    onChange={e => setPasswordForm(f => ({ ...f, [key]: e.target.value }))}
-                    placeholder="••••••••"
-                    className="w-full px-3 py-2.5 pr-10 border border-gray-200 rounded-xl text-sm focus:outline-none focus:border-[#D32F2F] bg-white"
+                    type="text"
+                    value={profileForm.roleName}
+                    disabled
+                    className="w-full px-3 py-2.5 border border-gray-200 rounded-xl text-sm bg-gray-50 text-gray-400 cursor-not-allowed"
                   />
-                  <button
-                    type="button"
-                    onClick={() => setShowPw(v => ({ ...v, [key]: !v[key] }))}
-                    className="absolute right-3 top-1/2 -translate-y-1/2 text-gray-400 hover:text-[#616161]"
-                  >
-                    {showPw[key] ? <EyeOff size={14} /> : <Eye size={14} />}
-                  </button>
                 </div>
+              )}
+            </div>
+
+            {profileMsg && (
+              <div
+                className={`mt-4 flex items-center gap-2 px-4 py-2.5 rounded-xl text-sm ${profileMsg.ok ? "bg-green-50 border border-green-200 text-green-700" : "bg-red-50 border border-red-200 text-red-600"}`}
+              >
+                {profileMsg.ok ? (
+                  <CheckCircle size={14} />
+                ) : (
+                  <AlertCircle size={14} />
+                )}
+                {profileMsg.text}
               </div>
-            ))}
+            )}
+
+            <div className="mt-5 flex justify-end">
+              <button
+                onClick={handleSaveProfile}
+                disabled={saving}
+                className="flex items-center gap-2 px-5 py-2.5 bg-[#D32F2F] text-white rounded-xl font-semibold text-sm hover:bg-[#B71C1C] disabled:opacity-60 transition-colors"
+              >
+                {saving ? (
+                  <>
+                    <RefreshCw size={13} className="animate-spin" /> Saving…
+                  </>
+                ) : (
+                  <>
+                    <Save size={14} /> Save Changes
+                  </>
+                )}
+              </button>
+            </div>
           </div>
 
-          {passwordMsg && (
-            <div className={`mt-4 flex items-center gap-2 px-4 py-2.5 rounded-xl text-sm ${passwordMsg.ok ? 'bg-green-50 border border-green-200 text-green-700' : 'bg-red-50 border border-red-200 text-red-600'}`}>
-              {passwordMsg.ok ? <CheckCircle size={14} /> : <AlertCircle size={14} />}
-              {passwordMsg.text}
+          {/* ── Change Password ── */}
+          <div className="bg-white rounded-2xl border border-gray-100 p-6">
+            <div className="flex items-center gap-2 mb-5">
+              <div className="w-8 h-8 bg-red-50 rounded-xl flex items-center justify-center">
+                <Lock size={15} className="text-[#D32F2F]" />
+              </div>
+              <h3
+                className="font-bold text-[#212121]"
+                style={{ fontFamily: "Poppins, sans-serif" }}
+              >
+                Change Password
+              </h3>
             </div>
-          )}
 
-          <div className="mt-5 flex justify-end">
-            <button
-              onClick={handleChangePassword}
-              disabled={savingPw}
-              className="flex items-center gap-2 px-5 py-2.5 bg-[#212121] text-white rounded-xl font-semibold text-sm hover:bg-black disabled:opacity-60 transition-colors"
-            >
-              {savingPw
-                ? <><RefreshCw size={13} className="animate-spin" /> Updating…</>
-                : <><Lock size={14} /> Update Password</>
-              }
-            </button>
+            <div className="space-y-3">
+              {(
+                [
+                  ["current", "Current Password"],
+                  ["newPass", "New Password"],
+                  ["confirm", "Confirm New Password"],
+                ] as const
+              ).map(([key, label]) => (
+                <div key={key}>
+                  <label className="block text-xs font-semibold text-[#616161] uppercase tracking-wider mb-1.5">
+                    {label}
+                  </label>
+                  <div className="relative">
+                    <input
+                      type={showPw[key] ? "text" : "password"}
+                      value={passwordForm[key]}
+                      onChange={(e) =>
+                        setPasswordForm((f) => ({
+                          ...f,
+                          [key]: e.target.value,
+                        }))
+                      }
+                      placeholder="••••••••"
+                      className="w-full px-3 py-2.5 pr-10 border border-gray-200 rounded-xl text-sm focus:outline-none focus:border-[#D32F2F] bg-white"
+                    />
+                    <button
+                      type="button"
+                      onClick={() =>
+                        setShowPw((v) => ({ ...v, [key]: !v[key] }))
+                      }
+                      className="absolute right-3 top-1/2 -translate-y-1/2 text-gray-400 hover:text-[#616161]"
+                    >
+                      {showPw[key] ? <EyeOff size={14} /> : <Eye size={14} />}
+                    </button>
+                  </div>
+                </div>
+              ))}
+            </div>
+
+            {passwordMsg && (
+              <div
+                className={`mt-4 flex items-center gap-2 px-4 py-2.5 rounded-xl text-sm ${passwordMsg.ok ? "bg-green-50 border border-green-200 text-green-700" : "bg-red-50 border border-red-200 text-red-600"}`}
+              >
+                {passwordMsg.ok ? (
+                  <CheckCircle size={14} />
+                ) : (
+                  <AlertCircle size={14} />
+                )}
+                {passwordMsg.text}
+              </div>
+            )}
+
+            <div className="mt-5 flex justify-end">
+              <button
+                onClick={handleChangePassword}
+                disabled={savingPw}
+                className="flex items-center gap-2 px-5 py-2.5 bg-[#212121] text-white rounded-xl font-semibold text-sm hover:bg-black disabled:opacity-60 transition-colors"
+              >
+                {savingPw ? (
+                  <>
+                    <RefreshCw size={13} className="animate-spin" /> Updating…
+                  </>
+                ) : (
+                  <>
+                    <Lock size={14} /> Update Password
+                  </>
+                )}
+              </button>
+            </div>
           </div>
         </div>
-
       </div>
-    </div>
+    </>
   );
 }

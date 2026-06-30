@@ -46,7 +46,7 @@ const labelCls = 'block text-xs font-semibold text-[#212121] mb-1';
 
 export default function BookingModal({ onClose }: BookingModalProps) {
   const [step, setStep] = useState<Step>(1);
-  const [userType, setUserType] = useState<UserType>(null);
+  const [userType, setUserType] = useState<UserType>("customer");
   const [customerForm, setCustomerForm] = useState(emptyCustomer);
   const [numForm, setNumForm] = useState(emptyNumerologist);
   const [requirements, setRequirements] = useState(emptyRequirements);

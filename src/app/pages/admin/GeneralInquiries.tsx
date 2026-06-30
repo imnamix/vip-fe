@@ -8,6 +8,7 @@ import {
   deleteGeneralInquiries,
   updateGeneralInquiry,
 } from '../../services/GeneralInquiryService';
+import { usePermission } from '../../hooks/usePermission';
 
 const LIMIT = 10;
 
@@ -200,6 +201,10 @@ export default function GeneralInquiries() {
   const [deleteItem,  setDeleteItem]  = useState<any | null>(null);
   const [deleting,    setDeleting]    = useState(false);
   const searchTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
+  const { can }      = usePermission();
+  const canView       = can('General Inquiry', 'read');
+  const canDelete      = can('General Inquiry', 'delete');
+  const showActions    = canView || canDelete;
 
   const [stats, setStats] = useState({ total: 0, pending: 0, today: 0 });
 
@@ -376,7 +381,7 @@ export default function GeneralInquiries() {
               <table className="w-full min-w-[640px]">
                 <thead>
                   <tr className="bg-gray-50 dark:bg-white/5 border-b border-gray-100 dark:border-white/5">
-                    {['#', 'Name', 'Mobile', 'Looking For', 'Status', 'Date', 'Actions'].map(h => (
+                    {['#', 'Name', 'Mobile', 'Looking For', 'Status', 'Date', ...(showActions ? ['Actions'] : [])].map(h => (
                       <th key={h} className="text-left px-4 py-3 text-xs font-semibold text-[#616161] dark:text-gray-400 uppercase tracking-wider whitespace-nowrap">
                         {h}
                       </th>
@@ -386,7 +391,7 @@ export default function GeneralInquiries() {
                 <tbody className="divide-y divide-gray-50 dark:divide-white/5">
                   {rows.length === 0 ? (
                     <tr>
-                      <td colSpan={7} className="px-4 py-16 text-center">
+                      <td colSpan={showActions ? 7 : 6} className="px-4 py-16 text-center">
                         <div className="flex flex-col items-center gap-2 text-[#9E9E9E]">
                           <MessageSquarePlus size={28} className="opacity-30" />
                           <span className="text-sm">{search ? 'No results found' : 'No enquiries yet'}</span>
@@ -428,24 +433,30 @@ export default function GeneralInquiries() {
                           <td className="px-4 py-3 text-xs text-[#616161] dark:text-gray-400 whitespace-nowrap">
                             {formatDate(row.created_at)}
                           </td>
-                          <td className="px-4 py-3">
-                            <div className="flex items-center gap-1">
-                              <button
-                                onClick={() => setViewItem(row)}
-                                className="p-1.5 text-blue-500 hover:bg-blue-50 dark:hover:bg-blue-900/20 rounded-lg transition-colors"
-                                title="View"
-                              >
-                                <Eye size={14} />
-                              </button>
-                              <button
-                                onClick={() => setDeleteItem(row)}
-                                className="p-1.5 text-[#D32F2F] hover:bg-red-50 dark:hover:bg-red-900/20 rounded-lg transition-colors"
-                                title="Delete"
-                              >
-                                <Trash2 size={14} />
-                              </button>
-                            </div>
-                          </td>
+                          {showActions && (
+                            <td className="px-4 py-3">
+                              <div className="flex items-center gap-1">
+                                {canView && (
+                                  <button
+                                    onClick={() => setViewItem(row)}
+                                    className="p-1.5 text-blue-500 hover:bg-blue-50 dark:hover:bg-blue-900/20 rounded-lg transition-colors"
+                                    title="View"
+                                  >
+                                    <Eye size={14} />
+                                  </button>
+                                )}
+                                {canDelete && (
+                                  <button
+                                    onClick={() => setDeleteItem(row)}
+                                    className="p-1.5 text-[#D32F2F] hover:bg-red-50 dark:hover:bg-red-900/20 rounded-lg transition-colors"
+                                    title="Delete"
+                                  >
+                                    <Trash2 size={14} />
+                                  </button>
+                                )}
+                              </div>
+                            </td>
+                          )}
                         </tr>
                       );
                     })

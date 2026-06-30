@@ -1,9 +1,12 @@
 import { useState, useEffect } from 'react';
+import { useNavigate, useOutletContext } from 'react-router';
 import { Calendar, MapPin, Users, Clock, X, CheckCircle, Play, ChevronLeft, ChevronRight, Loader2, ImageOff } from 'lucide-react';
 import Masonry, { ResponsiveMasonry } from 'react-responsive-masonry';
 import BannerCarousel from '../components/BannerCarousel';
 import { getAllEvents, getEventsByID } from '../services/EventsService';
 import { getAllGalleryItems } from '../services/GalleryService';
+
+interface OutletCtx { openBooking: () => void }
 
 const bannerSlides = [
   { img: 'https://images.unsplash.com/photo-1540575467063-178a50c2df87?w=1440&h=400&fit=crop', title: 'Events & Gallery', subtitle: 'Upcoming workshops, expos, and our visual showcase.' },
@@ -69,6 +72,8 @@ function formatTime(t: string) {
 }
 
 export default function EventsGallery() {
+  const { openBooking } = useOutletContext<OutletCtx>();
+  const navigate = useNavigate();
   const [mainTab, setMainTab] = useState<'Events' | 'Gallery'>('Events');
 
   // Events
@@ -440,6 +445,33 @@ export default function EventsGallery() {
           </div>
         </section>
       )}
+
+      {/* ─── CTA Banner ──────────────────────── */}
+      <section className="py-20 bg-gradient-to-r from-[#212121] to-[#B71C1C]">
+        <div className="max-w-4xl mx-auto px-4 text-center">
+          <h2 className="text-4xl font-bold text-white mb-4" style={{ fontFamily: 'Poppins, sans-serif' }}>
+            Ready to Transform Your Life?
+          </h2>
+          <p className="text-white/80 text-lg mb-8">
+            Book a personalised numerology Number and unlock the power of your numbers today.
+          </p>
+          <div className="flex flex-wrap gap-4 justify-center">
+            <button
+              onClick={openBooking}
+              className="px-8 py-4 bg-[#FBC02D] text-black rounded-xl font-bold text-lg hover:bg-yellow-400 transition-colors"
+              style={{ fontFamily: 'Poppins, sans-serif' }}
+            >
+              Book Your Number
+            </button>
+            <button
+              onClick={() => navigate('/contact')}
+              className="px-8 py-4 bg-white/10 border border-white/30 text-white rounded-xl font-semibold text-lg hover:bg-white/20 transition-colors"
+            >
+              Contact Us
+            </button>
+          </div>
+        </div>
+      </section>
 
       {/* ═══════ LIGHTBOX ═══════ */}
       {lightbox !== null && filteredGallery[lightbox] && (

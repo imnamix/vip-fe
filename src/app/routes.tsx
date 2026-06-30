@@ -30,6 +30,10 @@ import DeliveryTracking from './pages/admin/DeliveryTracking';
 import Notifications from './pages/admin/Notifications';
 import AdminProfile from './pages/admin/AdminProfile';
 import Settings from './pages/admin/Settings';
+import Forbidden from './pages/admin/Forbidden';
+import { ProtectedRoute } from './components/ProtectedRoute';
+
+const P = ProtectedRoute;
 
 export const router = createBrowserRouter([
   {
@@ -48,33 +52,113 @@ export const router = createBrowserRouter([
     path: '/admin',
     Component: AdminLayout,
     children: [
-      { index: true, Component: Dashboard },
-      { path: 'customers', Component: Customers },
-      { path: 'customers/new', Component: CustomerForm },
-      { path: 'customers/:id/edit', Component: CustomerForm },
-      { path: 'inquiries', Component: Inquiries },
-      { path: 'inquiries/:id', Component: InquiryDetail },
-      { path: 'general-inquiries', Component: GeneralInquiries },
-      { path: 'numerologists', Component: Numerologists },
-      { path: 'numerologists/new', Component: NumerologistForm },
-      { path: 'numerologists/:id', Component: NumerologistDetail },
-      { path: 'numerologists/:id/edit', Component: NumerologistForm },
-      { path: 'events', Component: AdminEvents },
-      { path: 'events/banner', Component: EventBannerSlides },
-      { path: 'events/new', Component: EventForm },
-      { path: 'events/:id', Component: EventView },
-      { path: 'events/:id/edit', Component: EventForm },
-      { path: 'vip-numbers', Component: VipNumbers },
-      { path: 'vip-numbers/new', Component: VipNumberForm },
-      { path: 'vip-numbers/:id', Component: VipNumberView },
-      { path: 'vip-numbers/:id/edit', Component: VipNumberForm },
-      { path: 'content', Component: ContentManagement },
-      { path: 'roles', Component: Roles },
-      { path: 'users', Component: AdminUsers },
-      { path: 'delivery', Component: DeliveryTracking },
-      { path: 'notifications', Component: Notifications },
+      {
+        index: true,
+        element: <P module="Dashboard"><Dashboard /></P>,
+      },
+      {
+        path: 'customers',
+        element: <P module="Customers"><Customers /></P>,
+      },
+      {
+        path: 'customers/new',
+        element: <P module="Customers" action="write"><CustomerForm /></P>,
+      },
+      {
+        path: 'customers/:id/edit',
+        element: <P module="Customers" action="update"><CustomerForm /></P>,
+      },
+      {
+        path: 'inquiries',
+        element: <P module="Inquiry"><Inquiries /></P>,
+      },
+      {
+        path: 'inquiries/:id',
+        element: <P module="Inquiry"><InquiryDetail /></P>,
+      },
+      {
+        path: 'general-inquiries',
+        element: <P module="General Inquiry"><GeneralInquiries /></P>,
+      },
+      {
+        path: 'numerologists',
+        element: <P module="Customers"><Numerologists /></P>,
+      },
+      {
+        path: 'numerologists/new',
+        element: <P module="Customers" action="write"><NumerologistForm /></P>,
+      },
+      {
+        path: 'numerologists/:id',
+        element: <P module="Customers"><NumerologistDetail /></P>,
+      },
+      {
+        path: 'numerologists/:id/edit',
+        element: <P module="Customers" action="update"><NumerologistForm /></P>,
+      },
+      {
+        path: 'events',
+        element: <P module="Events"><AdminEvents /></P>,
+      },
+      {
+        path: 'events/banner',
+        element: <P module="Events" action="write"><EventBannerSlides /></P>,
+      },
+      {
+        path: 'events/new',
+        element: <P module="Events" action="write"><EventForm /></P>,
+      },
+      {
+        path: 'events/:id',
+        element: <P module="Events"><EventView /></P>,
+      },
+      {
+        path: 'events/:id/edit',
+        element: <P module="Events" action="update"><EventForm /></P>,
+      },
+      {
+        path: 'vip-numbers',
+        element: <P module="Top VIP Numbers"><VipNumbers /></P>,
+      },
+      {
+        path: 'vip-numbers/new',
+        element: <P module="Top VIP Numbers" action="write"><VipNumberForm /></P>,
+      },
+      {
+        path: 'vip-numbers/:id',
+        element: <P module="Top VIP Numbers"><VipNumberView /></P>,
+      },
+      {
+        path: 'vip-numbers/:id/edit',
+        element: <P module="Top VIP Numbers" action="update"><VipNumberForm /></P>,
+      },
+      {
+        path: 'content',
+        element: <P module="Content"><ContentManagement /></P>,
+      },
+      {
+        path: 'roles',
+        element: <P module="Roles"><Roles /></P>,
+      },
+      {
+        path: 'users',
+        element: <P module="Users"><AdminUsers /></P>,
+      },
+      {
+        path: 'delivery',
+        element: <P module="Delivery"><DeliveryTracking /></P>,
+      },
+      {
+        path: 'notifications',
+        element: <P module="Notifications"><Notifications /></P>,
+      },
+      // Profile is self-service — any authenticated user can access
       { path: 'profile', Component: AdminProfile },
-      { path: 'settings', Component: Settings },
+      {
+        path: 'settings',
+        element: <P module="Settings"><Settings /></P>,
+      },
+      { path: '403', Component: Forbidden },
     ],
   },
 ]);

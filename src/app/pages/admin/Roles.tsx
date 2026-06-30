@@ -1,4 +1,4 @@
-import { useState, useEffect, useCallback } from "react";
+import { useState, useEffect, useCallback, useRef } from "react";
 import { useSearchParams } from "react-router";
 import {
   Plus,
@@ -18,6 +18,7 @@ import {
   updateRole,
   deleteRole,
 } from "../../services/RoleService";
+import { usePermission } from "../../hooks/usePermission";
 
 // ─── Types ────────────────────────────────────────────────────────────────────
 type Permission = "create" | "view" | "update" | "delete";
@@ -141,8 +142,15 @@ export default function Roles() {
   const [saving, setSaving] = useState(false);
   const [fetchError, setFetchError] = useState("");
   const [saveError, setSaveError] = useState("");
+  const [nameError, setNameError] = useState("");
+  const formTopRef = useRef<HTMLDivElement>(null);
   const [roleForm, setRoleForm] = useState(emptyRole());
   const [deleteId, setDeleteId] = useState<string | number | null>(null);
+  const { can: canDo } = usePermission();
+  const canCreateRole    = canDo("Roles", "write");
+  const canEditRole      = canDo("Roles", "update");
+  const canDeleteRole     = canDo("Roles", "delete");
+  const showRoleActions     = canEditRole || canDeleteRole;
   const [deleting, setDeleting] = useState(false);
   const [deleteError, setDeleteError] = useState("");
 
@@ -154,10 +162,12 @@ export default function Roles() {
       const res = await getAllRoles();
       const rawRoles: any[] = res?.data ?? res ?? [];
       setRoles(
-        rawRoles.map((r) => ({
-          ...r,
-          permissions: apiToUiPermissions(r.permissions ?? {}),
-        })),
+        rawRoles
+          .filter((r) => r.name?.trim().toLowerCase() !== "super admin")
+          .map((r) => ({
+            ...r,
+            permissions: apiToUiPermissions(r.permissions ?? {}),
+          })),
       );
     } catch {
       setFetchError("Failed to load roles. Please try again.");
@@ -180,6 +190,10 @@ export default function Roles() {
       getRoleById(editRoleId)
         .then((res) => {
           const r = res?.data ?? res;
+          if (r?.name?.trim().toLowerCase() === "super admin") {
+            setSearchParams({});
+            return;
+          }
           if (r) {
             setRoleForm({
               name: r.name ?? "",
@@ -204,10 +218,12 @@ export default function Roles() {
   const openNew = () => {
     setRoleForm(emptyRole());
     setSaveError("");
+    setNameError("");
     setSearchParams({ mode: "form" });
   };
 
   const openEdit = (r: Role) => {
+    if (r.name?.trim().toLowerCase() === "super admin") return;
     setRoleForm({
       name: r.name,
       description: r.description,
@@ -215,36 +231,57 @@ export default function Roles() {
       permissions: r.permissions ?? emptyPermissions(),
     });
     setSaveError("");
+    setNameError("");
     setSearchParams({ mode: "form", id: String(r.id) });
   };
 
   const handleBack = () => {
     setSaveError("");
+    setNameError("");
     setSearchParams({});
   };
 
   // ── Save ───────────────────────────────────────────────────────────────────
+  const scrollToFormTop = () => {
+    formTopRef.current?.scrollIntoView({ behavior: "smooth", block: "start" });
+  };
+
   const handleSave = async () => {
     if (!roleForm.name.trim()) {
-      setSaveError("Role name is required.");
+      setNameError("Role name is required.");
+      scrollToFormTop();
       return;
     }
     setSaving(true);
     setSaveError("");
+    setNameError("");
     try {
       const payload = {
         ...roleForm,
         permissions: uiToApiPermissions(roleForm.permissions),
       };
-      if (editRoleId !== null) {
-        await updateRole(payload, editRoleId);
-      } else {
-        await addRole(payload);
+      const res = editRoleId !== null
+        ? await updateRole(payload, editRoleId)
+        : await addRole(payload);
+
+      // Backend responds 200 with success:false for conflicts (e.g. duplicate name)
+      // instead of throwing, so this must be checked separately from the catch block.
+      if (res?.success === false) {
+        const msg = res.message ?? "Failed to save. Please try again.";
+        if (/name/i.test(msg)) {
+          setNameError(msg);
+        } else {
+          setSaveError(msg);
+        }
+        scrollToFormTop();
+        return;
       }
+
       await fetchRoles();
       setSearchParams({});
-    } catch {
-      setSaveError("Failed to save. Please try again.");
+    } catch (error: any) {
+      setSaveError(error?.response?.data?.message ?? "Failed to save. Please try again.");
+      scrollToFormTop();
     } finally {
       setSaving(false);
     }
@@ -341,12 +378,14 @@ export default function Roles() {
                   className={loading ? "animate-spin" : ""}
                 />
               </button>
-              <button
-                onClick={openNew}
-                className="flex items-center gap-2 px-4 py-2 bg-[#D32F2F] text-white rounded-xl text-sm font-semibold hover:bg-[#B71C1C] transition-colors"
-              >
-                <Plus size={13} /> Add Role
-              </button>
+              {canCreateRole && (
+                <button
+                  onClick={openNew}
+                  className="flex items-center gap-2 px-4 py-2 bg-[#D32F2F] text-white rounded-xl text-sm font-semibold hover:bg-[#B71C1C] transition-colors"
+                >
+                  <Plus size={13} /> Add Role
+                </button>
+              )}
             </div>
           </>
         ) : (
@@ -380,12 +419,14 @@ export default function Roles() {
               <div className="bg-white rounded-2xl border border-gray-100 py-16 text-center">
                 <Shield size={32} className="mx-auto text-gray-200 mb-3" />
                 <p className="text-sm text-[#616161]">No roles yet.</p>
-                <button
-                  onClick={openNew}
-                  className="mt-3 text-sm text-[#D32F2F] font-semibold hover:underline"
-                >
-                  Create the first role
-                </button>
+                {canCreateRole && (
+                  <button
+                    onClick={openNew}
+                    className="mt-3 text-sm text-[#D32F2F] font-semibold hover:underline"
+                  >
+                    Create the first role
+                  </button>
+                )}
               </div>
             ) : (
               roles.map((r) => (
@@ -439,20 +480,26 @@ export default function Roles() {
                       </div>
                     )}
                   </div>
+                  {showRoleActions && (
                   <div className="flex items-center gap-1.5 ml-auto flex-shrink-0">
+                    {canEditRole && (
                     <button
                       onClick={() => openEdit(r)}
                       className="flex items-center gap-1.5 px-3 py-1.5 border border-gray-200 text-[#616161] rounded-xl text-xs font-medium hover:border-[#FBC02D] hover:text-[#FBC02D] transition-colors"
                     >
                       <Edit size={12} /> Edit & Permissions
                     </button>
+                    )}
+                    {canDeleteRole && (
                     <button
                       onClick={() => setDeleteId(r.id)}
                       className="p-1.5 text-[#D32F2F] hover:bg-red-50 rounded-lg transition-colors"
                     >
                       <Trash2 size={13} />
                     </button>
+                    )}
                   </div>
+                  )}
                 </div>
               ))
             )}
@@ -462,7 +509,7 @@ export default function Roles() {
 
       {/* ═══════════════ FORM ═══════════════ */}
       {mode === "form" && (
-        <div className="max-w-3xl mx-auto space-y-5">
+        <div ref={formTopRef} className="max-w-3xl mx-auto space-y-5">
           {formLoading ? (
             <div className="space-y-5">
               <div className="bg-white rounded-2xl border border-gray-100 p-5 animate-pulse h-40" />
@@ -500,12 +547,20 @@ export default function Roles() {
                     </label>
                     <input
                       value={roleForm.name}
-                      onChange={(e) =>
-                        setRoleForm((f) => ({ ...f, name: e.target.value }))
-                      }
+                      onChange={(e) => {
+                        setRoleForm((f) => ({ ...f, name: e.target.value }));
+                        if (nameError) setNameError("");
+                      }}
                       placeholder="e.g. Sales Manager"
-                      className="w-full px-3 py-2.5 border border-gray-200 rounded-xl text-sm focus:outline-none focus:border-[#D32F2F]"
+                      className={`w-full px-3 py-2.5 border rounded-xl text-sm focus:outline-none ${
+                        nameError
+                          ? "border-red-400 focus:border-red-500"
+                          : "border-gray-200 focus:border-[#D32F2F]"
+                      }`}
                     />
+                    {nameError && (
+                      <p className="mt-1.5 text-xs text-red-600">{nameError}</p>
+                    )}
                   </div>
                   <div>
                     <label className="block text-xs font-semibold text-[#616161] uppercase tracking-wider mb-1.5">
