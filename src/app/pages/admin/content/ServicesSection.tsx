@@ -113,7 +113,7 @@ function IconPicker({ value, onChange }: { value: string; onChange: (name: strin
   );
 }
 
-function SingleImageUpload({ value, onChange, label, canDelete = true }: { value: string; onChange: (url: string) => void; label: string; canDelete?: boolean }) {
+function SingleImageUpload({ value, onChange, label, canDelete = true, hint }: { value: string; onChange: (url: string) => void; label: string; canDelete?: boolean; hint?: string }) {
   const [uploading, setUploading] = useState(false);
   const [imgPreview, setImgPreview] = useState(false);
 
@@ -162,6 +162,7 @@ function SingleImageUpload({ value, onChange, label, canDelete = true }: { value
     <label className={`flex flex-col items-center gap-2 py-8 border-2 border-dashed rounded-xl cursor-pointer transition-colors ${uploading ? 'opacity-60 pointer-events-none border-gray-200' : 'border-[#D32F2F]/40 hover:border-[#D32F2F] hover:bg-red-50'}`}>
       {uploading ? <Loader2 size={20} className="animate-spin text-[#D32F2F]" /> : <Image size={20} className="text-[#D32F2F]" />}
       <span className="text-xs text-[#D32F2F] font-medium">{uploading ? 'Uploading…' : `Upload ${label}`}</span>
+      {hint && <span className="text-xs text-[#9E9E9E]">{hint}</span>}
       <input type="file" accept="image/*" className="hidden" onChange={handleUpload} disabled={uploading} />
     </label>
   );
@@ -469,6 +470,7 @@ export default function ServicesSection() {
                   onChange={url => updateItem(svc.localId, 'image', url)}
                   label="Service Image"
                   canDelete={canDelete}
+                  hint="Recommended: 800 x 600 px"
                 />
                 {fieldErrors[svc.localId]?.image && (
                   <p className="mt-1 text-xs text-red-500 flex items-center gap-1"><AlertCircle size={11} />{fieldErrors[svc.localId].image}</p>

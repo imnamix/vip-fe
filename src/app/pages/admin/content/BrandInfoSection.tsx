@@ -168,6 +168,7 @@ export default function BrandInfoSection() {
             <label className={`flex flex-col items-center gap-2 py-8 border-2 border-dashed rounded-xl cursor-pointer transition-colors ${uploadingKey === "logo" ? "opacity-60 pointer-events-none border-gray-200" : "border-[#D32F2F]/40 hover:border-[#D32F2F] hover:bg-red-50"}`}>
               {uploadingKey === "logo" ? <Loader2 size={20} className="animate-spin text-[#D32F2F]" /> : <Image size={20} className="text-[#D32F2F]" />}
               <span className="text-xs text-[#D32F2F] font-medium">{uploadingKey === "logo" ? "Uploading…" : "Upload Logo"}</span>
+              <span className="text-xs text-[#9E9E9E]">Recommended: 240 x 80 px</span>
               <input type="file" accept="image/*" className="hidden" onChange={handleImageUpload("logo")} disabled={uploadingKey === "logo"} />
             </label>
           )}
@@ -197,6 +198,7 @@ export default function BrandInfoSection() {
             <label className={`flex flex-col items-center gap-2 py-8 border-2 border-dashed rounded-xl cursor-pointer transition-colors ${uploadingKey === "favicon" ? "opacity-60 pointer-events-none border-gray-200" : "border-[#D32F2F]/40 hover:border-[#D32F2F] hover:bg-red-50"}`}>
               {uploadingKey === "favicon" ? <Loader2 size={20} className="animate-spin text-[#D32F2F]" /> : <Image size={20} className="text-[#D32F2F]" />}
               <span className="text-xs text-[#D32F2F] font-medium">{uploadingKey === "favicon" ? "Uploading…" : "Upload Favicon"}</span>
+              <span className="text-xs text-[#9E9E9E]">Recommended: 512 x 512 px</span>
               <input type="file" accept="image/*" className="hidden" onChange={handleImageUpload("favicon")} disabled={uploadingKey === "favicon"} />
             </label>
           )}
@@ -345,7 +347,7 @@ export default function BrandInfoSection() {
                     </div>
                   </div>
                   <div className="mt-2 flex items-center justify-between">
-                    {/* <span className="text-xs text-[#9E9E9E]">Recommended: 1200×630px</span> */}
+                    <span className="text-xs text-[#9E9E9E]">Recommended: 1200 x 630 px</span>
                     <button type="button" onClick={() => set("ogImage", "")} className="flex items-center gap-1 px-3 py-1.5 text-xs text-red-600 border border-red-200 rounded-lg hover:bg-red-50 transition-colors">
                       <Trash2 size={12} /> Remove
                     </button>
@@ -355,7 +357,7 @@ export default function BrandInfoSection() {
                 <label className={`flex flex-col items-center gap-2 py-8 border-2 border-dashed rounded-xl cursor-pointer transition-colors ${uploadingKey === "ogImage" ? "opacity-60 pointer-events-none border-gray-200" : "border-[#D32F2F]/40 hover:border-[#D32F2F] hover:bg-red-50"}`}>
                   {uploadingKey === "ogImage" ? <Loader2 size={20} className="animate-spin text-[#D32F2F]" /> : <Image size={20} className="text-[#D32F2F]" />}
                   <span className="text-xs text-[#D32F2F] font-medium">{uploadingKey === "ogImage" ? "Uploading…" : "Upload OG Image"}</span>
-                  <span className="text-xs text-[#9E9E9E]">Recommended: 1200×630px</span>
+                  <span className="text-xs text-[#9E9E9E]">Recommended: 1200 x 630 px</span>
                   <input type="file" accept="image/*" className="hidden" onChange={handleImageUpload("ogImage")} disabled={uploadingKey === "ogImage"} />
                 </label>
               )}

@@ -117,6 +117,7 @@ interface FormState {
   price: string;
   tag: Tag;
   rating: number;
+  numerologyScore: string;
   status: number;
 }
 
@@ -128,6 +129,7 @@ const EMPTY: FormState = {
   price: '',
   tag: '',
   rating: 10,
+  numerologyScore: '',
   status: 1,
 };
 
@@ -158,6 +160,7 @@ export default function VipNumberForm() {
             price: d.price != null ? String(d.price) : '',
             tag: (d.tag ?? '') as Tag,
             rating: d.rating != null ? Number(d.rating) : 10,
+            numerologyScore: d.numerologyScore ?? '',
             status: d.status ?? 1,
           });
         }
@@ -203,6 +206,7 @@ export default function VipNumberForm() {
         price: form.price ? Number(form.price) : null,
         tag: form.tag || null,
         rating: form.rating,
+        numerologyScore: form.numerologyScore || null,
         status: form.status,
       };
       if (isEdit) {
@@ -365,6 +369,18 @@ export default function VipNumberForm() {
                 <span>10</span>
               </div>
             </div>
+          </div>
+
+          {/* Numerology Score */}
+          <div>
+            <label className="block text-xs font-semibold text-[#212121] mb-1.5">Numerology Score</label>
+            <input
+              type="text"
+              value={form.numerologyScore}
+              onChange={e => set('numerologyScore', e.target.value)}
+              placeholder="e.g. 41 - Highly Auspicious"
+              className="w-full px-3 py-2.5 border border-gray-200 rounded-xl text-sm focus:outline-none focus:border-[#D32F2F] transition-colors text-[#212121] placeholder:text-gray-400"
+            />
           </div>
 
           {/* Status */}

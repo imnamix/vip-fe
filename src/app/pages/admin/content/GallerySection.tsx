@@ -153,6 +153,7 @@ function MediaUpload({
           : <Video size={20} className="text-[#D32F2F]" />
       }
       <span className="text-xs text-[#D32F2F] font-medium">{uploading ? 'Uploading…' : label}</span>
+      {type === 'image' && <span className="text-xs text-[#9E9E9E]">Recommended: 1024 x 768 px</span>}
       <input type="file" accept={accept} className="hidden" onChange={handleUpload} disabled={uploading} />
     </label>
   );

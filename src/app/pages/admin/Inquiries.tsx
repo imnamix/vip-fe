@@ -1,6 +1,7 @@
 import { useState, useEffect, useRef } from 'react';
 import { useNavigate } from 'react-router';
-import { Search, LayoutGrid, List, Eye, Edit, Clock, Plus, X, RefreshCw, ChevronLeft, ChevronRight } from 'lucide-react';
+import * as XLSX from 'xlsx';
+import { Search, LayoutGrid, List, Eye, Edit, Clock, Plus, X, RefreshCw, ChevronLeft, ChevronRight, Download, CalendarDays, ChevronDown } from 'lucide-react';
 import { getAllEnquires, createInquiry, updateEnquiry, getStatusCounts } from '../../services/EnquiresService';
 import { usePermission } from '../../hooks/usePermission';
 
@@ -16,6 +17,7 @@ const STATUS_COLORS: Record<string, { bg: string; text: string; border: string; 
   'Paid':              { bg: '#E0F2F1', text: '#009688',  border: '#B2DFDB', activeBg: '#009688'  },
   'Dispatched':        { bg: '#F3E5F5', text: '#9C27B0',  border: '#E1BEE7', activeBg: '#9C27B0'  },
   'Delivered':         { bg: '#E8F5E9', text: '#388E3C',  border: '#C8E6C9', activeBg: '#388E3C'  },
+  'Cancelled':         { bg: '#FFEBEE', text: '#D32F2F',  border: '#FFCDD2', activeBg: '#D32F2F'  },
 };
 
 const SOURCE_OPTIONS = ['Website', 'WhatsApp', 'Referral', 'Event', 'Social Media', 'Cold Call', 'Walk-in', 'Other'];
@@ -92,6 +94,34 @@ const nowLog = () => new Date().toLocaleString('en-IN', {
   day: 'numeric', month: 'short', year: 'numeric',
   hour: '2-digit', minute: '2-digit', hour12: true,
 });
+
+/* ── Date filter helpers ────────────────────────────────────────────────── */
+type DateFilterKey = 'today' | 'week' | 'month' | 'custom' | null;
+type DateRange = { startDate?: string; endDate?: string };
+
+const DATE_FILTER_OPTIONS: { key: Exclude<DateFilterKey, null>; label: string }[] = [
+  { key: 'today',  label: 'Today' },
+  { key: 'week',   label: '1 Week' },
+  { key: 'month',  label: '1 Month' },
+  { key: 'custom', label: 'Custom' },
+];
+
+/* Today's date in IST (Asia/Kolkata), formatted as YYYY-MM-DD for <input type="date"> */
+const todayIST = () => new Date().toLocaleDateString('en-CA', { timeZone: 'Asia/Kolkata' });
+
+const daysAgoIST = (n: number) => {
+  const d = new Date();
+  d.setDate(d.getDate() - n);
+  return d.toLocaleDateString('en-CA', { timeZone: 'Asia/Kolkata' });
+};
+
+function getDateRange(key: DateFilterKey, customStart: string, customEnd: string): DateRange {
+  if (key === 'today')  { const t = todayIST(); return { startDate: t, endDate: t }; }
+  if (key === 'week')   return { startDate: daysAgoIST(6),  endDate: todayIST() };
+  if (key === 'month')  return { startDate: daysAgoIST(29), endDate: todayIST() };
+  if (key === 'custom') return { startDate: customStart || undefined, endDate: customEnd || undefined };
+  return {};
+}
 
 /* ── Add / Edit Modal ──────────────────────────────────────────────────── */
 function LeadFormModal({ initial, editId, existingActivityLog, onClose, onSaved }: {
@@ -536,17 +566,44 @@ export default function Inquiries() {
   const [total,        setTotal]        = useState(0);
   const [activeStatus, setActiveStatus] = useState<string | null>(null);
   const [statusCounts, setStatusCounts] = useState<Record<string, number>>({});
+  const [dateFilterKey, setDateFilterKey] = useState<DateFilterKey>(null);
+  const [customStart,  setCustomStart]  = useState('');
+  const [customEnd,    setCustomEnd]    = useState('');
+  const [dateMenuOpen, setDateMenuOpen] = useState(false);
+  const [exporting,    setExporting]    = useState(false);
   const searchTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
+  const dateMenuRef = useRef<HTMLDivElement>(null);
   const navigate    = useNavigate();
   const { can }     = usePermission();
   const canView     = can('Inquiry', 'read');
   const canEdit     = can('Inquiry', 'update');
   const showActions = canView || canEdit;
 
-  const fetchLeads = async (p: number, q: string, s: string | null) => {
+  /* Close the date dropdown on outside click */
+  useEffect(() => {
+    const handler = (e: MouseEvent) => {
+      if (dateMenuRef.current && !dateMenuRef.current.contains(e.target as Node)) setDateMenuOpen(false);
+    };
+    document.addEventListener('mousedown', handler);
+    return () => document.removeEventListener('mousedown', handler);
+  }, []);
+
+  const currentDateRange = (): DateRange => getDateRange(dateFilterKey, customStart, customEnd);
+
+  const fmtShort = (d: string) => new Date(d).toLocaleDateString('en-IN', { day: 'numeric', month: 'short' });
+
+  const dateFilterLabel = () => {
+    if (!dateFilterKey) return 'Date Filter';
+    if (dateFilterKey === 'custom') {
+      return customStart && customEnd ? `${fmtShort(customStart)} – ${fmtShort(customEnd)}` : 'Custom';
+    }
+    return DATE_FILTER_OPTIONS.find(o => o.key === dateFilterKey)?.label ?? 'Date';
+  };
+
+  const fetchLeads = async (p: number, q: string, s: string | null, dr: DateRange = {}) => {
     setLoading(true); setFetchError('');
     try {
-      const res = await getAllEnquires(p, LIMIT, q || undefined, s || undefined);
+      const res = await getAllEnquires(p, LIMIT, q || undefined, s || undefined, dr.startDate, dr.endDate);
       setLeads(res?.data ?? []);
       setTotal(res?.count ?? 0);
     } catch {
@@ -575,7 +632,7 @@ export default function Inquiries() {
     if (searchTimer.current) clearTimeout(searchTimer.current);
     searchTimer.current = setTimeout(() => {
       setPage(1);
-      fetchLeads(1, q, activeStatus);
+      fetchLeads(1, q, activeStatus, currentDateRange());
     }, 350);
   };
 
@@ -583,16 +640,16 @@ export default function Inquiries() {
     const next = s === activeStatus ? null : s;
     setActiveStatus(next);
     setPage(1);
-    fetchLeads(1, search, next);
+    fetchLeads(1, search, next, currentDateRange());
   };
 
   const handlePageChange = (p: number) => {
     setPage(p);
-    fetchLeads(p, search, activeStatus);
+    fetchLeads(p, search, activeStatus, currentDateRange());
   };
 
   const refresh = () => {
-    fetchLeads(page, search, activeStatus);
+    fetchLeads(page, search, activeStatus, currentDateRange());
     fetchCounts();
   };
 
@@ -601,8 +658,77 @@ export default function Inquiries() {
   const closeModal = ()         => setModalState({ open: false });
 
   const onSaved = () => {
-    fetchLeads(page, search, activeStatus);
+    fetchLeads(page, search, activeStatus, currentDateRange());
     fetchCounts();
+  };
+
+  /* Date option click — toggles off if the same key is clicked again */
+  const handleDateFilter = (key: Exclude<DateFilterKey, null>) => {
+    const next = key === dateFilterKey ? null : key;
+    setDateFilterKey(next);
+    if (next !== 'custom') {
+      setPage(1);
+      fetchLeads(1, search, activeStatus, getDateRange(next, customStart, customEnd));
+      setDateMenuOpen(false);
+    }
+    // For 'custom' the menu stays open so the start/end pickers can be used
+  };
+
+  const clearDateFilter = () => {
+    setDateFilterKey(null);
+    setCustomStart('');
+    setCustomEnd('');
+    setDateMenuOpen(false);
+    setPage(1);
+    fetchLeads(1, search, activeStatus, {});
+  };
+
+  /* Custom range — refetch only once both start & end are chosen */
+  const handleCustomDateChange = (which: 'start' | 'end', value: string) => {
+    const nextStart = which === 'start' ? value : customStart;
+    const nextEnd   = which === 'end'   ? value : customEnd;
+    if (which === 'start') setCustomStart(value); else setCustomEnd(value);
+    if (nextStart && nextEnd) {
+      setPage(1);
+      fetchLeads(1, search, activeStatus, { startDate: nextStart, endDate: nextEnd });
+      setDateMenuOpen(false);
+    }
+  };
+
+  const handleExportExcel = async () => {
+    setExporting(true);
+    try {
+      const dr = currentDateRange();
+      const res = await getAllEnquires(1, 100000, search || undefined, activeStatus || undefined, dr.startDate, dr.endDate);
+      const rows: any[] = res?.data ?? [];
+
+      const exportRows = rows.map((inq, idx) => ({
+        'Sr No':      idx + 1,
+        'ID':         inq.id,
+        'Name':       inq.name || '',
+        'Mobile':     inq.mobile || '',
+        'Type':       inq.inquiryType || 'customer',
+        'Taluka':     inq.taluka || '',
+        'District':   inq.district || '',
+        'State':      inq.state || '',
+        'Pin Code':   inq.pinCode || '',
+        'Source':     inq.source || '',
+        'VIP Number': inq.confirmedNumber || inq.vipNumber || '',
+        'Status':     inq.status || 'Pending',
+        'Date': inq.created_at
+          ? new Date(inq.created_at).toLocaleDateString('en-IN', { day: '2-digit', month: 'short', year: 'numeric' })
+          : '',
+      }));
+
+      const ws = XLSX.utils.json_to_sheet(exportRows);
+      const wb = XLSX.utils.book_new();
+      XLSX.utils.book_append_sheet(wb, ws, 'Inquiries');
+      XLSX.writeFile(wb, `Inquiries_${todayIST()}.xlsx`);
+    } catch {
+      setFetchError('Failed to export data. Please try again.');
+    } finally {
+      setExporting(false);
+    }
   };
 
   return (
@@ -625,15 +751,15 @@ export default function Inquiries() {
         <div className="flex items-center gap-3 flex-wrap">
           <div className="relative">
             <Search
-              size={13}
+              size={15}
               className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400"
             />
             <input
               type="text"
-              placeholder="Search name, mobile…"
+              placeholder="Search name, mobile number..."
               value={search}
               onChange={(e) => handleSearchChange(e.target.value)}
-              className="pl-8 pr-4 py-2 border border-gray-200 rounded-xl text-sm focus:outline-none focus:border-[#D32F2F] w-48"
+              className="pl-8 pr-4 py-2 border border-gray-200 rounded-xl text-sm focus:outline-none focus:border-[#D32F2F] w-78"
             />
             {search && (
               <button
@@ -650,6 +776,15 @@ export default function Inquiries() {
             className="p-2 border border-gray-200 rounded-xl text-[#616161] hover:border-[#D32F2F] hover:text-[#D32F2F] transition-colors"
           >
             <RefreshCw size={14} className={loading ? "animate-spin" : ""} />
+          </button>
+          <button
+            onClick={handleExportExcel}
+            disabled={exporting}
+            title="Download Excel"
+            className="flex items-center gap-2 px-3 py-2 border border-gray-200 rounded-xl text-sm font-semibold text-[#616161] hover:border-[#D32F2F] hover:text-[#D32F2F] transition-colors disabled:opacity-50"
+          >
+            <Download size={14} className={exporting ? "animate-pulse" : ""} />
+            {exporting ? "Exporting…" : "Excel"}
           </button>
           {/* <div className="flex bg-gray-100 rounded-xl p-1 gap-1">
             <button
@@ -676,8 +811,8 @@ export default function Inquiries() {
         </div>
       </div>
 
-      {/* ── Status filter pills ── */}
-      <div className="flex flex-wrap gap-2 mb-5">
+      {/* ── Status filter pills + Date filter dropdown (same row) ── */}
+      <div className="flex flex-wrap items-center gap-2 mb-5">
         {/* "All" pill */}
         <button
           onClick={() => handleStatusFilter(null)}
@@ -730,14 +865,86 @@ export default function Inquiries() {
           );
         })}
 
-        {activeStatus && (
+        {/* ── Date filter dropdown — pushed to the right ── */}
+        <div className="relative ml-auto flex items-center gap-1.5" ref={dateMenuRef}>
           <button
-            onClick={() => handleStatusFilter(null)}
-            className="flex items-center gap-1 px-2.5 py-1.5 rounded-xl text-xs text-[#616161] border border-gray-200 hover:border-[#D32F2F] hover:text-[#D32F2F]"
+            onClick={() => setDateMenuOpen((o) => !o)}
+            className={`flex items-center gap-1.5 h-[34px] px-3 rounded-xl text-xs font-semibold border transition-all ${
+              dateFilterKey
+                ? "bg-[#D32F2F] text-white border-[#D32F2F]"
+                : "bg-white text-[#616161] border-gray-200 hover:border-gray-400"
+            }`}
           >
-            <X size={10} /> Clear filter
+            <CalendarDays size={13} />
+            {dateFilterLabel()}
+            <ChevronDown size={12} className={dateMenuOpen ? "rotate-180 transition-transform" : "transition-transform"} />
           </button>
-        )}
+
+          {dateFilterKey && (
+            <button
+              onClick={clearDateFilter}
+              title="Clear date filter"
+              className="flex items-center justify-center h-[34px] w-[34px] rounded-xl border border-gray-200 text-[#616161] hover:border-[#D32F2F] hover:text-[#D32F2F] transition-colors"
+            >
+              <X size={13} />
+            </button>
+          )}
+
+          {dateMenuOpen && (
+            <div className="absolute right-0 top-full mt-1 z-50 bg-white border border-gray-200 rounded-xl shadow-xl p-2 w-56">
+              {DATE_FILTER_OPTIONS.map(({ key, label }) => {
+                const isActive = dateFilterKey === key;
+                return (
+                  <button
+                    key={key}
+                    onClick={() => handleDateFilter(key)}
+                    className={`w-full text-left px-3 py-2 rounded-lg text-xs font-semibold transition-colors ${
+                      isActive
+                        ? "bg-red-50 text-[#D32F2F]"
+                        : "text-[#616161] hover:bg-gray-50"
+                    }`}
+                  >
+                    {label}
+                  </button>
+                );
+              })}
+
+              {dateFilterKey === "custom" && (
+                <div className="mt-1 pt-2 border-t border-gray-100 space-y-2 px-1">
+                  <div>
+                    <label className="block text-[10px] font-semibold text-[#9E9E9E] mb-1">Start date</label>
+                    <input
+                      type="date"
+                      value={customStart}
+                      max={customEnd || undefined}
+                      onChange={(e) => handleCustomDateChange("start", e.target.value)}
+                      className="w-full px-2.5 py-1.5 border border-gray-200 rounded-lg text-xs focus:outline-none focus:border-[#D32F2F]"
+                    />
+                  </div>
+                  <div>
+                    <label className="block text-[10px] font-semibold text-[#9E9E9E] mb-1">End date</label>
+                    <input
+                      type="date"
+                      value={customEnd}
+                      min={customStart || undefined}
+                      onChange={(e) => handleCustomDateChange("end", e.target.value)}
+                      className="w-full px-2.5 py-1.5 border border-gray-200 rounded-lg text-xs focus:outline-none focus:border-[#D32F2F]"
+                    />
+                  </div>
+                </div>
+              )}
+
+              {dateFilterKey && (
+                <button
+                  onClick={clearDateFilter}
+                  className="w-full flex items-center gap-1 mt-1 px-3 py-2 rounded-lg text-xs text-[#616161] hover:bg-gray-50 hover:text-[#D32F2F] border-t border-gray-100"
+                >
+                  <X size={10} /> Clear date filter
+                </button>
+              )}
+            </div>
+          )}
+        </div>
       </div>
 
       {/* Error banner */}

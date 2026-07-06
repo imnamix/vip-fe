@@ -336,6 +336,7 @@ export default function EventForm() {
                     <span className="text-xs text-[#D32F2F] font-medium">
                       {uploadingImage ? "Uploading…" : "Upload Event Image"}
                     </span>
+                    <span className="text-xs text-[#9E9E9E]">Recommended: 1024 x 600 px</span>
                     <input
                       type="file"
                       accept="image/*"
@@ -582,6 +583,9 @@ export default function EventForm() {
               </span>
               <span className="text-[10px] text-[#9E9E9E]">
                 Select multiple images at once
+              </span>
+              <span className="text-[10px] text-[#9E9E9E]">
+                Recommended: 800 x 600 px
               </span>
               <input
                 type="file"

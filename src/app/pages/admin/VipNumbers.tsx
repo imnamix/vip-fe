@@ -33,6 +33,7 @@ interface VipNumberItem {
   price: number;
   tag: string | null;
   rating: number | null;
+  numerologyScore: string | null;
   status: number;
 }
 

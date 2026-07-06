@@ -248,6 +248,9 @@ export default function AdminProfile() {
                 <p className="text-xs text-[#9E9E9E] mt-2">
                   {profileForm.email}
                 </p>
+                <p className="text-xs text-[#9E9E9E] mt-1">
+                  Photo recommended: 400 x 400 px
+                </p>
               </div>
             </div>
 

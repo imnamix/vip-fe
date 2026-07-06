@@ -1,48 +1,98 @@
-import { useState } from 'react';
-import { X, User, Briefcase, CheckCircle, ChevronRight, ChevronLeft, Hash } from 'lucide-react';
-import { createInquiry } from '../services/EnquiresService';
+import { useState } from "react";
+import {
+  X,
+  User,
+  Briefcase,
+  CheckCircle,
+  ChevronRight,
+  ChevronLeft,
+  Hash,
+} from "lucide-react";
+import { createInquiry } from "../services/EnquiresService";
 
-type UserType = 'customer' | 'numerologist' | null;
+type UserType = "customer" | "numerologist" | null;
 type Step = 1 | 2 | 3 | 4;
 
 const INDIAN_STATES = [
-  'Andhra Pradesh', 'Arunachal Pradesh', 'Assam', 'Bihar', 'Chhattisgarh',
-  'Goa', 'Gujarat', 'Haryana', 'Himachal Pradesh', 'Jharkhand', 'Karnataka',
-  'Kerala', 'Madhya Pradesh', 'Maharashtra', 'Manipur', 'Meghalaya', 'Mizoram',
-  'Nagaland', 'Odisha', 'Punjab', 'Rajasthan', 'Sikkim', 'Tamil Nadu',
-  'Telangana', 'Tripura', 'Uttar Pradesh', 'Uttarakhand', 'West Bengal',
-  'Andaman and Nicobar Islands', 'Chandigarh', 'Delhi', 'Jammu and Kashmir',
-  'Ladakh', 'Lakshadweep', 'Puducherry',
+  "Andhra Pradesh",
+  "Arunachal Pradesh",
+  "Assam",
+  "Bihar",
+  "Chhattisgarh",
+  "Goa",
+  "Gujarat",
+  "Haryana",
+  "Himachal Pradesh",
+  "Jharkhand",
+  "Karnataka",
+  "Kerala",
+  "Madhya Pradesh",
+  "Maharashtra",
+  "Manipur",
+  "Meghalaya",
+  "Mizoram",
+  "Nagaland",
+  "Odisha",
+  "Punjab",
+  "Rajasthan",
+  "Sikkim",
+  "Tamil Nadu",
+  "Telangana",
+  "Tripura",
+  "Uttar Pradesh",
+  "Uttarakhand",
+  "West Bengal",
+  "Andaman and Nicobar Islands",
+  "Chandigarh",
+  "Delhi",
+  "Jammu and Kashmir",
+  "Ladakh",
+  "Lakshadweep",
+  "Puducherry",
 ];
 
-const STEP_LABELS = ['User Type', 'Details', 'Requirements', 'Confirmation'];
+const STEP_LABELS = ["User Type", "Details", "Requirements", "Confirmation"];
 
 interface BookingModalProps {
   onClose: () => void;
 }
 
 const emptyCustomer = {
-  name: '', mobile: '', address: '', taluka: '', district: '', state: '',
-  pinCode: '', nearestViStore: '',
+  name: "",
+  mobile: "",
+  address: "",
+  taluka: "",
+  district: "",
+  state: "",
+  pinCode: "",
+  nearestViStore: "",
 };
 
 const emptyNumerologist = {
-  name: '', mobile: '', clientName: '', clientMobile: '',
-  address: '', district: '', state: '', pinCode: '', nearestViStore: '',
+  name: "",
+  mobile: "",
+  clientName: "",
+  clientMobile: "",
+  address: "",
+  district: "",
+  state: "",
+  pinCode: "",
+  nearestViStore: "",
 };
 
 const emptyRequirements = {
-  hasNumerologistRef: 'no' as 'yes' | 'no',
-  numerologistRefName: '',
-  numerologistRefMobile: '',
-  requireDigits: '',
-  notRequireDigits: '',
-  total: '',
-  specialRequirements: '',
+  hasNumerologistRef: "no" as "yes" | "no",
+  numerologistRefName: "",
+  numerologistRefMobile: "",
+  requireDigits: "",
+  notRequireDigits: "",
+  total: "",
+  specialRequirements: "",
 };
 
-const inputCls = 'w-full px-3 py-2 border border-gray-200 rounded-xl text-sm focus:outline-none focus:border-[#D32F2F] bg-gray-50';
-const labelCls = 'block text-xs font-semibold text-[#212121] mb-1';
+const inputCls =
+  "w-full px-3 py-2 border border-gray-200 rounded-xl text-sm focus:outline-none focus:border-[#D32F2F] bg-gray-50";
+const labelCls = "block text-xs font-semibold text-[#212121] mb-1";
 
 export default function BookingModal({ onClose }: BookingModalProps) {
   const [step, setStep] = useState<Step>(1);
@@ -51,16 +101,16 @@ export default function BookingModal({ onClose }: BookingModalProps) {
   const [numForm, setNumForm] = useState(emptyNumerologist);
   const [requirements, setRequirements] = useState(emptyRequirements);
   const [loading, setLoading] = useState(false);
-  const [error, setError] = useState('');
+  const [error, setError] = useState("");
 
   const handleFinalSubmit = async () => {
     setLoading(true);
-    setError('');
+    setError("");
     try {
       const base =
-        userType === 'customer'
-          ? { inquiryType: 'customer', source: 'Website', ...customerForm }
-          : { inquiryType: 'numerologist', source: 'Website', ...numForm };
+        userType === "customer"
+          ? { inquiryType: "customer", source: "Website", ...customerForm }
+          : { inquiryType: "numerologist", source: "Website", ...numForm };
 
       const payload = {
         ...base,
@@ -68,29 +118,30 @@ export default function BookingModal({ onClose }: BookingModalProps) {
         notRequireDigits: requirements.notRequireDigits,
         total: requirements.total,
         specialRequirements: requirements.specialRequirements,
-        ...(userType === 'customer' && {
-          hasNumerologistRef: requirements.hasNumerologistRef === 'yes',
+        ...(userType === "customer" && {
+          hasNumerologistRef: requirements.hasNumerologistRef === "yes",
           numerologistRefName:
-            requirements.hasNumerologistRef === 'yes'
+            requirements.hasNumerologistRef === "yes"
               ? requirements.numerologistRefName
-              : '',
+              : "",
           numerologistRefMobile:
-            requirements.hasNumerologistRef === 'yes'
+            requirements.hasNumerologistRef === "yes"
               ? requirements.numerologistRefMobile
-              : '',
+              : "",
         }),
       };
 
       await createInquiry(payload);
       setStep(4);
     } catch {
-      setError('Something went wrong. Please try again.');
+      setError("Something went wrong. Please try again.");
     } finally {
       setLoading(false);
     }
   };
 
-  const displayName = userType === 'customer' ? customerForm.name : numForm.name;
+  const displayName =
+    userType === "customer" ? customerForm.name : numForm.name;
 
   return (
     <div
@@ -112,7 +163,7 @@ export default function BookingModal({ onClose }: BookingModalProps) {
                 className="font-bold text-[#212121] text-lg leading-tight"
                 style={{ fontFamily: "Poppins, sans-serif" }}
               >
-                Book Your Number
+                Book Your Numerology Number
               </h2>
               <p className="text-[#616161] text-xs">
                 Step {step} of 4 — {STEP_LABELS[step - 1]}
@@ -247,7 +298,7 @@ export default function BookingModal({ onClose }: BookingModalProps) {
                     {/* Customer details */}
                     <div className="grid grid-cols-2 gap-3">
                       <div>
-                        <label className={labelCls}>Customer Name *</label>
+                        <label className={labelCls}>Customer Name <span className="text-red-500">*</span></label>
                         <input
                           type="text"
                           value={customerForm.name}
@@ -262,7 +313,7 @@ export default function BookingModal({ onClose }: BookingModalProps) {
                         />
                       </div>
                       <div>
-                        <label className={labelCls}>Mobile Number *</label>
+                        <label className={labelCls}>Mobile Number <span className="text-red-500">*</span></label>
                         <input
                           type="tel"
                           value={customerForm.mobile}
@@ -382,7 +433,7 @@ export default function BookingModal({ onClose }: BookingModalProps) {
                     {/* Numerologist details */}
                     <div className="grid grid-cols-2 gap-3">
                       <div>
-                        <label className={labelCls}>Numerologist Name *</label>
+                        <label className={labelCls}>Numerologist Name <span className="text-red-500">*</span></label>
                         <input
                           type="text"
                           value={numForm.name}
@@ -395,7 +446,7 @@ export default function BookingModal({ onClose }: BookingModalProps) {
                       </div>
                       <div>
                         <label className={labelCls}>
-                          Numerologist Mobile *
+                          Numerologist Mobile <span className="text-red-500">*</span>
                         </label>
                         <input
                           type="tel"
@@ -413,7 +464,7 @@ export default function BookingModal({ onClose }: BookingModalProps) {
                     </div>
                     <div className="grid grid-cols-2 gap-3">
                       <div>
-                        <label className={labelCls}>Client Name *</label>
+                        <label className={labelCls}>Client Name <span className="text-red-500">*</span>  </label>
                         <input
                           type="text"
                           value={numForm.clientName}
@@ -428,7 +479,7 @@ export default function BookingModal({ onClose }: BookingModalProps) {
                         />
                       </div>
                       <div>
-                        <label className={labelCls}>Client Mobile *</label>
+                        <label className={labelCls}>Client Mobile <span className="text-red-500">*</span></label>
                         <input
                           type="tel"
                           value={numForm.clientMobile}
@@ -609,7 +660,7 @@ export default function BookingModal({ onClose }: BookingModalProps) {
                       <div className="grid grid-cols-2 gap-3">
                         <div>
                           <label className={labelCls}>
-                            Numerologist Name *
+                            Numerologist Name <span className="text-red-500">*</span>
                           </label>
                           <input
                             type="text"
@@ -626,7 +677,7 @@ export default function BookingModal({ onClose }: BookingModalProps) {
                         </div>
                         <div>
                           <label className={labelCls}>
-                            Numerologist Mobile *
+                            Numerologist Mobile <span className="text-red-500">*</span>
                           </label>
                           <input
                             type="tel"

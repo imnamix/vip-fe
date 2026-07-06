@@ -1,222 +1,499 @@
-import { useState } from 'react';
-import { Package, Truck, MapPin, CheckCircle, Clock, Search, Edit, Save, X, ChevronLeft, ChevronRight } from 'lucide-react';
+import { useState, useEffect, useRef } from 'react';
+import {
+  Truck, CheckCircle, XCircle, Search, Edit, X, ChevronLeft, ChevronRight, RefreshCw,
+} from 'lucide-react';
+import { getAllEnquires, updateEnquiry, getStatusCounts } from '../../services/EnquiresService';
+import { usePermission } from '../../hooks/usePermission';
 
-type DeliveryStatus = 'Pending' | 'Packed' | 'Dispatched' | 'In Transit' | 'Delivered';
-const ALL_STATUS: DeliveryStatus[] = ['Pending', 'Packed', 'Dispatched', 'In Transit', 'Delivered'];
+type DeliveryStatus = 'Dispatched' | 'Delivered' | 'Cancelled';
+const ALL_STATUS: DeliveryStatus[] = ['Dispatched', 'Delivered', 'Cancelled'];
 
-const statusMeta: Record<DeliveryStatus, { bg: string; text: string; icon: typeof Package }> = {
-  Pending: { bg: '#FFF3E0', text: '#FF9800', icon: Clock },
-  Packed: { bg: '#E3F2FD', text: '#2196F3', icon: Package },
-  Dispatched: { bg: '#F3E5F5', text: '#9C27B0', icon: Truck },
-  'In Transit': { bg: '#FFF8E1', text: '#FBC02D', icon: Truck },
-  Delivered: { bg: '#E8F5E9', text: '#388E3C', icon: CheckCircle },
+/* Relative order of the "normal" flow — used to detect forward vs. reverted status changes */
+const STATUS_ORDER: Record<DeliveryStatus, number> = { Dispatched: 1, Delivered: 2, Cancelled: 0 };
+
+const STATUS_META: Record<DeliveryStatus, { bg: string; text: string; border: string; icon: typeof Truck }> = {
+  Dispatched: { bg: '#F3E5F5', text: '#9C27B0', border: '#E1BEE7', icon: Truck },
+  Delivered:  { bg: '#E8F5E9', text: '#388E3C', border: '#C8E6C9', icon: CheckCircle },
+  Cancelled:  { bg: '#FFEBEE', text: '#D32F2F', border: '#FFCDD2', icon: XCircle },
 };
 
-const carriers = ['Bluedart', 'Delhivery', 'FedEx', 'DTDC', 'Ecom Express'];
+const LIMIT = 10;
 
-const initDeliveries = Array.from({ length: 20 }, (_, i) => ({
-  id: `DEL-${String(3001 + i).padStart(5, '0')}`,
-  orderId: `ORD-${String(7001 + i).padStart(5, '0')}`,
-  customer: ['Rohit Sharma', 'Kavita Singh', 'Anil Bhatt', 'Sunita Rao', 'Nikhil Jain', 'Divya Nair', 'Ravi Gupta'][i % 7],
-  mobile: `+91 ${9600000000 + i}`,
-  vipNumber: ['9999988888', '8888877777', '7777766666'][i % 3],
-  address: ['402, Serenity Apts, Baner, Pune 411045', 'B-12, Andheri West, Mumbai 400058', '301, Green Park, New Delhi 110016'][i % 3],
-  carrier: carriers[i % carriers.length],
-  trackingNo: `BD${String(100000000 + i * 12345)}`,
-  status: ALL_STATUS[i % ALL_STATUS.length] as DeliveryStatus,
-  orderDate: `Nov ${(i % 28) + 1}, 2024`,
-  estimatedDelivery: `Nov ${(i % 28) + 5}, 2024`,
-  notes: '',
-}));
+const nowStr = () => new Date().toLocaleString('en-IN', {
+  day: 'numeric', month: 'short', year: 'numeric', hour: '2-digit', minute: '2-digit', hour12: true,
+});
 
-const PAGE_SIZE = 8;
+/* Today's date in IST (Asia/Kolkata), formatted as YYYY-MM-DD for <input type="date"> */
+const todayIST = () => new Date().toLocaleDateString('en-CA', { timeZone: 'Asia/Kolkata' });
 
-export default function DeliveryTracking() {
-  const [deliveries, setDeliveries] = useState(initDeliveries);
-  const [search, setSearch] = useState('');
-  const [filter, setFilter] = useState<DeliveryStatus | 'All'>('All');
-  const [page, setPage] = useState(1);
-  const [editId, setEditId] = useState<string | null>(null);
-  const [editForm, setEditForm] = useState<Partial<typeof initDeliveries[0]>>({});
+const fmtDate = (d?: string) => {
+  if (!d) return '—';
+  const dt = new Date(d);
+  return isNaN(dt.getTime()) ? d : dt.toLocaleDateString('en-IN', { day: 'numeric', month: 'short', year: 'numeric' });
+};
 
-  const filtered = deliveries.filter(d =>
-    (filter === 'All' || d.status === filter) &&
-    (d.customer.toLowerCase().includes(search.toLowerCase()) ||
-      d.id.includes(search.toUpperCase()) ||
-      d.trackingNo.includes(search))
+/* Builds a human-readable activity-log line for a status transition, calling out reverts/cancellations */
+function describeStatusChange(oldStatus: DeliveryStatus, newStatus: DeliveryStatus, reason?: string): string {
+  if (newStatus === 'Cancelled') {
+    return `Delivery cancelled${reason ? ` — reason: ${reason}` : ''}`;
+  }
+  if (oldStatus === 'Cancelled') {
+    return `Delivery reactivated — status reverted from "Cancelled" to "${newStatus}"`;
+  }
+  if (STATUS_ORDER[newStatus] < STATUS_ORDER[oldStatus]) {
+    return `Status reverted from "${oldStatus}" to "${newStatus}"`;
+  }
+  return `Status changed to "${newStatus}"`;
+}
+
+/* ── Status Badge ──────────────────────────────────────────────────────── */
+function StatusBadge({ status }: { status: DeliveryStatus }) {
+  const m = STATUS_META[status];
+  const Icon = m.icon;
+  return (
+    <span className="flex items-center gap-1.5 text-xs font-semibold px-2.5 py-1 rounded-full w-fit border" style={{ background: m.bg, color: m.text, borderColor: m.border }}>
+      <Icon size={11} /> {status}
+    </span>
   );
-  const totalPages = Math.ceil(filtered.length / PAGE_SIZE);
-  const paginated = filtered.slice((page - 1) * PAGE_SIZE, page * PAGE_SIZE);
+}
 
-  const openEdit = (d: typeof initDeliveries[0]) => { setEditId(d.id); setEditForm({ ...d }); };
-  const saveEdit = () => {
-    setDeliveries(ds => ds.map(d => d.id === editId ? { ...d, ...editForm } as typeof d : d));
-    setEditId(null);
+/* ── Pagination ─────────────────────────────────────────────────────────── */
+function getPageNumbers(current: number, total: number): (number | '...')[] {
+  if (total <= 7) return Array.from({ length: total }, (_, i) => i + 1);
+  const pages: (number | '...')[] = [];
+  const left  = Math.max(2, current - 1);
+  const right = Math.min(total - 1, current + 1);
+  pages.push(1);
+  if (left > 2)           pages.push('...');
+  for (let i = left; i <= right; i++) pages.push(i);
+  if (right < total - 1)  pages.push('...');
+  pages.push(total);
+  return pages;
+}
+
+function Pagination({ page, total, limit, onChange }: {
+  page: number; total: number; limit: number; onChange: (p: number) => void;
+}) {
+  const totalPages = Math.ceil(total / limit);
+  if (totalPages <= 1) return null;
+
+  return (
+    <div className="px-4 py-3 flex flex-wrap items-center justify-between gap-3 border-t border-gray-100">
+      <span className="text-xs text-[#616161]">
+        {total === 0 ? '0 results' : `${(page - 1) * limit + 1}–${Math.min(page * limit, total)} of ${total}`}
+      </span>
+      <div className="flex items-center gap-1.5">
+        <button onClick={() => onChange(page - 1)} disabled={page === 1}
+          className="w-8 h-8 rounded-lg border border-gray-200 flex items-center justify-center disabled:opacity-40 hover:border-[#D32F2F] transition-colors">
+          <ChevronLeft size={13} />
+        </button>
+        {getPageNumbers(page, totalPages).map((p, idx) =>
+          p === '...' ? (
+            <span key={`ellipsis-${idx}`} className="w-8 h-8 flex items-center justify-center text-xs text-[#9E9E9E]">…</span>
+          ) : (
+            <button key={p} onClick={() => onChange(p as number)}
+              className={`w-8 h-8 rounded-lg text-xs font-medium transition-colors ${
+                page === p ? 'bg-[#D32F2F] text-white' : 'border border-gray-200 hover:border-[#D32F2F] text-[#616161]'
+              }`}>
+              {p}
+            </button>
+          )
+        )}
+        <button onClick={() => onChange(page + 1)} disabled={page === totalPages || totalPages === 0}
+          className="w-8 h-8 rounded-lg border border-gray-200 flex items-center justify-center disabled:opacity-40 hover:border-[#D32F2F] transition-colors">
+          <ChevronRight size={13} />
+        </button>
+      </div>
+    </div>
+  );
+}
+
+/* ── Edit Popup ─────────────────────────────────────────────────────────── */
+function DeliveryEditPopup({ delivery, onClose, onSaved }: {
+  delivery: any; onClose: () => void; onSaved: () => void;
+}) {
+  const [status,        setStatus]        = useState<DeliveryStatus>((delivery.status as DeliveryStatus) || 'Dispatched');
+  const [deliveredDate, setDeliveredDate] = useState(delivery.deliveredDate || '');
+  const [notes,         setNotes]         = useState(delivery.deliveryNotes || '');
+  const [cancelReason,  setCancelReason]  = useState(delivery.cancelReason || '');
+  const [saving,        setSaving]        = useState(false);
+  const [fieldErrors,   setFieldErrors]   = useState<{ deliveredDate?: string; cancelReason?: string }>({});
+  const [apiError,      setApiError]      = useState('');
+
+  const clearFieldError = (field: 'deliveredDate' | 'cancelReason') =>
+    setFieldErrors(fe => (fe[field] ? { ...fe, [field]: undefined } : fe));
+
+  const handleStatusChange = (s: DeliveryStatus) => {
+    setStatus(s);
+    setFieldErrors({});
+    setApiError('');
+    if (s === 'Delivered' && !deliveredDate) setDeliveredDate(todayIST());
   };
 
-  const summary = ALL_STATUS.map(s => ({ status: s, count: deliveries.filter(d => d.status === s).length }));
+  const save = async () => {
+    const errs: typeof fieldErrors = {};
+    if (status === 'Delivered' && !deliveredDate) {
+      errs.deliveredDate = 'Delivered date is required to mark this order as Delivered.';
+    }
+    if (status === 'Cancelled' && !cancelReason.trim()) {
+      errs.cancelReason = 'Cancellation reason is required to mark this order as Cancelled.';
+    }
+    if (Object.keys(errs).length) { setFieldErrors(errs); return; }
+
+    setFieldErrors({}); setApiError(''); setSaving(true);
+    try {
+      let timeline: any[] = [];
+      if (delivery.activityLog) { try { timeline = JSON.parse(delivery.activityLog); } catch {} }
+
+      const notesChanged = notes.trim() !== (delivery.deliveryNotes || '').trim();
+
+      const parts: string[] = [];
+      if (status !== delivery.status) {
+        parts.push(describeStatusChange(delivery.status, status, status === 'Cancelled' ? cancelReason.trim() : undefined));
+      }
+      if (deliveredDate && deliveredDate !== (delivery.deliveredDate || '')) parts.push(`delivered date set to ${fmtDate(deliveredDate)}`);
+      if (notesChanged) parts.push('delivery notes updated');
+
+      const newTimeline = parts.length
+        ? [...timeline, { date: nowStr(), action: parts.join(' · '), user: 'Admin', status }]
+        : timeline;
+
+      // Mirror the delivery note into the inquiry's general Notes panel so it shows up there too
+      let generalNotes: any[] = [];
+      if (delivery.enquiryNotes) { try { generalNotes = JSON.parse(delivery.enquiryNotes); } catch {} }
+      const newGeneralNotes = notesChanged && notes.trim()
+        ? [...generalNotes, { author: 'Admin (Delivery)', text: notes.trim(), time: nowStr() }]
+        : generalNotes;
+
+      await updateEnquiry(delivery.id, {
+        status,
+        deliveredDate: deliveredDate || null,
+        deliveryNotes: notes,
+        cancelReason: status === 'Cancelled' ? cancelReason.trim() : null,
+        activityLog: JSON.stringify(newTimeline),
+        enquiryNotes: JSON.stringify(newGeneralNotes),
+      });
+      onSaved();
+      onClose();
+    } catch (e: any) {
+      setApiError(e?.response?.data?.message || 'Failed to update delivery. Please try again.');
+    } finally {
+      setSaving(false);
+    }
+  };
+
+  const fieldCls = (hasError?: string) =>
+    `w-full px-3 py-2.5 border rounded-xl text-sm focus:outline-none bg-white ${
+      hasError ? 'border-red-400 focus:border-red-500' : 'border-gray-200 focus:border-[#D32F2F]'
+    }`;
+
+  const roField = (label: string, value: string, mono?: boolean) => (
+    <div>
+      <label className="block text-[10px] font-semibold text-[#616161] uppercase tracking-wider mb-1">{label}</label>
+      <div className={`px-3 py-2.5 bg-gray-50 rounded-xl text-sm text-[#212121] ${mono ? 'font-mono font-semibold' : ''}`}>{value || '—'}</div>
+    </div>
+  );
+
+  return (
+    <div className="fixed inset-0 bg-black/55 z-50 flex items-center justify-center p-4 overflow-y-auto backdrop-blur-xs" onClick={onClose}>
+      <div className="bg-white rounded-2xl max-w-lg w-full my-4 shadow-2xl overflow-hidden" onClick={e => e.stopPropagation()}>
+        <div className="bg-gradient-to-r from-[#D32F2F] to-[#B71C1C] px-6 py-5 flex items-center justify-between">
+          <div className="flex items-center gap-3">
+            <div className="w-10 h-10 bg-white/20 rounded-xl flex items-center justify-center">
+              <Truck size={18} className="text-white" />
+            </div>
+            <div>
+              <h3 className="text-base font-bold text-white" style={{ fontFamily: 'Poppins, sans-serif' }}>Update Delivery</h3>
+              <p className="text-red-200 text-xs mt-0.5 font-mono">{delivery.deliveryId}</p>
+            </div>
+          </div>
+          <button onClick={onClose} className="w-8 h-8 bg-white/20 rounded-xl flex items-center justify-center text-white hover:bg-white/30 transition-colors">
+            <X size={15} />
+          </button>
+        </div>
+
+        <div className="px-6 py-5 max-h-[72vh] overflow-y-auto space-y-4">
+          <div className="grid grid-cols-2 gap-3">
+            {roField('Customer Name', delivery.name)}
+            {roField('Customer Mobile', delivery.mobile, true)}
+            {roField('Delivery ID', delivery.deliveryId, true)}
+            {roField('Expected Delivery', fmtDate(delivery.expectedDeliveryDate))}
+            {roField('Partner Name', delivery.deliveryPartnerName)}
+            {roField('Partner Mobile', delivery.deliveryPartnerMobile)}
+          </div>
+          {roField('Delivery Address', delivery.deliveryAddress)}
+
+          {/* Status */}
+          <div>
+            <label className="block text-[10px] font-semibold text-[#616161] uppercase tracking-wider mb-1.5">Status</label>
+            <div className="grid grid-cols-3 gap-2">
+              {ALL_STATUS.map(s => {
+                const m = STATUS_META[s];
+                const Icon = m.icon;
+                const active = status === s;
+                return (
+                  <button key={s} onClick={() => handleStatusChange(s)}
+                    className={`flex items-center justify-center gap-1.5 py-2.5 px-2 rounded-xl text-xs font-semibold transition-all border-2 ${active ? 'border-current' : 'border-transparent'}`}
+                    style={{ background: m.bg, color: m.text }}>
+                    <Icon size={12} /> {s}
+                  </button>
+                );
+              })}
+            </div>
+          </div>
+
+          {/* Cancellation Reason — only when status is Cancelled */}
+          {status === 'Cancelled' && (
+            <div>
+              <label className="block text-[10px] font-semibold text-[#616161] uppercase tracking-wider mb-1.5">
+                Reason <span className="text-red-500">*</span>
+              </label>
+              <textarea value={cancelReason} onChange={e => { setCancelReason(e.target.value); clearFieldError('cancelReason'); }} rows={2}
+                placeholder="Why is this delivery being cancelled?"
+                className={`${fieldCls(fieldErrors.cancelReason)} resize-none`} />
+              {fieldErrors.cancelReason && <p className="text-xs text-red-500 mt-1">{fieldErrors.cancelReason}</p>}
+            </div>
+          )}
+
+          {/* Delivered Date */}
+          <div>
+            <label className="block text-[10px] font-semibold text-[#616161] uppercase tracking-wider mb-1.5">
+              Delivered Date {status === 'Delivered' && <span className="text-red-500">*</span>}
+            </label>
+            <input type="date" value={deliveredDate} onChange={e => { setDeliveredDate(e.target.value); clearFieldError('deliveredDate'); }}
+              className={fieldCls(fieldErrors.deliveredDate)} />
+            {fieldErrors.deliveredDate && <p className="text-xs text-red-500 mt-1">{fieldErrors.deliveredDate}</p>}
+          </div>
+
+          {/* Notes */}
+          <div>
+            <label className="block text-[10px] font-semibold text-[#616161] uppercase tracking-wider mb-1.5">Notes</label>
+            <textarea value={notes} onChange={e => setNotes(e.target.value)} rows={3} placeholder="Delivery notes / remarks…"
+              className="w-full px-3 py-2.5 border border-gray-200 rounded-xl text-sm focus:outline-none focus:border-[#D32F2F] resize-none bg-white" />
+          </div>
+
+          {apiError && <p className="text-xs text-red-500 text-center bg-red-50 py-2 px-3 rounded-xl border border-red-100">{apiError}</p>}
+        </div>
+
+        <div className="px-6 py-4 border-t border-gray-100 flex gap-3">
+          <button onClick={onClose} disabled={saving}
+            className="flex-1 py-2.5 border-2 border-gray-200 text-[#616161] rounded-xl text-sm font-semibold hover:border-[#D32F2F] hover:text-[#D32F2F] transition-colors disabled:opacity-50">
+            Cancel
+          </button>
+          <button onClick={save} disabled={saving}
+            className="flex-1 py-2.5 bg-gradient-to-r from-[#D32F2F] to-[#B71C1C] text-white rounded-xl text-sm font-semibold hover:from-[#B71C1C] hover:to-[#C62828] disabled:opacity-50 transition-all shadow-sm">
+            {saving ? 'Saving…' : 'Save Changes'}
+          </button>
+        </div>
+      </div>
+    </div>
+  );
+}
+
+/* ── Main Page ─────────────────────────────────────────────────────────── */
+export default function DeliveryTracking() {
+  const [deliveries,   setDeliveries]   = useState<any[]>([]);
+  const [loading,      setLoading]      = useState(true);
+  const [fetchError,   setFetchError]   = useState('');
+  const [search,       setSearch]       = useState('');
+  const [filter,       setFilter]       = useState<DeliveryStatus | null>(null);
+  const [page,         setPage]         = useState(1);
+  const [total,        setTotal]        = useState(0);
+  const [statusCounts, setStatusCounts] = useState<Record<string, number>>({});
+  const [editing,      setEditing]      = useState<any | null>(null);
+  const searchTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
+  const { can }     = usePermission();
+  const canEdit     = can('Delivery', 'update');
+
+  const fetchDeliveries = async (p: number, q: string, s: DeliveryStatus | null) => {
+    setLoading(true); setFetchError('');
+    try {
+      const statusParam = s || 'Dispatched,Delivered,Cancelled';
+      const res = await getAllEnquires(p, LIMIT, q || undefined, statusParam);
+      setDeliveries(res?.data ?? []);
+      setTotal(res?.count ?? 0);
+    } catch {
+      setFetchError('Failed to load deliveries. Please try again.');
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const fetchCounts = async () => {
+    try {
+      const res = await getStatusCounts();
+      setStatusCounts(res?.data ?? {});
+    } catch {}
+  };
+
+  useEffect(() => { fetchDeliveries(1, '', null); fetchCounts(); }, []);
+
+  const handleSearchChange = (q: string) => {
+    setSearch(q);
+    if (searchTimer.current) clearTimeout(searchTimer.current);
+    searchTimer.current = setTimeout(() => { setPage(1); fetchDeliveries(1, q, filter); }, 350);
+  };
+
+  const handleFilter = (s: DeliveryStatus | null) => {
+    const next = s === filter ? null : s;
+    setFilter(next);
+    setPage(1);
+    fetchDeliveries(1, search, next);
+  };
+
+  const handlePageChange = (p: number) => { setPage(p); fetchDeliveries(p, search, filter); };
+
+  const refresh = () => { fetchDeliveries(page, search, filter); fetchCounts(); };
+
+  const onSaved = () => { fetchDeliveries(page, search, filter); fetchCounts(); };
+
+  const allDeliveryCount = ALL_STATUS.reduce((sum, s) => sum + (statusCounts[s] ?? 0), 0);
 
   return (
     <div>
-      <div className="mb-5">
-        <h1 className="text-xl font-bold text-[#212121]" style={{ fontFamily: 'Poppins, sans-serif' }}>Delivery Tracking</h1>
-        <p className="text-[#616161] text-xs">Track and update all VIP number deliveries</p>
+      {/* ── Top bar ── */}
+      <div className="flex items-center justify-between mb-5 flex-wrap gap-3">
+        <div>
+          <h1 className="text-2xl font-bold text-[#212121]" style={{ fontFamily: 'Poppins, sans-serif' }}>Delivery</h1>
+          <p className="text-[#616161] text-sm">
+            {loading ? 'Loading…' : `${total} ${filter ? `"${filter}"` : ''} ${total === 1 ? 'delivery' : 'deliveries'}`}
+          </p>
+        </div>
+        <button onClick={refresh} title="Refresh" className="p-2 border border-gray-200 rounded-xl text-[#616161] hover:border-[#D32F2F] hover:text-[#D32F2F] transition-colors">
+          <RefreshCw size={14} className={loading ? 'animate-spin' : ''} />
+        </button>
       </div>
 
-      {/* Summary pills */}
-      <div className="flex flex-wrap gap-2 mb-5">
-        {[{ status: 'All' as const, count: deliveries.length }, ...summary].map(s => {
-          const meta = s.status === 'All' ? null : statusMeta[s.status];
-          const active = filter === s.status;
+      {/* ── Search + status filter pills (same line, search first) ── */}
+      <div className="flex items-center flex-wrap gap-2 mb-5">
+        <div className="relative">
+          <Search size={13} className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400" />
+          <input
+            type="text"
+            placeholder="Delivery ID, customer, VIP number, partner…"
+            value={search}
+            onChange={e => handleSearchChange(e.target.value)}
+            className="pl-8 pr-4 py-2 border border-gray-200 rounded-xl text-sm focus:outline-none focus:border-[#D32F2F] w-96"
+          />
+          {search && (
+            <button onClick={() => handleSearchChange('')} className="absolute right-2.5 top-1/2 -translate-y-1/2 text-gray-400 hover:text-gray-600">
+              <X size={12} />
+            </button>
+          )}
+        </div>
+        <button
+          onClick={() => handleFilter(null)}
+          className={`flex items-center gap-1.5 px-3 py-1.5 rounded-xl text-xs font-semibold border transition-all ${
+            filter === null ? 'bg-[#D32F2F] text-white border-[#D32F2F]' : 'bg-white text-[#616161] border-gray-200 hover:border-gray-400'
+          }`}
+        >
+          All
+          <span className={`font-bold px-1.5 py-0.5 rounded-full text-[10px] ${filter === null ? 'bg-white/20' : 'bg-gray-100'}`}>
+            {allDeliveryCount}
+          </span>
+        </button>
+        {ALL_STATUS.map(s => {
+          const m = STATUS_META[s];
+          const active = filter === s;
+          const count = statusCounts[s] ?? 0;
           return (
-            <button key={s.status}
-              onClick={() => { setFilter(s.status as typeof filter); setPage(1); }}
-              className={`flex items-center gap-1.5 px-3 py-2 rounded-xl text-xs font-semibold transition-all border ${active ? 'border-current shadow-sm' : 'border-transparent'}`}
-              style={meta ? { background: meta.bg, color: meta.text } : { background: active ? '#212121' : '#f3f4f6', color: active ? '#fff' : '#616161' }}
+            <button
+              key={s}
+              onClick={() => handleFilter(s)}
+              className={`flex items-center gap-1.5 px-3 py-1.5 rounded-xl text-xs font-semibold border transition-all ${active ? 'text-white' : 'hover:opacity-90'}`}
+              style={active ? { backgroundColor: m.text, borderColor: m.text, color: '#fff' } : { background: m.bg, color: m.text, borderColor: m.border }}
             >
-              {s.status} <span className="font-bold">{s.count}</span>
+              {s}
+              <span className={`font-bold px-1.5 py-0.5 rounded-full text-[10px] ${active ? 'bg-white/25' : 'bg-white/60'}`}>{count}</span>
             </button>
           );
         })}
       </div>
 
-      {/* Search */}
-      <div className="bg-white rounded-2xl border border-gray-100 p-3 mb-4">
-        <div className="relative max-w-sm">
-          <Search size={13} className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400" />
-          <input value={search} onChange={e => { setSearch(e.target.value); setPage(1); }} placeholder="Customer, ID, tracking number..."
-            className="w-full pl-8 pr-4 py-2 border border-gray-200 rounded-xl text-sm focus:outline-none focus:border-[#D32F2F]" />
+      {/* Error banner */}
+      {fetchError && (
+        <div className="bg-red-50 border border-red-200 rounded-2xl px-4 py-3 text-sm text-red-600 mb-4 flex items-center justify-between">
+          {fetchError}
+          <button onClick={refresh} className="text-[#D32F2F] font-semibold text-xs hover:underline">Retry</button>
         </div>
-      </div>
+      )}
 
-      {/* Table */}
-      <div className="bg-white rounded-2xl border border-gray-100 overflow-hidden">
-        <div className="overflow-x-auto">
-          <table className="w-full min-w-[700px]">
-            <thead>
-              <tr className="bg-gray-50 border-b border-gray-100">
-                {['Delivery ID', 'Customer', 'VIP Number', 'Carrier / Tracking', 'Status', 'Est. Delivery', 'Actions'].map(h => (
-                  <th key={h} className="text-left px-4 py-3 text-xs font-semibold text-[#616161] uppercase tracking-wider whitespace-nowrap">{h}</th>
-                ))}
-              </tr>
-            </thead>
-            <tbody>
-              {paginated.map(d => {
-                const meta = statusMeta[d.status];
-                const StatusIcon = meta.icon;
-                return (
-                  <tr key={d.id} className="border-b border-gray-50 hover:bg-gray-50">
-                    <td className="px-4 py-3">
-                      <div className="text-xs font-mono font-bold text-[#D32F2F]">{d.id}</div>
-                      <div className="text-xs text-[#616161]">{d.orderId}</div>
-                    </td>
-                    <td className="px-4 py-3">
-                      <div className="text-sm font-medium text-[#212121] whitespace-nowrap">{d.customer}</div>
-                      <div className="text-xs text-[#616161] flex items-center gap-1"><MapPin size={10} /><span className="max-w-32 truncate">{d.address}</span></div>
-                    </td>
-                    <td className="px-4 py-3 text-xs font-mono font-bold text-[#D32F2F]">{d.vipNumber}</td>
-                    <td className="px-4 py-3">
-                      <div className="text-sm font-medium text-[#212121]">{d.carrier}</div>
-                      <div className="text-xs text-[#616161] font-mono">{d.trackingNo}</div>
-                    </td>
-                    <td className="px-4 py-3">
-                      <div className="flex items-center gap-1.5 text-xs font-semibold px-2 py-1 rounded-xl w-fit" style={{ background: meta.bg, color: meta.text }}>
-                        <StatusIcon size={11} />{d.status}
-                      </div>
-                    </td>
-                    <td className="px-4 py-3 text-xs text-[#616161]">{d.estimatedDelivery}</td>
-                    <td className="px-4 py-3">
-                      <button onClick={() => openEdit(d)} className="p-1.5 text-[#FBC02D] hover:bg-yellow-50 rounded-lg"><Edit size={13} /></button>
-                    </td>
-                  </tr>
-                );
-              })}
-            </tbody>
-          </table>
-        </div>
-
-        <div className="px-4 py-3 flex flex-wrap items-center justify-between gap-3 border-t border-gray-100">
-          <span className="text-xs text-[#616161]">{(page - 1) * PAGE_SIZE + 1}–{Math.min(page * PAGE_SIZE, filtered.length)} of {filtered.length}</span>
-          <div className="flex gap-1.5">
-            <button onClick={() => setPage(p => Math.max(1, p - 1))} disabled={page === 1} className="w-8 h-8 rounded-lg border border-gray-200 flex items-center justify-center disabled:opacity-40 hover:border-[#D32F2F]"><ChevronLeft size={12} /></button>
-            {Array.from({ length: Math.min(5, totalPages) }, (_, i) => i + 1).map(p => (
-              <button key={p} onClick={() => setPage(p)} className={`w-8 h-8 rounded-lg text-xs ${page === p ? 'bg-[#D32F2F] text-white' : 'border border-gray-200 hover:border-[#D32F2F]'}`}>{p}</button>
-            ))}
-            <button onClick={() => setPage(p => Math.min(totalPages, p + 1))} disabled={page === totalPages} className="w-8 h-8 rounded-lg border border-gray-200 flex items-center justify-center disabled:opacity-40 hover:border-[#D32F2F]"><ChevronRight size={12} /></button>
-          </div>
-        </div>
-      </div>
-
-      {/* Edit Drawer / Modal */}
-      {editId && (
-        <div className="fixed inset-0 bg-black/60 z-50 flex items-center justify-center p-4" onClick={() => setEditId(null)}>
-          <div className="bg-white rounded-2xl max-w-md w-full shadow-2xl" onClick={e => e.stopPropagation()}>
-            <div className="flex items-center justify-between px-5 py-4 border-b border-gray-100">
-              <h3 className="font-bold text-[#212121]" style={{ fontFamily: 'Poppins, sans-serif' }}>Update Delivery</h3>
-              <div className="flex items-center gap-2">
-                <span className="text-xs font-mono font-bold text-[#D32F2F]">{editId}</span>
-                <button onClick={() => setEditId(null)} className="p-1.5 text-gray-400 hover:bg-gray-100 rounded-lg"><X size={14} /></button>
-              </div>
+      {/* Loading skeleton */}
+      {loading && (
+        <div className="bg-white rounded-2xl border border-gray-100 overflow-hidden">
+          {[...Array(LIMIT)].map((_, i) => (
+            <div key={i} className="flex items-center gap-4 px-4 py-3 border-b border-gray-50 last:border-0">
+              <div className="w-6 h-3 bg-gray-100 rounded animate-pulse" />
+              <div className="w-24 h-3 bg-gray-100 rounded animate-pulse" />
+              <div className="w-32 h-3 bg-gray-100 rounded animate-pulse" />
+              <div className="w-20 h-3 bg-gray-100 rounded animate-pulse ml-auto" />
             </div>
-
-            <div className="p-5 space-y-4">
-              {/* Status */}
-              <div>
-                <label className="block text-xs font-semibold text-[#616161] uppercase tracking-wider mb-1.5">Status</label>
-                <div className="grid grid-cols-3 gap-2">
-                  {ALL_STATUS.map(s => {
-                    const m = statusMeta[s];
-                    const active = editForm.status === s;
-                    return (
-                      <button key={s} onClick={() => setEditForm(f => ({ ...f, status: s }))}
-                        className={`py-2 px-2 rounded-xl text-xs font-semibold transition-all border-2 ${active ? 'border-current' : 'border-transparent'}`}
-                        style={{ background: m.bg, color: m.text }}>
-                        {s}
-                      </button>
-                    );
-                  })}
-                </div>
-              </div>
-
-              {/* Carrier */}
-              <div>
-                <label className="block text-xs font-semibold text-[#616161] uppercase tracking-wider mb-1.5">Carrier</label>
-                <select value={editForm.carrier || ''} onChange={e => setEditForm(f => ({ ...f, carrier: e.target.value }))}
-                  className="w-full px-3 py-2.5 border border-gray-200 rounded-xl text-sm focus:outline-none focus:border-[#D32F2F] bg-white">
-                  {carriers.map(c => <option key={c}>{c}</option>)}
-                </select>
-              </div>
-
-              {/* Tracking */}
-              <div>
-                <label className="block text-xs font-semibold text-[#616161] uppercase tracking-wider mb-1.5">Tracking Number</label>
-                <input value={editForm.trackingNo || ''} onChange={e => setEditForm(f => ({ ...f, trackingNo: e.target.value }))}
-                  className="w-full px-3 py-2.5 border border-gray-200 rounded-xl text-sm focus:outline-none focus:border-[#D32F2F] font-mono" />
-              </div>
-
-              {/* Est. Delivery */}
-              <div>
-                <label className="block text-xs font-semibold text-[#616161] uppercase tracking-wider mb-1.5">Estimated Delivery Date</label>
-                <input type="date" value={editForm.estimatedDelivery || ''} onChange={e => setEditForm(f => ({ ...f, estimatedDelivery: e.target.value }))}
-                  className="w-full px-3 py-2.5 border border-gray-200 rounded-xl text-sm focus:outline-none focus:border-[#D32F2F]" />
-              </div>
-
-              {/* Notes */}
-              <div>
-                <label className="block text-xs font-semibold text-[#616161] uppercase tracking-wider mb-1.5">Notes</label>
-                <textarea value={editForm.notes || ''} onChange={e => setEditForm(f => ({ ...f, notes: e.target.value }))} rows={2}
-                  className="w-full px-3 py-2.5 border border-gray-200 rounded-xl text-sm focus:outline-none focus:border-[#D32F2F] resize-none" placeholder="Delivery notes..." />
-              </div>
-            </div>
-
-            <div className="px-5 py-4 border-t border-gray-100 flex gap-3">
-              <button onClick={() => setEditId(null)} className="flex-1 py-2.5 border border-gray-200 text-[#616161] rounded-xl text-sm font-semibold">Cancel</button>
-              <button onClick={saveEdit} className="flex-1 py-2.5 bg-[#D32F2F] text-white rounded-xl text-sm font-semibold flex items-center justify-center gap-2 hover:bg-[#B71C1C]">
-                <Save size={13} /> Save Changes
-              </button>
-            </div>
-          </div>
+          ))}
         </div>
+      )}
+
+      {/* ── Table ── */}
+      {!loading && (
+        <div className="bg-white rounded-2xl border border-gray-100 overflow-hidden">
+          {deliveries.length === 0 ? (
+            <div className="text-center py-16 text-[#616161]">
+              <Truck size={28} className="text-gray-300 mx-auto mb-3" />
+              <p className="font-medium text-sm">{search || filter ? 'No results found' : 'No deliveries yet'}</p>
+              <p className="text-xs text-gray-400 mt-1">
+                {search || filter ? 'Try a different search or filter.' : 'Orders marked as Dispatched will appear here.'}
+              </p>
+            </div>
+          ) : (
+            <>
+              <div className="overflow-x-auto">
+                <table className="w-full">
+                  <thead>
+                    <tr className="bg-gray-50 border-b border-gray-100">
+                      {[
+                        'Sr No', 'Delivery ID', 'Customer Name', 'Customer Mobile', 'VIP Number', 'Partner Name',
+                        'Partner Mobile', 'Status', 'Expected Date', 'Delivered Date',
+                        ...(canEdit ? ['Action'] : []),
+                      ].map(h => (
+                        <th key={h} className="text-left px-4 py-3 text-xs font-semibold text-[#616161] uppercase tracking-wider whitespace-nowrap">{h}</th>
+                      ))}
+                    </tr>
+                  </thead>
+                  <tbody>
+                    {deliveries.map((d, i) => (
+                      <tr key={d.id}
+                        onClick={() => canEdit && setEditing(d)}
+                        className={`border-b border-gray-50 hover:bg-gray-50 transition-colors ${canEdit ? 'cursor-pointer' : ''}`}>
+                        <td className="px-4 py-3 text-xs text-[#616161]">{(page - 1) * LIMIT + i + 1}</td>
+                        <td className="px-4 py-3 text-xs font-mono font-bold text-[#D32F2F] whitespace-nowrap">{d.deliveryId || '—'}</td>
+                        <td className="px-4 py-3 text-sm font-medium text-[#212121] whitespace-nowrap">{d.name || '—'}</td>
+                        <td className="px-4 py-3 text-sm text-[#616161] whitespace-nowrap">{d.mobile || '—'}</td>
+                        <td className="px-4 py-3 text-xs font-mono font-bold text-[#D32F2F] whitespace-nowrap">{d.confirmedNumber || d.vipNumber || '—'}</td>
+                        <td className="px-4 py-3 text-sm text-[#212121] whitespace-nowrap">{d.deliveryPartnerName || '—'}</td>
+                        <td className="px-4 py-3 text-sm text-[#616161] whitespace-nowrap">{d.deliveryPartnerMobile || '—'}</td>
+                        <td className="px-4 py-3"><StatusBadge status={(d.status as DeliveryStatus) || 'Dispatched'} /></td>
+                        <td className="px-4 py-3 text-xs text-[#616161] whitespace-nowrap">{fmtDate(d.expectedDeliveryDate)}</td>
+                        <td className="px-4 py-3 text-xs text-[#616161] whitespace-nowrap">{fmtDate(d.deliveredDate)}</td>
+                        {canEdit && (
+                          <td className="px-4 py-3">
+                            <button onClick={e => { e.stopPropagation(); setEditing(d); }} className="p-1.5 text-amber-500 hover:bg-amber-50 rounded-lg" title="Edit">
+                              <Edit size={13} />
+                            </button>
+                          </td>
+                        )}
+                      </tr>
+                    ))}
+                  </tbody>
+                </table>
+              </div>
+              <Pagination page={page} total={total} limit={LIMIT} onChange={handlePageChange} />
+            </>
+          )}
+        </div>
+      )}
+
+      {/* ── Edit Popup ── */}
+      {editing && (
+        <DeliveryEditPopup delivery={editing} onClose={() => setEditing(null)} onSaved={onSaved} />
       )}
     </div>
   );

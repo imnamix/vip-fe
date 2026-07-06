@@ -27,6 +27,7 @@ interface VipNumber {
   description: string;
   price: number;
   rating: number | null;
+  numerologyScore: string | null;
   status: number;
   created_at: string;
   updated_at: string;
@@ -177,6 +178,16 @@ export default function VipNumberView() {
                   <>{parseFloat(Number(item.rating).toFixed(1))}<span className="text-base text-[#9E9E9E] font-normal">/10</span></>
                 ) : '—'}
               </div>
+            </div>
+          </div>
+
+          <div className="bg-white rounded-2xl border border-gray-100 p-5 flex items-start gap-3">
+            <div className="w-9 h-9 rounded-xl bg-purple-50 flex items-center justify-center flex-shrink-0">
+              <Hash size={16} className="text-purple-600" />
+            </div>
+            <div>
+              <div className="text-xs text-[#9E9E9E] font-medium mb-0.5">Numerology Score</div>
+              <div className="text-base font-bold text-[#212121]">{item.numerologyScore || '—'}</div>
             </div>
           </div>
         </div>

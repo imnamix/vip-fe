@@ -109,6 +109,7 @@ export default function SlideEditor({ slides, setSlides, label = 'Slide', showEr
                       <span className={`text-xs font-medium ${showErrors ? "text-red-500" : "text-[#D32F2F]"}`}>
                         {uploadingId === slide.id ? "Uploading…" : "Upload Background Image"}
                       </span>
+                      <span className="text-xs text-[#9E9E9E]">Recommended: 1024 x 600 px</span>
                       <input
                         type="file"
                         accept="image/*"

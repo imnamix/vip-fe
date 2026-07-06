@@ -42,12 +42,16 @@ export const getAllEnquires = async (
   page: number = 1,
   limit: number = 10,
   searchKeys?: string,
-  status?: string
+  status?: string,
+  startDate?: string,
+  endDate?: string
 ) => {
   try {
     let enquiresUrl = `${URL.GET_ALL}?page=${page}&limit=${limit}`;
     if (searchKeys) enquiresUrl += `&search=${encodeURIComponent(searchKeys)}`;
     if (status)     enquiresUrl += `&status=${encodeURIComponent(status)}`;
+    if (startDate)  enquiresUrl += `&startDate=${encodeURIComponent(startDate)}`;
+    if (endDate)    enquiresUrl += `&endDate=${encodeURIComponent(endDate)}`;
     const response = await ApiRequest.get(enquiresUrl);
     return response.data;
   } catch (error) {

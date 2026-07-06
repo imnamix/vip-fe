@@ -1,14 +1,17 @@
 import { useState, useEffect, useCallback } from 'react';
+import { useNavigate } from 'react-router';
 import {
   AreaChart, Area, PieChart, Pie, Cell,
   XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, Legend,
 } from 'recharts';
 import {
-  TrendingUp, Users, IndianRupee, MessageSquare,
-  Calendar, Truck, ArrowUpRight, RefreshCw, Hash,
-  ClipboardList, UserCheck,
+  TrendingUp, IndianRupee, MessageSquare,
+  Calendar, Truck, ArrowUpRight, FileDown, Hash,
+  ClipboardList, Package, AlertCircle, Clock,
 } from 'lucide-react';
 import { getDashboardSummary } from '../../services/DashboardService';
+import { usePermission } from '../../hooks/usePermission';
+import { downloadDashboardReport } from '../../utils/dashboardReport';
 
 // ─── Types ────────────────────────────────────────────────────────────────────
 interface DashboardStats {
@@ -16,10 +19,10 @@ interface DashboardStats {
   pendingEnquiries: number;
   inProgressEnquiries: number;
   deliveredEnquiries: number;
+  dispatchedEnquiries: number;
   cancelledEnquiries: number;
   totalEvents: number;
   totalVipNumbers: number;
-  totalAdminUsers: number;
   totalGeneralInquiries: number;
   pendingGeneralInquiries: number;
 }
@@ -83,9 +86,14 @@ function StatSkeleton() {
 
 // ─── Component ────────────────────────────────────────────────────────────────
 export default function Dashboard() {
+  const navigate = useNavigate();
+  const { can } = usePermission();
+  const canViewInquiry = can('Inquiry', 'read');
+
   const [summary, setSummary] = useState<Summary | null>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError]     = useState('');
+  const [generatingReport, setGeneratingReport] = useState(false);
 
   const fetchSummary = useCallback(async () => {
     setLoading(true);
@@ -104,15 +112,25 @@ export default function Dashboard() {
 
   const s = summary?.stats;
 
+  const handleDownloadReport = async () => {
+    if (!summary) return;
+    setGeneratingReport(true);
+    try {
+      await downloadDashboardReport(summary);
+    } finally {
+      setGeneratingReport(false);
+    }
+  };
+
   const statCards = s ? [
     { label: 'Total Enquiries',    value: s.totalEnquiries,        icon: MessageSquare, color: '#D32F2F', bg: '#FFF8E1' },
     { label: 'Pending Enquiries',  value: s.pendingEnquiries,      icon: ClipboardList, color: '#FF9800', bg: '#FFF3E0' },
     { label: 'Delivered',          value: s.deliveredEnquiries,    icon: Truck,         color: '#4CAF50', bg: '#E8F5E9' },
-    { label: 'In Progress',        value: s.inProgressEnquiries,   icon: RefreshCw,     color: '#FBC02D', bg: '#FFFDE7' },
+    { label: 'Dispatched',         value: s.dispatchedEnquiries,   icon: Package,       color: '#9C27B0', bg: '#F3E5F5' },
     { label: 'Total Events',       value: s.totalEvents,           icon: Calendar,      color: '#2196F3', bg: '#E3F2FD' },
-    { label: 'VIP Numbers',        value: s.totalVipNumbers,       icon: Hash,          color: '#9C27B0', bg: '#F3E5F5' },
+    { label: 'VIP Numbers',        value: s.totalVipNumbers,       icon: Hash,          color: '#607D8B', bg: '#ECEFF1' },
     { label: 'General Inquiries',  value: s.totalGeneralInquiries, icon: IndianRupee,   color: '#009688', bg: '#E0F2F1' },
-    { label: 'Admin Users',        value: s.totalAdminUsers,       icon: UserCheck,     color: '#607D8B', bg: '#ECEFF1' },
+    { label: 'In Progress',        value: s.inProgressEnquiries,   icon: Clock,         color: '#FBC02D', bg: '#FFFDE7' },
   ] : [];
 
   const trendData: MonthlyPoint[] = summary?.monthlyTrend ?? [];
@@ -134,12 +152,12 @@ export default function Dashboard() {
           <p className="text-[#616161] text-sm">Welcome back. Here's what's happening today.</p>
         </div>
         <button
-          onClick={fetchSummary}
-          disabled={loading}
+          onClick={handleDownloadReport}
+          disabled={loading || !summary || generatingReport}
           className="flex items-center gap-1.5 text-sm text-[#616161] hover:text-[#D32F2F] border border-gray-200 rounded-xl px-3 py-2 disabled:opacity-50"
         >
-          <RefreshCw size={13} className={loading ? 'animate-spin' : ''} />
-          Refresh
+          <FileDown size={13} className={generatingReport ? 'animate-pulse' : ''} />
+          {generatingReport ? 'Generating…' : 'Report'}
         </button>
       </div>
 
@@ -282,7 +300,11 @@ export default function Dashboard() {
         ) : (
           <div className="divide-y divide-gray-50">
             {(summary?.recentEnquiries ?? []).map(enq => (
-              <div key={enq.id} className="flex items-center gap-3 py-3">
+              <div
+                key={enq.id}
+                onClick={canViewInquiry ? () => navigate(`/admin/inquiries/${enq.id}`) : undefined}
+                className={`flex items-center gap-3 py-3 ${canViewInquiry ? 'cursor-pointer hover:bg-gray-50 -mx-2 px-2 rounded-lg' : ''}`}
+              >
                 <div className="w-8 h-8 rounded-full bg-red-50 flex items-center justify-center flex-shrink-0">
                   <span className="text-xs font-bold text-[#D32F2F]">
                     {(enq.name ?? '?').charAt(0).toUpperCase()}
@@ -335,13 +357,15 @@ export default function Dashboard() {
 
           <div className="bg-white rounded-2xl p-5 border border-gray-100 col-span-2 sm:col-span-1">
             <div className="flex items-center gap-2 mb-1">
-              <Users size={14} className="text-[#607D8B]" />
-              <span className="text-xs font-semibold text-[#616161] uppercase tracking-wider">Admin Users</span>
+              <AlertCircle size={14} className="text-[#9C27B0]" />
+              <span className="text-xs font-semibold text-[#616161] uppercase tracking-wider">Inquiry Pending</span>
             </div>
             <div className="text-2xl font-bold text-[#212121]" style={{ fontFamily: 'Poppins, sans-serif' }}>
-              {s.totalAdminUsers}
+              {s.totalEnquiries > 0
+                ? `${Math.round((s.pendingEnquiries / s.totalEnquiries) * 100)}%`
+                : '—'}
             </div>
-            <p className="text-xs text-[#616161] mt-0.5">active users in the system</p>
+            <p className="text-xs text-[#616161] mt-0.5">of all enquiries still pending</p>
           </div>
         </div>
       )}

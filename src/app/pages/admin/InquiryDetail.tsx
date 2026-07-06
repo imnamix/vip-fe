@@ -3,13 +3,13 @@ import { useParams, useNavigate } from 'react-router';
 import {
   ChevronLeft, CheckCircle, Clock, Phone, MapPin, Hash, MessageSquare,
   Truck, Package, User, Plus, AlertCircle, Upload, X, ArrowRight,
-  Edit2, IndianRupee, Check, RefreshCw, FileText, ExternalLink,
+  Edit2, IndianRupee, Check, RefreshCw, FileText, ExternalLink, XCircle,
 } from 'lucide-react';
 import { useAdminTheme } from '../../context/AdminThemeContext';
 import { getEnquiryById, updateEnquiry } from '../../services/EnquiresService';
 import { uploadFiles } from '../../services/MediaService';
 
-type Status = 'Pending' | 'Number Suggested' | 'Number Confirmed' | 'Awaiting Payment' | 'Paid' | 'Dispatched' | 'Delivered';
+type Status = 'Pending' | 'Number Suggested' | 'Number Confirmed' | 'Awaiting Payment' | 'Paid' | 'Dispatched' | 'Delivered' | 'Cancelled';
 
 const ALL_STATUSES: Status[] = [
   'Pending', 'Number Suggested', 'Number Confirmed',
@@ -28,11 +28,12 @@ const STATUS_META: Record<Status, {
   'Paid':              { color: '#009688', bg: '#E0F2F1', border: '#B2DFDB', darkBg: 'rgba(0,150,136,0.12)',   darkBorder: 'rgba(0,150,136,0.25)',  darkText: '#4DB6AC', icon: IndianRupee, label: 'Payment Received' },
   'Dispatched':        { color: '#9C27B0', bg: '#F3E5F5', border: '#E1BEE7', darkBg: 'rgba(156,39,176,0.12)', darkBorder: 'rgba(156,39,176,0.25)', darkText: '#CE93D8', icon: Package,     label: 'Dispatched'       },
   'Delivered':         { color: '#388E3C', bg: '#E8F5E9', border: '#C8E6C9', darkBg: 'rgba(56,142,60,0.12)',  darkBorder: 'rgba(56,142,60,0.25)',  darkText: '#A5D6A7', icon: Truck,       label: 'Delivered'        },
+  'Cancelled':         { color: '#D32F2F', bg: '#FFEBEE', border: '#FFCDD2', darkBg: 'rgba(211,47,47,0.12)',  darkBorder: 'rgba(211,47,47,0.25)',  darkText: '#EF9A9A', icon: XCircle,     label: 'Cancelled'        },
 };
 
-/* Stepper theme: done=yellow, active=red, future=dark-blue */
+/* Stepper theme: done=red-yellow mix, active=red, future=yellow */
 const STEP = {
-  done: { bg: "#1565C0", border: "#1565C0", line: "#FBC02D" },
+  done: { bg: "linear-gradient(135deg, #D32F2F, #FBC02D)", border: "#EF6C00", line: "#FBC02D", text: "#EF6C00" },
   active: { bg: "#D32F2F", border: "#D32F2F", line: "#e5e7eb" },
   future: {
     bg: "transparent",
@@ -199,6 +200,170 @@ function SuggestNumberPopup({ onClose, onSend }: { onClose: () => void; onSend: 
   );
 }
 
+/* ── Mark as Dispatched Popup ─────────────────────────────────────────────── */
+interface DispatchInfo { partnerName: string; partnerMobile: string; expectedDeliveryDate: string; address: string }
+
+interface DispatchErrors { partnerName?: string; partnerMobile?: string; expectedDeliveryDate?: string; address?: string }
+
+function DispatchPopup({ initialAddress, onClose, onSend }: { initialAddress: string; onClose: () => void; onSend: (d: DispatchInfo) => void }) {
+  const [partnerName,          setPartnerName]          = useState('');
+  const [partnerMobile,        setPartnerMobile]        = useState('');
+  const [expectedDeliveryDate, setExpectedDeliveryDate] = useState('');
+  const [address,              setAddress]              = useState(initialAddress);
+  const [editingAddress,       setEditingAddress]       = useState(false);
+  const [errors,               setErrors]               = useState<DispatchErrors>({});
+  const [saving,               setSaving]               = useState(false);
+  const today = new Date().toISOString().split('T')[0];
+
+  const clearError = (field: keyof DispatchErrors) =>
+    setErrors(er => (er[field] ? { ...er, [field]: undefined } : er));
+
+  const validate = () => {
+    const errs: DispatchErrors = {};
+    if (!partnerName.trim())          errs.partnerName = 'Delivery partner name is required.';
+    if (!partnerMobile.trim())        errs.partnerMobile = 'Mobile number is required.';
+    else if (!/^\d{10}$/.test(partnerMobile.trim())) errs.partnerMobile = 'Enter a valid 10-digit mobile number.';
+    if (!expectedDeliveryDate)        errs.expectedDeliveryDate = 'Expected delivery date is required.';
+    if (!address.trim())              errs.address = 'Delivery address is required.';
+    setErrors(errs);
+    return Object.keys(errs).length === 0;
+  };
+
+  const save = async () => {
+    if (!validate()) return;
+    setSaving(true);
+    try {
+      await onSend({ partnerName: partnerName.trim(), partnerMobile: partnerMobile.trim(), expectedDeliveryDate, address: address.trim() });
+      onClose();
+    } finally {
+      setSaving(false);
+    }
+  };
+
+  const fieldCls = (hasError?: string) =>
+    `w-full px-3 py-2.5 border rounded-xl text-sm focus:outline-none bg-white dark:bg-[#13151e] text-[#212121] dark:text-white placeholder:text-gray-400 ${
+      hasError ? 'border-red-400 focus:border-red-500' : 'border-gray-200 dark:border-white/10 focus:border-[#D32F2F]'
+    }`;
+
+  return (
+    <div
+      className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/50 backdrop-blur-sm"
+      onClick={onClose}
+    >
+      <div
+        className="bg-white dark:bg-[#1e2133] rounded-2xl shadow-2xl w-full max-w-md overflow-hidden border border-gray-100 dark:border-white/10"
+        onClick={(e) => e.stopPropagation()}
+      >
+        <div className="flex items-center justify-between px-6 py-4 border-b border-gray-100 dark:border-white/10">
+          <div>
+            <h3
+              className="font-bold text-[#212121] dark:text-white"
+              style={{ fontFamily: "Poppins, sans-serif" }}
+            >
+              Mark as Dispatched
+            </h3>
+            <p className="text-xs text-[#616161] dark:text-gray-400 mt-0.5">
+              Enter delivery partner details to dispatch this order
+            </p>
+          </div>
+          <button
+            onClick={onClose}
+            className="w-8 h-8 flex items-center justify-center rounded-full hover:bg-gray-100 dark:hover:bg-white/10 text-[#616161]"
+          >
+            <X size={16} />
+          </button>
+        </div>
+        <div className="px-6 py-4 space-y-3 max-h-[70vh] overflow-y-auto">
+          <div>
+            <label className="text-[10px] font-semibold text-[#616161] uppercase tracking-wider mb-1 block">
+              Delivery Partner Name <span className="text-red-500">*</span>
+            </label>
+            <input
+              value={partnerName}
+              onChange={(e) => { setPartnerName(e.target.value); clearError('partnerName'); }}
+              placeholder="e.g. Bluedart, Delhivery, courier person"
+              className={fieldCls(errors.partnerName)}
+            />
+            {errors.partnerName && <p className="text-xs text-red-500 mt-1">{errors.partnerName}</p>}
+          </div>
+          <div>
+            <label className="text-[10px] font-semibold text-[#616161] uppercase tracking-wider mb-1 block">
+              Partner Mobile Number <span className="text-red-500">*</span>
+            </label>
+            <input
+              value={partnerMobile}
+              onChange={(e) => {
+                setPartnerMobile(e.target.value.replace(/\D/g, "").slice(0, 10));
+                clearError('partnerMobile');
+              }}
+              placeholder="9876543210"
+              inputMode="numeric"
+              className={`${fieldCls(errors.partnerMobile)} font-mono`}
+            />
+            {errors.partnerMobile && <p className="text-xs text-red-500 mt-1">{errors.partnerMobile}</p>}
+          </div>
+          <div>
+            <label className="text-[10px] font-semibold text-[#616161] uppercase tracking-wider mb-1 block">
+              Expected Delivery Date <span className="text-red-500">*</span>
+            </label>
+            <input
+              type="date"
+              value={expectedDeliveryDate}
+              min={today}
+              onChange={(e) => { setExpectedDeliveryDate(e.target.value); clearError('expectedDeliveryDate'); }}
+              className={fieldCls(errors.expectedDeliveryDate)}
+            />
+            {errors.expectedDeliveryDate && <p className="text-xs text-red-500 mt-1">{errors.expectedDeliveryDate}</p>}
+          </div>
+          <div>
+            <div className="flex items-center justify-between mb-1">
+              <label className="text-[10px] font-semibold text-[#616161] uppercase tracking-wider block">
+                Delivery Address <span className="text-red-500">*</span>
+              </label>
+              <button
+                onClick={() => setEditingAddress(e => !e)}
+                className="flex items-center gap-1 text-[10px] text-[#616161] hover:text-[#D32F2F]"
+              >
+                {editingAddress ? <><Check size={11} /> Done</> : <><Edit2 size={11} /> Edit</>}
+              </button>
+            </div>
+            {!editingAddress ? (
+              <div className="px-3 py-2.5 bg-gray-50 dark:bg-white/4 rounded-xl text-sm text-[#212121] dark:text-white whitespace-pre-wrap">
+                {address || "—"}
+              </div>
+            ) : (
+              <textarea
+                value={address}
+                onChange={(e) => { setAddress(e.target.value); clearError('address'); }}
+                rows={2}
+                placeholder="Delivery address"
+                className={`${fieldCls(errors.address)} resize-none`}
+              />
+            )}
+            {errors.address && <p className="text-xs text-red-500 mt-1">{errors.address}</p>}
+          </div>
+        </div>
+        <div className="px-6 py-4 border-t border-gray-100 dark:border-white/10 flex gap-3">
+          <button
+            onClick={onClose}
+            disabled={saving}
+            className="flex-1 py-2.5 border border-gray-200 dark:border-white/10 text-[#616161] dark:text-gray-300 rounded-xl text-sm font-semibold disabled:opacity-50"
+          >
+            Cancel
+          </button>
+          <button
+            onClick={save}
+            disabled={saving}
+            className="flex-1 py-2.5 bg-[#9C27B0] hover:bg-purple-700 text-white rounded-xl text-sm font-semibold disabled:opacity-60"
+          >
+            {saving ? "Saving…" : "Confirm Dispatch"}
+          </button>
+        </div>
+      </div>
+    </div>
+  );
+}
+
 /* ── Main ───────────────────────────────────────────────────────────────── */
 export default function InquiryDetail() {
   const { id }   = useParams<{ id: string }>();
@@ -219,6 +384,7 @@ export default function InquiryDetail() {
 
   const [newNote,          setNewNote]          = useState('');
   const [showSuggestPopup, setShowSuggestPopup] = useState(false);
+  const [showDispatchPopup, setShowDispatchPopup] = useState(false);
   const [showPaymentForm,  setShowPaymentForm]  = useState(false);
   const [showProofModal,   setShowProofModal]   = useState(false);
   const [proofRef,         setProofRef]         = useState('');
@@ -232,8 +398,13 @@ export default function InquiryDetail() {
   const [editVipVal,       setEditVipVal]       = useState('');
 
   const persist = async (patch: Record<string, any>) => {
-    if (!id) return;
-    try { await updateEnquiry(Number(id), patch); } catch {}
+    if (!id) return null;
+    try {
+      const res = await updateEnquiry(Number(id), patch);
+      return res?.data ?? res;
+    } catch {
+      return null;
+    }
   };
 
   const loadEnquiry = async () => {
@@ -271,9 +442,10 @@ export default function InquiryDetail() {
 
   useEffect(() => { loadEnquiry(); }, [id]);
 
-  const currentIdx = ALL_STATUSES.indexOf(status);
-  const mobile     = (enquiry?.mobile ?? '').replace(/\D/g, '');
-  const location   = [enquiry?.district, enquiry?.state].filter(Boolean).join(', ') || '—';
+  const currentIdx  = ALL_STATUSES.indexOf(status);
+  const mobile      = (enquiry?.mobile ?? '').replace(/\D/g, '');
+  const location    = [enquiry?.district, enquiry?.state].filter(Boolean).join(', ') || '—';
+  const fullAddress = [enquiry?.address, enquiry?.taluka, enquiry?.district, enquiry?.state, enquiry?.pinCode].filter(Boolean).join(', ');
 
   const requestStatusChange = (s: Status, label: string, extra?: Record<string, any>) =>
     setPendingStatus({ status: s, label, extra });
@@ -315,6 +487,26 @@ export default function InquiryDetail() {
     setStatus('Number Suggested');
     setTimeline(newTl);
     await persist({ status: 'Number Suggested', suggestedNumbers: JSON.stringify(numbers), activityLog: JSON.stringify(newTl) });
+  };
+
+  const handleDispatchSend = async (info: DispatchInfo) => {
+    const ts     = nowStr();
+    const addressChanged = fullAddress && info.address !== fullAddress;
+    const newTl: TimelineEvent[] = [
+      ...timeline,
+      { date: ts, action: `Order dispatched via ${info.partnerName} (${info.partnerMobile}) to ${info.address} — expected delivery ${info.expectedDeliveryDate}${addressChanged ? ' (delivery address updated)' : ''}`, user: 'Admin', status: 'Dispatched' },
+    ];
+    setStatus('Dispatched');
+    setTimeline(newTl);
+    const data = await persist({
+      status: 'Dispatched',
+      deliveryPartnerName: info.partnerName,
+      deliveryPartnerMobile: info.partnerMobile,
+      expectedDeliveryDate: info.expectedDeliveryDate,
+      deliveryAddress: info.address,
+      activityLog: JSON.stringify(newTl),
+    });
+    if (data) setEnquiry((prev: any) => ({ ...prev, ...data }));
   };
 
   const handleUpdateVipNumber = async () => {
@@ -452,7 +644,7 @@ export default function InquiryDetail() {
 
             if (done) {
               dotClass += 'text-white';
-              dotStyle = { backgroundColor: STEP.done.bg, borderColor: STEP.done.border };
+              dotStyle = { background: STEP.done.bg, borderColor: STEP.done.border };
             } else if (active) {
               dotClass += 'text-white shadow-lg';
               dotStyle = { backgroundColor: STEP.active.bg, borderColor: STEP.active.border, boxShadow: '0 0 0 4px rgba(211,47,47,0.15)' };
@@ -481,7 +673,7 @@ export default function InquiryDetail() {
                     className={`text-center text-[10px] leading-tight font-semibold`}
                     style={{
                       color: done
-                        ? STEP.done.bg
+                        ? STEP.done.text
                         : active
                           ? STEP.active.bg
                           : STEP.future.iconColor,
@@ -805,10 +997,56 @@ export default function InquiryDetail() {
                   )}
                 </div>
               )}
-              <button onClick={() => requestStatusChange('Dispatched', 'Mark this order as Dispatched?')}
+              <button onClick={() => setShowDispatchPopup(true)}
                 className="flex items-center gap-2 px-4 py-2.5 bg-[#9C27B0] hover:bg-purple-700 text-white rounded-xl text-sm font-semibold">
                 <Package size={13} /> Mark Dispatched <ArrowRight size={13} />
               </button>
+            </div>
+          )}
+
+          {(status === 'Dispatched' || status === 'Delivered' || status === 'Cancelled') && enquiry?.deliveryId && (
+            <div className="bg-white dark:bg-[#1a1d26] rounded-2xl border border-gray-100 dark:border-white/6 p-5">
+              <h3 className="font-bold text-[#212121] dark:text-white mb-4 text-xs uppercase tracking-widest">Delivery Details</h3>
+              <div className="grid grid-cols-2 gap-2.5">
+                <div className="bg-gray-50 dark:bg-white/4 rounded-xl px-3 py-2.5">
+                  <div className="text-[10px] font-bold text-[#616161] dark:text-gray-500 uppercase tracking-wider mb-0.5">Delivery ID</div>
+                  <div className="text-sm font-mono font-bold text-[#9C27B0]">{enquiry.deliveryId}</div>
+                </div>
+                <div className="bg-gray-50 dark:bg-white/4 rounded-xl px-3 py-2.5">
+                  <div className="text-[10px] font-bold text-[#616161] dark:text-gray-500 uppercase tracking-wider mb-0.5">Expected Delivery</div>
+                  <div className="text-sm font-medium text-[#212121] dark:text-white">{enquiry.expectedDeliveryDate || '—'}</div>
+                </div>
+                <div className="bg-gray-50 dark:bg-white/4 rounded-xl px-3 py-2.5">
+                  <div className="text-[10px] font-bold text-[#616161] dark:text-gray-500 uppercase tracking-wider mb-0.5">Delivery Partner</div>
+                  <div className="text-sm font-medium text-[#212121] dark:text-white">{enquiry.deliveryPartnerName || '—'}</div>
+                </div>
+                <div className="bg-gray-50 dark:bg-white/4 rounded-xl px-3 py-2.5">
+                  <div className="text-[10px] font-bold text-[#616161] dark:text-gray-500 uppercase tracking-wider mb-0.5">Partner Mobile</div>
+                  <div className="text-sm font-medium text-[#212121] dark:text-white">{enquiry.deliveryPartnerMobile || '—'}</div>
+                </div>
+                {enquiry.deliveredDate && (
+                  <div className="bg-gray-50 dark:bg-white/4 rounded-xl px-3 py-2.5">
+                    <div className="text-[10px] font-bold text-[#616161] dark:text-gray-500 uppercase tracking-wider mb-0.5">Delivered Date</div>
+                    <div className="text-sm font-medium text-[#212121] dark:text-white">{enquiry.deliveredDate}</div>
+                  </div>
+                )}
+                <div className="col-span-2 bg-gray-50 dark:bg-white/4 rounded-xl px-3 py-2.5">
+                  <div className="text-[10px] font-bold text-[#616161] dark:text-gray-500 uppercase tracking-wider mb-0.5">Delivery Address</div>
+                  <div className="text-sm font-medium text-[#212121] dark:text-white">{enquiry.deliveryAddress || '—'}</div>
+                </div>
+                {enquiry.deliveryNotes && (
+                  <div className="col-span-2 bg-gray-50 dark:bg-white/4 rounded-xl px-3 py-2.5">
+                    <div className="text-[10px] font-bold text-[#616161] dark:text-gray-500 uppercase tracking-wider mb-0.5">Delivery Notes</div>
+                    <div className="text-sm font-medium text-[#212121] dark:text-white">{enquiry.deliveryNotes}</div>
+                  </div>
+                )}
+                {enquiry.cancelReason && (
+                  <div className="col-span-2 bg-red-50 dark:bg-red-900/15 border border-red-100 dark:border-red-500/20 rounded-xl px-3 py-2.5">
+                    <div className="text-[10px] font-bold text-[#D32F2F] uppercase tracking-wider mb-0.5">Cancellation Reason</div>
+                    <div className="text-sm font-medium text-[#212121] dark:text-white">{enquiry.cancelReason}</div>
+                  </div>
+                )}
+              </div>
             </div>
           )}
 
@@ -839,6 +1077,22 @@ export default function InquiryDetail() {
                 <div>
                   <div className="font-bold text-white text-base" style={{ fontFamily: 'Poppins, sans-serif' }}>Successfully Delivered</div>
                   <div className="text-green-100 text-xs mt-0.5">VIP Number <span className="font-mono font-bold">{confirmedNumber}</span> has been activated.</div>
+                </div>
+              </div>
+            </div>
+          )}
+
+          {status === 'Cancelled' && (
+            <div className="rounded-2xl overflow-hidden border border-red-300 dark:border-red-500/30">
+              <div className="bg-gradient-to-br from-[#D32F2F] to-[#B71C1C] p-5 flex items-center gap-4">
+                <div className="w-12 h-12 bg-white/20 rounded-full flex items-center justify-center flex-shrink-0">
+                  <XCircle size={26} className="text-white" />
+                </div>
+                <div>
+                  <div className="font-bold text-white text-base" style={{ fontFamily: 'Poppins, sans-serif' }}>Order Cancelled</div>
+                  <div className="text-red-100 text-xs mt-0.5">
+                    {enquiry?.cancelReason ? <>Reason: {enquiry.cancelReason}</> : 'This order was cancelled.'}
+                  </div>
                 </div>
               </div>
             </div>
@@ -899,12 +1153,13 @@ export default function InquiryDetail() {
               )}
             </div>
             {([
-              ['Inquiry #',  `#${id}`],
+              // ['Inquiry #',  `#${id}`],
+              enquiry?.deliveryId ? ['Delivery ID', enquiry.deliveryId] : null,
               ['Source',     enquiry?.source      || '—'],
               ['Type',       enquiry?.inquiryType || 'customer'],
               ['Location',   location],
               ['Created',    enquiry?.created_at ? new Date(enquiry.created_at).toLocaleDateString('en-IN', { day: 'numeric', month: 'short', year: 'numeric' }) : '—'],
-            ] as [string, string][]).map(([label, val]) => (
+            ].filter(Boolean) as [string, string][]).map(([label, val]) => (
               <div key={label} className="flex justify-between items-center py-2.5 border-b border-gray-50 dark:border-white/4 last:border-0">
                 <span className="text-xs text-[#616161] dark:text-gray-500 font-medium">{label}</span>
                 <span className="text-sm font-semibold text-[#212121] dark:text-white truncate max-w-[60%] text-right capitalize">{val}</span>
@@ -965,6 +1220,9 @@ export default function InquiryDetail() {
 
       {/* Suggest Number Popup */}
       {showSuggestPopup && <SuggestNumberPopup onClose={() => setShowSuggestPopup(false)} onSend={handleSuggestSend} />}
+
+      {/* Mark as Dispatched Popup */}
+      {showDispatchPopup && <DispatchPopup initialAddress={enquiry?.deliveryAddress || fullAddress} onClose={() => setShowDispatchPopup(false)} onSend={handleDispatchSend} />}
 
       {/* Status Confirm Dialog */}
       {pendingStatus && (
