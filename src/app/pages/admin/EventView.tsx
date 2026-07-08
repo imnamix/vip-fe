@@ -2,10 +2,35 @@ import { useEffect, useState } from 'react';
 import { useParams, useNavigate } from 'react-router';
 import {
   ChevronLeft, Edit, Calendar, MapPin, IndianRupee, Users,
-  Clock, Loader2, AlertCircle, ImageOff, Images,
+  Clock, Loader2, AlertCircle, ImageOff, Images, UserCheck,
 } from 'lucide-react';
 import { getEventsByID } from '../../services/EventsService';
+import { getRegistrationsByEvent, updateRegistrationStatus } from '../../services/EventRegistrationService';
+import { usePermission } from '../../hooks/usePermission';
 import ImagePreviewPopup from '../../components/ImagePreviewPopup';
+
+type RegStatus = 'Registered' | 'Confirmed';
+
+interface Registration {
+  id: number;
+  name: string;
+  mobile: string;
+  address: string | null;
+  status: RegStatus;
+  created_at: string;
+}
+
+const REG_STATUS_META: Record<RegStatus, { bg: string; text: string; border: string }> = {
+  Registered: { bg: '#FFF3E0', text: '#FF9800', border: '#FFE0B2' },
+  Confirmed:  { bg: '#E8F5E9', text: '#4CAF50', border: '#C8E6C9' },
+};
+
+function formatDateTime(d: string) {
+  if (!d) return '—';
+  try {
+    return new Date(d).toLocaleDateString('en-IN', { day: 'numeric', month: 'short', year: 'numeric' });
+  } catch { return d; }
+}
 
 interface MediaItem { media_url: string; media_type: string }
 interface ScheduleItem { time: string; title: string }
@@ -59,6 +84,12 @@ export default function EventView() {
   const [error, setError] = useState<string | null>(null);
   const [imgPreview, setImgPreview] = useState<string | null>(null);
 
+  const [registrations, setRegistrations] = useState<Registration[]>([]);
+  const [regLoading, setRegLoading] = useState(true);
+  const [updatingId, setUpdatingId] = useState<number | null>(null);
+  const { can } = usePermission();
+  const canUpdateReg = can('Events', 'update');
+
   useEffect(() => {
     if (!id) return;
     const load = async () => {
@@ -79,6 +110,35 @@ export default function EventView() {
     };
     load();
   }, [id]);
+
+  useEffect(() => {
+    if (!id) return;
+    const loadRegistrations = async () => {
+      setRegLoading(true);
+      try {
+        const res = await getRegistrationsByEvent(id);
+        setRegistrations(res?.success ? (res.data ?? []) : []);
+      } catch {
+        setRegistrations([]);
+      } finally {
+        setRegLoading(false);
+      }
+    };
+    loadRegistrations();
+  }, [id]);
+
+  const toggleRegistrationStatus = async (reg: Registration) => {
+    const nextStatus: RegStatus = reg.status === 'Confirmed' ? 'Registered' : 'Confirmed';
+    setUpdatingId(reg.id);
+    try {
+      const res = await updateRegistrationStatus(reg.id, nextStatus);
+      if (res?.success) {
+        setRegistrations(prev => prev.map(r => r.id === reg.id ? { ...r, status: nextStatus } : r));
+      }
+    } finally {
+      setUpdatingId(null);
+    }
+  };
 
   if (loading) {
     return (
@@ -282,6 +342,71 @@ export default function EventView() {
           </div>
         </div>
       )}
+
+      {/* Registered People */}
+      <div className="bg-white rounded-2xl border border-gray-100 p-5 mt-5">
+        <div className="flex items-center gap-2 mb-4">
+          <UserCheck size={15} className="text-[#D32F2F]" />
+          <h3 className="font-bold text-[#212121] text-sm" style={{ fontFamily: 'Poppins, sans-serif' }}>
+            Registered People
+          </h3>
+          <span className="text-xs text-[#9E9E9E] ml-auto">{registrations.length} registered</span>
+        </div>
+
+        {regLoading ? (
+          <div className="flex items-center justify-center py-10 text-[#616161] text-sm gap-2">
+            <Loader2 size={15} className="animate-spin" /> Loading registrations…
+          </div>
+        ) : registrations.length === 0 ? (
+          <div className="text-center py-10 text-[#616161] text-sm">No one has registered for this event yet.</div>
+        ) : (
+          <div className="overflow-x-auto">
+            <table className="w-full">
+              <thead>
+                <tr className="border-b border-gray-100">
+                  {['Name', 'Mobile', 'Address', 'Registered On', 'Status', ...(canUpdateReg ? ['Action'] : [])].map(h => (
+                    <th key={h} className="text-left px-3 py-2 text-xs font-semibold text-[#616161] uppercase tracking-wider whitespace-nowrap">{h}</th>
+                  ))}
+                </tr>
+              </thead>
+              <tbody>
+                {registrations.map(reg => {
+                  const meta = REG_STATUS_META[reg.status] ?? REG_STATUS_META.Registered;
+                  return (
+                    <tr key={reg.id} className="border-b border-gray-50 last:border-0">
+                      <td className="px-3 py-2.5 text-sm font-medium text-[#212121] whitespace-nowrap">{reg.name}</td>
+                      <td className="px-3 py-2.5 text-sm text-[#616161] whitespace-nowrap">{reg.mobile}</td>
+                      <td className="px-3 py-2.5 text-sm text-[#616161] max-w-xs truncate">{reg.address || '—'}</td>
+                      <td className="px-3 py-2.5 text-xs text-[#616161] whitespace-nowrap">{formatDateTime(reg.created_at)}</td>
+                      <td className="px-3 py-2.5">
+                        <span
+                          className="inline-block text-xs font-bold px-2.5 py-0.5 rounded-full border"
+                          style={{ background: meta.bg, color: meta.text, borderColor: meta.border }}
+                        >
+                          {reg.status}
+                        </span>
+                      </td>
+                      {canUpdateReg && (
+                        <td className="px-3 py-2.5">
+                          <button
+                            onClick={() => toggleRegistrationStatus(reg)}
+                            disabled={updatingId === reg.id}
+                            className="text-xs font-semibold text-[#D32F2F] hover:underline disabled:opacity-50 whitespace-nowrap"
+                          >
+                            {updatingId === reg.id
+                              ? 'Updating…'
+                              : reg.status === 'Confirmed' ? 'Mark Registered' : 'Mark Confirmed'}
+                          </button>
+                        </td>
+                      )}
+                    </tr>
+                  );
+                })}
+              </tbody>
+            </table>
+          </div>
+        )}
+      </div>
 
       <ImagePreviewPopup
         open={!!imgPreview}

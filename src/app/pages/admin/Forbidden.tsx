@@ -1,8 +1,13 @@
 import { Link, useNavigate } from 'react-router';
+import { useSelector } from 'react-redux';
 import { ShieldX, ArrowLeft, Home } from 'lucide-react';
+import { getLandingPath } from '../../config/navConfig';
+import type { RootState } from '../../store/Store';
 
 export default function Forbidden() {
   const navigate = useNavigate();
+  const permissions = useSelector((state: RootState) => state.permission.permissions);
+  const landingPath = getLandingPath(permissions);
 
   return (
     <div className="flex flex-col items-center justify-center min-h-[70vh] text-center px-4">
@@ -30,10 +35,10 @@ export default function Forbidden() {
           <ArrowLeft size={16} /> Go Back
         </button>
         <Link
-          to="/admin"
+          to={landingPath}
           className="flex items-center gap-2 px-4 py-2.5 bg-[#D32F2F] text-white rounded-xl text-sm font-medium hover:bg-[#B71C1C] transition-colors"
         >
-          <Home size={16} /> Dashboard
+          <Home size={16} /> Go Home
         </Link>
       </div>
     </div>

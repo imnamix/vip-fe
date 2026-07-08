@@ -4,6 +4,7 @@ import { useDispatch, useSelector } from 'react-redux';
 import { AdminThemeContext } from '../context/AdminThemeContext';
 import { clearAuth } from '../store/slice/PermissionSlice';
 import { usePermission } from '../hooks/usePermission';
+import { menuItems } from '../config/navConfig';
 import type { AppDispatch, RootState } from '../store/Store';
 import {
   LayoutDashboard, Users, MessageSquare, Calendar,
@@ -11,19 +12,6 @@ import {
   LogOut, ChevronDown, User, X, Sun, Moon, Hash, Settings, ExternalLink,
   Home, Info, Wrench, Image, Star, HelpCircle, Video, Phone,
 } from 'lucide-react';
-
-const menuItems = [
-  { label: 'Dashboard',         path: '/admin',                   icon: LayoutDashboard, module: 'Dashboard'        },
-  { label: 'Inquiries',         path: '/admin/inquiries',         icon: MessageSquare,   module: 'Inquiry'          },
-  { label: 'General Inquiries', path: '/admin/general-inquiries', icon: MessageSquare,   module: 'General Inquiry'  },
-  { label: 'Events',            path: '/admin/events',            icon: Calendar,        module: 'Events'           },
-  { label: 'Top VIP Numbers',   path: '/admin/vip-numbers',       icon: Hash,            module: 'Top VIP Numbers'  },
-  { label: 'Content',           path: '/admin/content',           icon: FileText,        module: 'Content'     },
-  { label: 'Roles',             path: '/admin/roles',             icon: Shield,          module: 'Roles'       },
-  { label: 'Users',             path: '/admin/users',             icon: Users,           module: 'Users'       },
-  { label: 'Delivery',          path: '/admin/delivery',          icon: Truck,           module: 'Delivery'    },
-  { label: 'Settings',          path: '/admin/settings',          icon: Settings,        module: 'Settings'    },
-];
 
 const SEARCH_MODULES = [
   /* ── Top-level Modules ── */

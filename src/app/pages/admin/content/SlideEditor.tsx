@@ -4,9 +4,9 @@ import type { Slide } from './types';
 import { uploadFiles } from '../../../services/MediaService';
 import ImagePreviewPopup from '../../../components/ImagePreviewPopup';
 
-interface Props { slides: Slide[]; setSlides: (s: Slide[]) => void; label?: string; showErrors?: boolean; canWrite?: boolean; canDelete?: boolean }
+interface Props { slides: Slide[]; setSlides: (s: Slide[]) => void; label?: string; showErrors?: boolean; canWrite?: boolean; canDelete?: boolean; recommendedSize?: string }
 
-export default function SlideEditor({ slides, setSlides, label = 'Slide', showErrors = false, canWrite = true, canDelete = true }: Props) {
+export default function SlideEditor({ slides, setSlides, label = 'Slide', showErrors = false, canWrite = true, canDelete = true, recommendedSize = '1024 x 438 px' }: Props) {
   const [uploadingId, setUploadingId] = useState<number | null>(null);
     const [preview, setPreview] = useState<{
       url: string;
@@ -109,7 +109,7 @@ export default function SlideEditor({ slides, setSlides, label = 'Slide', showEr
                       <span className={`text-xs font-medium ${showErrors ? "text-red-500" : "text-[#D32F2F]"}`}>
                         {uploadingId === slide.id ? "Uploading…" : "Upload Background Image"}
                       </span>
-                      <span className="text-xs text-[#9E9E9E]">Recommended: 1024 x 600 px</span>
+                      <span className="text-xs text-[#9E9E9E]">Recommended: {recommendedSize}</span>
                       <input
                         type="file"
                         accept="image/*"

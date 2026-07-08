@@ -4,6 +4,7 @@ import { useDispatch } from 'react-redux';
 import { Hash, Eye, EyeOff, LogIn, Shield, Mail, KeyRound, RotateCcw, CheckCircle2, ArrowLeft } from 'lucide-react';
 import { LoginPage, ForgetPasswordOTP, verifyOtp, ResetPassword } from '../../services/LoginService';
 import { setAuth } from '../../store/slice/PermissionSlice';
+import { getLandingPath } from '../../config/navConfig';
 import type { AppDispatch } from '../../store/Store';
 
 type Step = 'login' | 'forgot' | 'verify' | 'reset';
@@ -56,7 +57,8 @@ export default function AdminLogin() {
 
   useEffect(() => {
     if (localStorage.getItem('token')) {
-      navigate('/admin', { replace: true });
+      const permissions = JSON.parse(localStorage.getItem('permissions') || '{}');
+      navigate(getLandingPath(permissions), { replace: true });
     }
   }, [navigate]);
 
@@ -102,14 +104,15 @@ export default function AdminLogin() {
       const res = await LoginPage({ email: loginEmail, password: loginPassword });
       const data = res.data;
       if (data?.success && data?.data?.accessToken) {
+        const permissions = data.data.permissions ?? {};
         dispatch(setAuth({
           accessToken: data.data.accessToken,
           refreshToken: data.data.refreshToken,
           user: data.data.user,
-          permissions: data.data.permissions ?? {},
+          permissions,
           permissionVersion: data.data.permissionVersion ?? null,
         }));
-        navigate('/admin');
+        navigate(getLandingPath(permissions));
       } else {
         setError(data?.message || 'Invalid credentials. Please try again.');
       }

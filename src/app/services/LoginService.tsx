@@ -18,6 +18,7 @@ export const LoginPage = async (payLoad: {
     throw error;
   }
 };
+
 export const ForgetPasswordOTP = async (payLoad: { email: string }) => {
   try {
     const response = await ApiRequest.post(URL.FORGETPASSWORD, payLoad);

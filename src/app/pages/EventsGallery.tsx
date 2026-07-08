@@ -17,6 +17,7 @@ import Masonry, { ResponsiveMasonry } from "react-responsive-masonry";
 import BannerCarousel from "../components/BannerCarousel";
 import { getAllEvents, getEventsByID } from "../services/EventsService";
 import { getAllGalleryItems } from "../services/GalleryService";
+import { registerForEvent } from "../services/EventRegistrationService";
 
 interface OutletCtx {
   openBooking: () => void;
@@ -130,7 +131,10 @@ export default function EventsGallery() {
   const [detailLoading, setDetailLoading] = useState(false);
   const [registered, setRegistered] = useState<number[]>([]);
   const [showRegister, setShowRegister] = useState(false);
-  const [regForm, setRegForm] = useState({ name: "", email: "", phone: "" });
+  const [regForm, setRegForm] = useState({ name: "", mobile: "", address: "" });
+  const [regErrors, setRegErrors] = useState<{ name?: string; mobile?: string }>({});
+  const [regSubmitting, setRegSubmitting] = useState(false);
+  const [regApiError, setRegApiError] = useState("");
 
   // Gallery
   const [galleryItems, setGalleryItems] = useState<GalleryItem[]>([]);
@@ -170,10 +174,38 @@ export default function EventsGallery() {
     setDetailLoading(false);
   };
 
-  const handleRegister = (e: React.FormEvent) => {
+  const handleRegister = async (e: React.FormEvent) => {
     e.preventDefault();
-    if (selectedEvent) setRegistered((p) => [...p, selectedEvent.id]);
-    setShowRegister(false);
+    if (!selectedEvent) return;
+
+    const errs: typeof regErrors = {};
+    if (!regForm.name.trim()) errs.name = "Name is required";
+    if (!regForm.mobile.trim()) errs.mobile = "Mobile number is required";
+    else if (!/^\d{10}$/.test(regForm.mobile.trim())) errs.mobile = "Enter a valid 10-digit mobile number";
+    if (errs.name || errs.mobile) { setRegErrors(errs); return; }
+
+    setRegErrors({});
+    setRegApiError("");
+    setRegSubmitting(true);
+    try {
+      const res = await registerForEvent({
+        eventId: selectedEvent.id,
+        name: regForm.name.trim(),
+        mobile: regForm.mobile.trim(),
+        address: regForm.address.trim() || undefined,
+      });
+      if (res?.success) {
+        setRegistered((p) => [...p, selectedEvent.id]);
+        setShowRegister(false);
+        setRegForm({ name: "", mobile: "", address: "" });
+      } else {
+        setRegApiError(res?.message || "Failed to register. Please try again.");
+      }
+    } catch {
+      setRegApiError("Failed to register. Please try again.");
+    } finally {
+      setRegSubmitting(false);
+    }
   };
 
   const formatFee = (fee) => {
@@ -509,7 +541,7 @@ export default function EventsGallery() {
                     You're Registered!
                   </div>
                   <div className="text-green-600 text-sm mt-1">
-                    Confirmation sent to your email & WhatsApp.
+                    Confirmation sent to your WhatsApp.
                   </div>
                 </div>
               ) : (
@@ -519,7 +551,7 @@ export default function EventsGallery() {
                   style={{ fontFamily: "Poppins, sans-serif" }}
                 >
                   Register Now
-                  {selectedEvent.fees ? ` — ${selectedEvent.fees}` : ""}
+                  {selectedEvent.fees ? ` — ${formatFee(selectedEvent.fees)}` : ""}
                 </button>
               )}
             </div>
@@ -744,38 +776,69 @@ export default function EventsGallery() {
               <div>
                 <span className="text-[#616161] text-xs">Fee</span>
                 <div className="font-bold text-[#D32F2F]">
-                  {selectedEvent.fees || "Free"}
+                  {formatFee(selectedEvent.fees)}
                 </div>
               </div>
             </div>
 
             <form onSubmit={handleRegister} className="space-y-3">
-              {[
-                ["Full Name", "name", "text"],
-                ["Email Address", "email", "email"],
-                ["Mobile Number", "phone", "tel"],
-              ].map(([label, key, type]) => (
-                <div key={key}>
-                  <label className="block text-xs font-semibold text-[#212121] mb-1">
-                    {label}
-                  </label>
-                  <input
-                    type={type}
-                    required
-                    value={regForm[key as keyof typeof regForm]}
-                    onChange={(e) =>
-                      setRegForm((f) => ({ ...f, [key]: e.target.value }))
-                    }
-                    className="w-full px-3 py-2.5 border border-gray-200 rounded-xl text-sm focus:outline-none focus:border-[#D32F2F] bg-gray-50"
-                  />
-                </div>
-              ))}
+              <div>
+                <label className="block text-xs font-semibold text-[#212121] mb-1">
+                  Full Name
+                </label>
+                <input
+                  type="text"
+                  value={regForm.name}
+                  onChange={(e) => {
+                    setRegForm((f) => ({ ...f, name: e.target.value }));
+                    if (regErrors.name) setRegErrors((er) => ({ ...er, name: undefined }));
+                  }}
+                  className={`w-full px-3 py-2.5 border rounded-xl text-sm focus:outline-none bg-gray-50 ${regErrors.name ? "border-red-400 focus:border-red-500" : "border-gray-200 focus:border-[#D32F2F]"}`}
+                />
+                {regErrors.name && <p className="text-xs text-red-500 mt-1">{regErrors.name}</p>}
+              </div>
+              <div>
+                <label className="block text-xs font-semibold text-[#212121] mb-1">
+                  Mobile Number
+                </label>
+                <input
+                  type="tel"
+                  inputMode="numeric"
+                  maxLength={10}
+                  value={regForm.mobile}
+                  onChange={(e) => {
+                    setRegForm((f) => ({ ...f, mobile: e.target.value.replace(/\D/g, "").slice(0, 10) }));
+                    if (regErrors.mobile) setRegErrors((er) => ({ ...er, mobile: undefined }));
+                  }}
+                  className={`w-full px-3 py-2.5 border rounded-xl text-sm focus:outline-none bg-gray-50 ${regErrors.mobile ? "border-red-400 focus:border-red-500" : "border-gray-200 focus:border-[#D32F2F]"}`}
+                />
+                {regErrors.mobile && <p className="text-xs text-red-500 mt-1">{regErrors.mobile}</p>}
+              </div>
+              <div>
+                <label className="block text-xs font-semibold text-[#212121] mb-1">
+                  Address <span className="text-gray-400 font-normal">(optional)</span>
+                </label>
+                <textarea
+                  rows={2}
+                  value={regForm.address}
+                  onChange={(e) => setRegForm((f) => ({ ...f, address: e.target.value }))}
+                  className="w-full px-3 py-2.5 border border-gray-200 rounded-xl text-sm focus:outline-none focus:border-[#D32F2F] bg-gray-50 resize-none"
+                />
+              </div>
+
+              {regApiError && (
+                <p className="text-xs text-red-600 bg-red-50 border border-red-200 rounded-xl px-3 py-2 text-center">
+                  {regApiError}
+                </p>
+              )}
+
               <button
                 type="submit"
-                className="w-full py-3 bg-[#D32F2F] text-white rounded-xl font-semibold hover:bg-[#B71C1C] transition-colors mt-2"
+                disabled={regSubmitting}
+                className="w-full py-3 bg-[#D32F2F] text-white rounded-xl font-semibold hover:bg-[#B71C1C] transition-colors mt-2 disabled:opacity-60"
                 style={{ fontFamily: "Poppins, sans-serif" }}
               >
-                Confirm Registration
+                {regSubmitting ? "Registering…" : "Confirm Registration"}
               </button>
             </form>
           </div>

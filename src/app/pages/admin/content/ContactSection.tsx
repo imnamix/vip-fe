@@ -161,7 +161,7 @@ function BannerSlideEditor({ slides, setSlidesFn, showErrors = false, canWrite =
                     <span className={`text-xs font-medium ${showErrors ? 'text-red-500' : 'text-[#D32F2F]'}`}>
                       {uploadingId === slide.id ? 'Uploading…' : 'Upload Banner Image'}
                     </span>
-                    <span className="text-xs text-[#9E9E9E]">Recommended: 1024 x 600 px</span>
+                    <span className="text-xs text-[#9E9E9E]">Recommended: 2048 x 410 px</span>
                     <input type="file" accept="image/*" className="hidden" onChange={handleImageUpload(slide.id)} disabled={uploadingId === slide.id} />
                   </label>
                   {showErrors && (

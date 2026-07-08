@@ -1,9 +1,11 @@
 import { useState, useEffect, useRef } from 'react';
 import { useNavigate } from 'react-router';
+import { useSelector } from 'react-redux';
 import * as XLSX from 'xlsx';
 import { Search, LayoutGrid, List, Eye, Edit, Clock, Plus, X, RefreshCw, ChevronLeft, ChevronRight, Download, CalendarDays, ChevronDown } from 'lucide-react';
 import { getAllEnquires, createInquiry, updateEnquiry, getStatusCounts } from '../../services/EnquiresService';
 import { usePermission } from '../../hooks/usePermission';
+import type { RootState } from '../../store/Store';
 
 type Status = 'Pending' | 'Number Suggested' | 'Number Confirmed' | 'Awaiting Payment' | 'Paid' | 'Dispatched' | 'Delivered';
 
@@ -133,6 +135,7 @@ function LeadFormModal({ initial, editId, existingActivityLog, onClose, onSaved 
   const [apiError, setApiError]   = useState('');
   const [loading, setLoading]     = useState(false);
   const isEdit                    = !!editId;
+  const currentUserName = useSelector((state: RootState) => state.permission.user?.name) || 'Admin';
 
   const set = (k: keyof typeof emptyForm) => (e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement | HTMLTextAreaElement>) => {
     setForm(p => ({ ...p, [k]: e.target.value }));
@@ -191,7 +194,7 @@ function LeadFormModal({ initial, editId, existingActivityLog, onClose, onSaved 
         activityLog = JSON.stringify([...prev, {
           date: nowLog(),
           action: `Number confirmed: ${form.vipNumber}`,
-          user: 'Admin',
+          user: currentUserName,
           status: 'Number Confirmed',
         }]);
       }

@@ -266,7 +266,7 @@ export default function Events() {
                 <div className="bg-green-50 border border-green-200 rounded-xl p-5 text-center">
                   <CheckCircle size={32} className="text-green-500 mx-auto mb-2" />
                   <h4 className="font-bold text-green-700 mb-1">Successfully Registered!</h4>
-                  <p className="text-green-600 text-sm">Confirmation sent to your email & WhatsApp.</p>
+                  <p className="text-green-600 text-sm">Confirmation sent to your WhatsApp.</p>
                 </div>
               ) : (
                 <form onSubmit={handleRegister}>

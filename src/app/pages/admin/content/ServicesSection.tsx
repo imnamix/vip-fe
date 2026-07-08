@@ -385,7 +385,7 @@ export default function ServicesSection() {
             <AlertCircle size={14} /> {bannerError}
           </div>
         )}
-        <SlideEditor slides={slides} setSlides={setSlides} label="Slide" showErrors={bannerSlideShowErrors} canWrite={canWrite} canDelete={canDelete} />
+        <SlideEditor slides={slides} setSlides={setSlides} label="Slide" showErrors={bannerSlideShowErrors} canWrite={canWrite} canDelete={canDelete} recommendedSize="2048 x 410 px" />
         <div className="flex items-center justify-end gap-3 pt-3 mt-3 border-t border-gray-100">
           {savedBanner && (
             <div className="flex items-center gap-1.5 text-green-600 text-sm font-medium">

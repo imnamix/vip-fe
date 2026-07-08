@@ -1,5 +1,6 @@
 import { useState, useEffect, useRef } from 'react';
 import { useParams, useNavigate } from 'react-router';
+import { useSelector } from 'react-redux';
 import {
   ChevronLeft, CheckCircle, Clock, Phone, MapPin, Hash, MessageSquare,
   Truck, Package, User, Plus, AlertCircle, Upload, X, ArrowRight,
@@ -8,6 +9,7 @@ import {
 import { useAdminTheme } from '../../context/AdminThemeContext';
 import { getEnquiryById, updateEnquiry } from '../../services/EnquiresService';
 import { uploadFiles } from '../../services/MediaService';
+import type { RootState } from '../../store/Store';
 
 type Status = 'Pending' | 'Number Suggested' | 'Number Confirmed' | 'Awaiting Payment' | 'Paid' | 'Dispatched' | 'Delivered' | 'Cancelled';
 
@@ -370,6 +372,7 @@ export default function InquiryDetail() {
   const navigate = useNavigate();
   const isDark   = useAdminTheme();
   const fileRef  = useRef<HTMLInputElement>(null);
+  const currentUserName = useSelector((state: RootState) => state.permission.user?.name) || 'Admin';
 
   const [enquiry,          setEnquiry]          = useState<any>(null);
   const [pageLoading,      setPageLoading]      = useState(true);
@@ -442,7 +445,9 @@ export default function InquiryDetail() {
 
   useEffect(() => { loadEnquiry(); }, [id]);
 
-  const currentIdx  = ALL_STATUSES.indexOf(status);
+  // Cancelled isn't a step in ALL_STATUSES — it replaces the final ("Delivered")
+  // slot in the stepper, so treat it as sitting at that last position.
+  const currentIdx  = status === 'Cancelled' ? ALL_STATUSES.length - 1 : ALL_STATUSES.indexOf(status);
   const mobile      = (enquiry?.mobile ?? '').replace(/\D/g, '');
   const location    = [enquiry?.district, enquiry?.state].filter(Boolean).join(', ') || '—';
   const fullAddress = [enquiry?.address, enquiry?.taluka, enquiry?.district, enquiry?.state, enquiry?.pinCode].filter(Boolean).join(', ');
@@ -464,7 +469,7 @@ export default function InquiryDetail() {
     else if (ns === 'Dispatched')            action = `Order dispatched — VIP number: ${nc || confirmedNumber}`;
     else if (ns === 'Delivered')             action = `Order delivered — VIP number ${confirmedNumber} activated`;
 
-    const newTl: TimelineEvent[] = [...timeline, { date: ts, action, user: 'Admin', status: ns }];
+    const newTl: TimelineEvent[] = [...timeline, { date: ts, action, user: currentUserName, status: ns }];
     try {
       setStatus(ns);
       setTimeline(newTl);
@@ -482,7 +487,7 @@ export default function InquiryDetail() {
   const handleSuggestSend = async (numbers: SuggestedNumber[]) => {
     const ts     = nowStr();
     const detail = numbers.map(n => `${n.number}${n.category ? ` (${n.category})` : ''}${n.price ? ` — ${n.price}` : ''}`).join(' | ');
-    const newTl: TimelineEvent[] = [...timeline, { date: ts, action: `Numbers suggested: ${detail}`, user: 'Admin', status: 'Number Suggested' }];
+    const newTl: TimelineEvent[] = [...timeline, { date: ts, action: `Numbers suggested: ${detail}`, user: currentUserName, status: 'Number Suggested' }];
     setSuggestedNumbers(numbers);
     setStatus('Number Suggested');
     setTimeline(newTl);
@@ -494,7 +499,7 @@ export default function InquiryDetail() {
     const addressChanged = fullAddress && info.address !== fullAddress;
     const newTl: TimelineEvent[] = [
       ...timeline,
-      { date: ts, action: `Order dispatched via ${info.partnerName} (${info.partnerMobile}) to ${info.address} — expected delivery ${info.expectedDeliveryDate}${addressChanged ? ' (delivery address updated)' : ''}`, user: 'Admin', status: 'Dispatched' },
+      { date: ts, action: `Order dispatched via ${info.partnerName} (${info.partnerMobile}) to ${info.address} — expected delivery ${info.expectedDeliveryDate}${addressChanged ? ' (delivery address updated)' : ''}`, user: currentUserName, status: 'Dispatched' },
     ];
     setStatus('Dispatched');
     setTimeline(newTl);
@@ -512,7 +517,7 @@ export default function InquiryDetail() {
   const handleUpdateVipNumber = async () => {
     if (!editVipVal.trim()) return;
     const ts   = nowStr();
-    const newTl: TimelineEvent[] = [...timeline, { date: ts, action: `Confirmed VIP number updated: ${confirmedNumber} → ${editVipVal}`, user: 'Admin' }];
+    const newTl: TimelineEvent[] = [...timeline, { date: ts, action: `Confirmed VIP number updated: ${confirmedNumber} → ${editVipVal}`, user: currentUserName }];
     setConfirmedNumber(editVipVal);
     setTimeline(newTl);
     setEditingVip(false); setEditVipVal('');
@@ -523,7 +528,7 @@ export default function InquiryDetail() {
     const text = newNote.trim();
     if (!text) return;
     const ts = nowStr();
-    const newNotes: Note[] = [...notes, { author: 'Admin', text, time: ts }];
+    const newNotes: Note[] = [...notes, { author: currentUserName, text, time: ts }];
     setNotes(newNotes);
     setNewNote('');
     await persist({ enquiryNotes: JSON.stringify(newNotes) });
@@ -545,7 +550,7 @@ export default function InquiryDetail() {
     if (!proofRef && !proofUrl) return;
     const ts    = nowStr();
     const parts = [proofRef && `Ref: ${proofRef}`, proofUrl && 'Proof document uploaded'].filter(Boolean).join(' · ');
-    const newTl: TimelineEvent[] = [...timeline, { date: ts, action: `Payment recorded — ${parts}`, user: 'Admin', status: 'Awaiting Payment' }];
+    const newTl: TimelineEvent[] = [...timeline, { date: ts, action: `Payment recorded — ${parts}`, user: currentUserName, status: 'Awaiting Payment' }];
     setPaymentProof({ ref: proofRef, url: proofUrl });
     setTimeline(newTl);
     setShowPaymentForm(false);
@@ -559,7 +564,7 @@ export default function InquiryDetail() {
     const ts   = nowStr();
     const newTl: TimelineEvent[] = [
       ...timeline,
-      { date: ts, action: `Numerologist commission (${enquiry?.numerologistRefName}) marked as ${pendingCommission ? 'Paid' : 'Not Paid'}`, user: 'Admin' },
+      { date: ts, action: `Numerologist commission (${enquiry?.numerologistRefName}) marked as ${pendingCommission ? 'Paid' : 'Not Paid'}`, user: currentUserName },
     ];
     setTimeline(newTl);
     await persist({ numerologistCommissionPaid: pendingCommission, activityLog: JSON.stringify(newTl) });
@@ -631,12 +636,16 @@ export default function InquiryDetail() {
         <p className="text-[10px] font-bold text-[#616161] dark:text-gray-500 uppercase tracking-widest mb-4">Customer Journey</p>
         <div className="flex items-start min-w-max gap-0">
           {ALL_STATUSES.map((s, idx) => {
-            const m      = STATUS_META[s];
+            // The final slot (normally "Delivered") shows "Cancelled" with a
+            // cross icon instead when the order was cancelled during delivery.
+            const isCancelledSlot = status === 'Cancelled' && idx === ALL_STATUSES.length - 1;
+            const displayStatus = isCancelledSlot ? 'Cancelled' : s;
+            const m      = STATUS_META[displayStatus];
             const Icon   = m.icon;
             const done   = idx < currentIdx;
             const active = idx === currentIdx;
             const future = idx > currentIdx;
-            const event  = timeline.find(t => t.status === s);
+            const event  = timeline.find(t => t.status === displayStatus);
 
             let dotStyle: React.CSSProperties = {};
             let dotClass = 'border-2 ';

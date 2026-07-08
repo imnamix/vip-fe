@@ -113,6 +113,7 @@ export default function EventBannerSlides() {
           setSlides={setSlides}
           label="Slide"
           showErrors={slideShowErrors}
+          recommendedSize="2048 x 410 px"
         />
       </div>
 

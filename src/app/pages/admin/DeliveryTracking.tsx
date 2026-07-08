@@ -1,9 +1,11 @@
 import { useState, useEffect, useRef } from 'react';
+import { useSelector } from 'react-redux';
 import {
   Truck, CheckCircle, XCircle, Search, Edit, X, ChevronLeft, ChevronRight, RefreshCw,
 } from 'lucide-react';
 import { getAllEnquires, updateEnquiry, getStatusCounts } from '../../services/EnquiresService';
 import { usePermission } from '../../hooks/usePermission';
+import type { RootState } from '../../store/Store';
 
 type DeliveryStatus = 'Dispatched' | 'Delivered' | 'Cancelled';
 const ALL_STATUS: DeliveryStatus[] = ['Dispatched', 'Delivered', 'Cancelled'];
@@ -119,6 +121,7 @@ function DeliveryEditPopup({ delivery, onClose, onSaved }: {
   const [saving,        setSaving]        = useState(false);
   const [fieldErrors,   setFieldErrors]   = useState<{ deliveredDate?: string; cancelReason?: string }>({});
   const [apiError,      setApiError]      = useState('');
+  const currentUserName = useSelector((state: RootState) => state.permission.user?.name) || 'Admin';
 
   const clearFieldError = (field: 'deliveredDate' | 'cancelReason') =>
     setFieldErrors(fe => (fe[field] ? { ...fe, [field]: undefined } : fe));
@@ -155,14 +158,14 @@ function DeliveryEditPopup({ delivery, onClose, onSaved }: {
       if (notesChanged) parts.push('delivery notes updated');
 
       const newTimeline = parts.length
-        ? [...timeline, { date: nowStr(), action: parts.join(' · '), user: 'Admin', status }]
+        ? [...timeline, { date: nowStr(), action: parts.join(' · '), user: currentUserName, status }]
         : timeline;
 
       // Mirror the delivery note into the inquiry's general Notes panel so it shows up there too
       let generalNotes: any[] = [];
       if (delivery.enquiryNotes) { try { generalNotes = JSON.parse(delivery.enquiryNotes); } catch {} }
       const newGeneralNotes = notesChanged && notes.trim()
-        ? [...generalNotes, { author: 'Admin (Delivery)', text: notes.trim(), time: nowStr() }]
+        ? [...generalNotes, { author: `${currentUserName} (Delivery)`, text: notes.trim(), time: nowStr() }]
         : generalNotes;
 
       await updateEnquiry(delivery.id, {
