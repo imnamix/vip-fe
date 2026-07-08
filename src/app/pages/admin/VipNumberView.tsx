@@ -42,6 +42,8 @@ function formatDate(d: string) {
   }
 }
 
+const cardCls = 'bg-white dark:bg-[#1a1d26] rounded-2xl border border-gray-100 dark:border-white/6';
+
 export default function VipNumberView() {
   const navigate = useNavigate();
   const { id } = useParams<{ id: string }>();
@@ -66,7 +68,7 @@ export default function VipNumberView() {
 
   if (loading) {
     return (
-      <div className="flex items-center justify-center py-24 text-[#616161] text-sm gap-2">
+      <div className="flex items-center justify-center py-24 text-[#616161] dark:text-gray-400 text-sm gap-2">
         <Loader2 size={16} className="animate-spin" /> Loading…
       </div>
     );
@@ -74,7 +76,7 @@ export default function VipNumberView() {
 
   if (error || !item) {
     return (
-      <div className="flex flex-col items-center gap-3 py-24 text-[#616161]">
+      <div className="flex flex-col items-center gap-3 py-24 text-[#616161] dark:text-gray-400">
         <AlertCircle size={28} className="text-red-400" />
         <p className="text-sm">{error ?? 'VIP number not found.'}</p>
         <button
@@ -93,32 +95,32 @@ export default function VipNumberView() {
       <button
         type="button"
         onClick={() => navigate('/admin/vip-numbers')}
-        className="flex items-center gap-1.5 text-[#616161] hover:text-[#D32F2F] text-sm font-medium mb-3 transition-colors"
+        className="flex items-center gap-1.5 text-[#616161] dark:text-gray-400 hover:text-[#D32F2F] text-sm font-medium mb-3 transition-colors"
       >
         <ChevronLeft size={15} /> Back to VIP Numbers
       </button>
 
       <div className="max-w-2xl mx-auto space-y-4">
         {/* Hero card */}
-        <div className="bg-white rounded-2xl border border-gray-100 p-6">
+        <div className={`${cardCls} p-6`}>
           <div className="flex items-start justify-between gap-4">
             <div className="flex items-center gap-4">
-              <div className="w-16 h-16 rounded-2xl bg-red-50 flex items-center justify-center text-[#D32F2F] flex-shrink-0">
+              <div className="w-16 h-16 rounded-2xl bg-red-50 dark:bg-red-900/20 flex items-center justify-center text-[#D32F2F] flex-shrink-0">
                 {renderIcon(item.icon, 28)}
               </div>
               <div>
                 <div className="flex items-center gap-2 mb-1">
-                  <h1 className="text-2xl font-bold text-[#212121] tracking-wide" style={{ fontFamily: 'Poppins, sans-serif' }}>
+                  <h1 className="text-2xl font-bold text-[#212121] dark:text-white tracking-wide" style={{ fontFamily: 'Poppins, sans-serif' }}>
                     {item.vipNumber || '—'}
                   </h1>
                   <span className={`px-2.5 py-0.5 rounded-lg text-xs font-semibold ${
-                    item.status === 1 ? 'bg-green-100 text-green-700' : 'bg-gray-100 text-gray-500'
+                    item.status === 1 ? 'bg-green-100 dark:bg-green-900/20 text-green-700 dark:text-green-400' : 'bg-gray-100 dark:bg-white/10 text-gray-500 dark:text-gray-400'
                   }`}>
                     {item.status === 1 ? 'Active' : 'Inactive'}
                   </span>
                 </div>
                 {item.category && (
-                  <span className="px-2.5 py-1 rounded-lg bg-amber-50 text-amber-700 text-xs font-semibold">
+                  <span className="px-2.5 py-1 rounded-lg bg-amber-50 dark:bg-amber-900/20 text-amber-700 dark:text-amber-400 text-xs font-semibold">
                     {item.category}
                   </span>
                 )}
@@ -126,7 +128,7 @@ export default function VipNumberView() {
             </div>
             <button
               onClick={() => navigate(`/admin/vip-numbers/${item.id}/edit`)}
-              className="flex items-center gap-1.5 px-4 py-2 border border-gray-200 text-[#616161] rounded-xl text-sm font-semibold hover:border-[#D32F2F] hover:text-[#D32F2F] transition-colors flex-shrink-0"
+              className="flex items-center gap-1.5 px-4 py-2 border border-gray-200 dark:border-white/10 text-[#616161] dark:text-gray-400 rounded-xl text-sm font-semibold hover:border-[#D32F2F] hover:text-[#D32F2F] transition-colors flex-shrink-0"
             >
               <Edit size={13} /> Edit
             </button>
@@ -135,93 +137,93 @@ export default function VipNumberView() {
 
         {/* Info grid */}
         <div className="grid grid-cols-2 gap-4">
-          <div className="bg-white rounded-2xl border border-gray-100 p-5 flex items-start gap-3">
-            <div className="w-9 h-9 rounded-xl bg-blue-50 flex items-center justify-center flex-shrink-0">
-              <Hash size={16} className="text-blue-600" />
+          <div className={`${cardCls} p-5 flex items-start gap-3`}>
+            <div className="w-9 h-9 rounded-xl bg-blue-50 dark:bg-blue-900/20 flex items-center justify-center flex-shrink-0">
+              <Hash size={16} className="text-blue-600 dark:text-blue-400" />
             </div>
             <div>
-              <div className="text-xs text-[#9E9E9E] font-medium mb-0.5">VIP Number</div>
-              <div className="text-base font-bold text-[#212121] tracking-wide">{item.vipNumber || '—'}</div>
+              <div className="text-xs text-[#9E9E9E] dark:text-gray-500 font-medium mb-0.5">VIP Number</div>
+              <div className="text-base font-bold text-[#212121] dark:text-white tracking-wide">{item.vipNumber || '—'}</div>
             </div>
           </div>
 
-          <div className="bg-white rounded-2xl border border-gray-100 p-5 flex items-start gap-3">
-            <div className="w-9 h-9 rounded-xl bg-amber-50 flex items-center justify-center flex-shrink-0">
-              <Tag size={16} className="text-amber-600" />
+          <div className={`${cardCls} p-5 flex items-start gap-3`}>
+            <div className="w-9 h-9 rounded-xl bg-amber-50 dark:bg-amber-900/20 flex items-center justify-center flex-shrink-0">
+              <Tag size={16} className="text-amber-600 dark:text-amber-400" />
             </div>
             <div>
-              <div className="text-xs text-[#9E9E9E] font-medium mb-0.5">Category</div>
-              <div className="text-base font-bold text-[#212121]">{item.category || '—'}</div>
+              <div className="text-xs text-[#9E9E9E] dark:text-gray-500 font-medium mb-0.5">Category</div>
+              <div className="text-base font-bold text-[#212121] dark:text-white">{item.category || '—'}</div>
             </div>
           </div>
 
-          <div className="bg-white rounded-2xl border border-gray-100 p-5 flex items-start gap-3">
-            <div className="w-9 h-9 rounded-xl bg-green-50 flex items-center justify-center flex-shrink-0">
-              <IndianRupee size={16} className="text-green-600" />
+          <div className={`${cardCls} p-5 flex items-start gap-3`}>
+            <div className="w-9 h-9 rounded-xl bg-green-50 dark:bg-green-900/20 flex items-center justify-center flex-shrink-0">
+              <IndianRupee size={16} className="text-green-600 dark:text-green-400" />
             </div>
             <div>
-              <div className="text-xs text-[#9E9E9E] font-medium mb-0.5">Price</div>
-              <div className="text-2xl font-bold text-[#212121]">
+              <div className="text-xs text-[#9E9E9E] dark:text-gray-500 font-medium mb-0.5">Price</div>
+              <div className="text-2xl font-bold text-[#212121] dark:text-white">
                 {item.price != null ? `₹${Number(item.price).toLocaleString('en-IN')}` : '—'}
               </div>
             </div>
           </div>
 
-          <div className="bg-white rounded-2xl border border-gray-100 p-5 flex items-start gap-3">
-            <div className="w-9 h-9 rounded-xl bg-[#FFF8E1] flex items-center justify-center flex-shrink-0">
+          <div className={`${cardCls} p-5 flex items-start gap-3`}>
+            <div className="w-9 h-9 rounded-xl bg-[#FFF8E1] dark:bg-yellow-900/20 flex items-center justify-center flex-shrink-0">
               <Star size={16} className="text-[#D32F2F]" />
             </div>
             <div>
-              <div className="text-xs text-[#9E9E9E] font-medium mb-0.5">Rating Score</div>
+              <div className="text-xs text-[#9E9E9E] dark:text-gray-500 font-medium mb-0.5">Rating Score</div>
               <div className="text-2xl font-bold text-[#D32F2F]" style={{ fontFamily: 'Poppins, sans-serif' }}>
                 {item.rating != null ? (
-                  <>{parseFloat(Number(item.rating).toFixed(1))}<span className="text-base text-[#9E9E9E] font-normal">/10</span></>
+                  <>{parseFloat(Number(item.rating).toFixed(1))}<span className="text-base text-[#9E9E9E] dark:text-gray-500 font-normal">/10</span></>
                 ) : '—'}
               </div>
             </div>
           </div>
 
-          <div className="bg-white rounded-2xl border border-gray-100 p-5 flex items-start gap-3">
-            <div className="w-9 h-9 rounded-xl bg-purple-50 flex items-center justify-center flex-shrink-0">
-              <Hash size={16} className="text-purple-600" />
+          <div className={`${cardCls} p-5 flex items-start gap-3`}>
+            <div className="w-9 h-9 rounded-xl bg-purple-50 dark:bg-purple-900/20 flex items-center justify-center flex-shrink-0">
+              <Hash size={16} className="text-purple-600 dark:text-purple-400" />
             </div>
             <div>
-              <div className="text-xs text-[#9E9E9E] font-medium mb-0.5">Numerology Score</div>
-              <div className="text-base font-bold text-[#212121]">{item.numerologyScore || '—'}</div>
+              <div className="text-xs text-[#9E9E9E] dark:text-gray-500 font-medium mb-0.5">Numerology Score</div>
+              <div className="text-base font-bold text-[#212121] dark:text-white">{item.numerologyScore || '—'}</div>
             </div>
           </div>
         </div>
 
         {/* Description */}
         {item.description && (
-          <div className="bg-white rounded-2xl border border-gray-100 p-5">
-            <h2 className="text-sm font-bold text-[#212121] mb-3" style={{ fontFamily: 'Poppins, sans-serif' }}>
+          <div className={`${cardCls} p-5`}>
+            <h2 className="text-sm font-bold text-[#212121] dark:text-white mb-3" style={{ fontFamily: 'Poppins, sans-serif' }}>
               Description
             </h2>
             <div
-              className="prose prose-sm max-w-none text-[#616161]"
+              className="prose prose-sm dark:prose-invert max-w-none text-[#616161] dark:text-gray-400"
               dangerouslySetInnerHTML={{ __html: item.description }}
             />
           </div>
         )}
 
         {/* Metadata */}
-        <div className="bg-white rounded-2xl border border-gray-100 p-5">
-          <h2 className="text-sm font-bold text-[#212121] mb-3" style={{ fontFamily: 'Poppins, sans-serif' }}>
+        <div className={`${cardCls} p-5`}>
+          <h2 className="text-sm font-bold text-[#212121] dark:text-white mb-3" style={{ fontFamily: 'Poppins, sans-serif' }}>
             Details
           </h2>
           <div className="space-y-2 text-sm">
-            <div className="flex items-center justify-between py-2 border-b border-gray-50">
-              <span className="text-[#9E9E9E]">ID</span>
-              <span className="text-[#212121] font-medium">#{item.id}</span>
+            <div className="flex items-center justify-between py-2 border-b border-gray-50 dark:border-white/5">
+              <span className="text-[#9E9E9E] dark:text-gray-500">ID</span>
+              <span className="text-[#212121] dark:text-white font-medium">#{item.id}</span>
             </div>
-            <div className="flex items-center justify-between py-2 border-b border-gray-50">
-              <span className="text-[#9E9E9E]">Created</span>
-              <span className="text-[#212121]">{formatDate(item.created_at)}</span>
+            <div className="flex items-center justify-between py-2 border-b border-gray-50 dark:border-white/5">
+              <span className="text-[#9E9E9E] dark:text-gray-500">Created</span>
+              <span className="text-[#212121] dark:text-white">{formatDate(item.created_at)}</span>
             </div>
             <div className="flex items-center justify-between py-2">
-              <span className="text-[#9E9E9E]">Last updated</span>
-              <span className="text-[#212121]">{formatDate(item.updated_at)}</span>
+              <span className="text-[#9E9E9E] dark:text-gray-500">Last updated</span>
+              <span className="text-[#212121] dark:text-white">{formatDate(item.updated_at)}</span>
             </div>
           </div>
         </div>

@@ -73,14 +73,19 @@ export default function Contact() {
   const addressString = addressLines.join(', ');
   const embedUrl = toEmbedUrl(contact.googleMapLink, addressString || undefined);
 
-  const cards = [
+  const cards: {
+    icon: typeof Phone; title: string; color: string; bg: string;
+    lines: string[]; hrefType?: 'tel' | 'mailto';
+  }[] = [
     {
       icon: Phone, title: 'Call Us', color: '#D32F2F', bg: '#FFF8E1',
       lines: [contact.contactNumber, contact.whatsappNumber].filter(Boolean),
+      hrefType: 'tel',
     },
     {
       icon: Mail, title: 'Email Us', color: '#FBC02D', bg: '#FFFDE7',
       lines: [contact.officeEmail, contact.alternateOfficeEmail].filter(Boolean),
+      hrefType: 'mailto',
     },
     {
       icon: MapPin, title: 'Visit Us', color: '#4CAF50', bg: '#E8F5E9',
@@ -119,14 +124,26 @@ export default function Contact() {
       <section className="py-16 bg-[#FFF8E1]">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
           <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6">
-            {cards.map(({ icon: Icon, title, color, bg, lines }) => (
+            {cards.map(({ icon: Icon, title, color, bg, lines, hrefType }) => (
               <div key={title} className="bg-white rounded-2xl p-6 text-center hover:shadow-lg transition-shadow">
                 <div className="w-14 h-14 rounded-2xl flex items-center justify-center mx-auto mb-4" style={{ backgroundColor: bg }}>
                   <Icon size={26} style={{ color }} />
                 </div>
                 <h3 className="font-bold text-[#212121] mb-2" style={{ fontFamily: 'Poppins, sans-serif' }}>{title}</h3>
                 {lines.length > 0
-                  ? lines.map((l, i) => <p key={i} className="text-[#616161] text-sm">{l}</p>)
+                  ? lines.map((l, i) =>
+                      hrefType ? (
+                        <a
+                          key={i}
+                          href={hrefType === 'tel' ? `tel:${l.replace(/[^+\d]/g, '')}` : `mailto:${l}`}
+                          className="block text-[#616161] text-sm hover:text-[#D32F2F] transition-colors"
+                        >
+                          {l}
+                        </a>
+                      ) : (
+                        <p key={i} className="text-[#616161] text-sm">{l}</p>
+                      ),
+                    )
                   : <p className="text-[#9E9E9E] text-sm italic">Not available</p>
                 }
               </div>

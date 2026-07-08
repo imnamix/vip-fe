@@ -5,6 +5,7 @@ import { Menu, X, Phone, Mail, MapPin, Facebook, Instagram, Youtube, Twitter, Li
 import BookingModal from './BookingModal';
 import { fetchBrandInfo } from '../store/slice/BrandInfoSlice';
 import { fetchContact } from '../store/slice/ContactSlice';
+import { getAllServices } from '../services/ServicesService';
 import type { RootState, AppDispatch } from '../store/Store';
 import type { Address, SocialLinks } from '../store/slice/ContactSlice';
 
@@ -18,7 +19,18 @@ const navLinks = [
 
 const quickLinks = [
   ...navLinks,
+  { label: 'Terms & Conditions', path: '/terms-and-conditions' },
+  { label: 'Privacy Policy', path: '/privacy-policy' },
   { label: 'Admin', path: '/admin/login' },
+];
+
+const FALLBACK_FOOTER_SERVICES = [
+  'VIP Number Booking',
+  'Mobile Numerology',
+  'Business Numerology',
+  'Name Correction',
+  'Consultation',
+  'Premium Suggestions',
 ];
 
 const socialConfig: { key: keyof SocialLinks; Icon: React.ElementType }[] = [
@@ -50,6 +62,7 @@ export default function Layout() {
 
   const { data: brand, initialized: brandInit } = useSelector((state: RootState) => state.brandInfo);
   const { data: contact, initialized: contactInit } = useSelector((state: RootState) => state.contact);
+  const [footerServices, setFooterServices] = useState<{ id: number; title: string }[]>([]);
 
   useEffect(() => {
     window.scrollTo(0, 0);
@@ -62,6 +75,17 @@ export default function Layout() {
   useEffect(() => {
     if (!contactInit) dispatch(fetchContact());
   }, [dispatch, contactInit]);
+
+  useEffect(() => {
+    getAllServices(0, 6)
+      .then((res) => {
+        const svcs: any[] = res?.data ?? [];
+        if (svcs.length) {
+          setFooterServices(svcs.map((s) => ({ id: s.id, title: s.title ?? '' })));
+        }
+      })
+      .catch(() => {});
+  }, []);
 
   const isActive = (path: string) =>
     path === '/' ? location.pathname === '/' : location.pathname.startsWith(path);
@@ -209,8 +233,18 @@ export default function Layout() {
             <div>
               <h4 className="font-bold text-white mb-4 text-sm" style={{ fontFamily: 'Poppins, sans-serif' }}>Services</h4>
               <ul className="space-y-2 text-sm text-gray-400">
-                {['VIP Number Booking', 'Mobile Numerology', 'Business Numerology', 'Name Correction', 'Consultation', 'Premium Suggestions'].map(s => (
-                  <li key={s}><Link to="/services" className="hover:text-[#FBC02D] transition-colors">{s}</Link></li>
+                {(footerServices.length > 0
+                  ? footerServices
+                  : FALLBACK_FOOTER_SERVICES.map(title => ({ id: null, title }))
+                ).map((s, i) => (
+                  <li key={s.id ?? i}>
+                    <Link
+                      to={s.id != null ? `/services?service=${s.id}` : '/services'}
+                      className="hover:text-[#FBC02D] transition-colors"
+                    >
+                      {s.title}
+                    </Link>
+                  </li>
                 ))}
               </ul>
             </div>

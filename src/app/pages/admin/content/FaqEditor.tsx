@@ -14,23 +14,23 @@ export default function FaqEditor({ items, setItems }: Props) {
   return (
     <div className="space-y-4">
       {items.map((faq, idx) => (
-        <div key={faq.id} className="border border-gray-200 rounded-xl p-4">
+        <div key={faq.id} className="border border-gray-200 dark:border-white/10 rounded-xl p-4">
           <div className="flex justify-between items-center mb-3">
-            <span className="text-sm font-semibold text-[#212121]">FAQ {idx + 1}</span>
-            <button onClick={() => remove(faq.id)} className="p-1.5 text-[#D32F2F] hover:bg-red-50 rounded-lg transition-colors">
+            <span className="text-sm font-semibold text-[#212121] dark:text-white">FAQ {idx + 1}</span>
+            <button onClick={() => remove(faq.id)} className="p-1.5 text-[#D32F2F] hover:bg-red-50 dark:hover:bg-red-900/20 rounded-lg transition-colors">
               <Trash2 size={13} />
             </button>
           </div>
           <div className="space-y-2">
             <input value={faq.question} onChange={e => update(faq.id, 'question', e.target.value)} placeholder="Question"
-              className="w-full px-3 py-2 border border-gray-200 rounded-xl text-sm focus:outline-none focus:border-[#D32F2F]" />
+              className="w-full px-3 py-2 border border-gray-200 dark:border-white/10 rounded-xl text-sm focus:outline-none focus:border-[#D32F2F] bg-white dark:bg-white/5 text-[#212121] dark:text-white placeholder:text-gray-400 dark:placeholder:text-gray-500" />
             <textarea value={faq.answer} onChange={e => update(faq.id, 'answer', e.target.value)} rows={2} placeholder="Answer"
-              className="w-full px-3 py-2 border border-gray-200 rounded-xl text-sm focus:outline-none focus:border-[#D32F2F] resize-none" />
+              className="w-full px-3 py-2 border border-gray-200 dark:border-white/10 rounded-xl text-sm focus:outline-none focus:border-[#D32F2F] resize-none bg-white dark:bg-white/5 text-[#212121] dark:text-white placeholder:text-gray-400 dark:placeholder:text-gray-500" />
           </div>
         </div>
       ))}
       <button onClick={add}
-        className="w-full py-3 border-2 border-dashed border-[#D32F2F]/40 text-[#D32F2F] rounded-xl text-sm font-medium hover:border-[#D32F2F] hover:bg-red-50 transition-colors flex items-center justify-center gap-2">
+        className="w-full py-3 border-2 border-dashed border-[#D32F2F]/40 text-[#D32F2F] rounded-xl text-sm font-medium hover:border-[#D32F2F] hover:bg-red-50 dark:hover:bg-red-900/10 transition-colors flex items-center justify-center gap-2">
         <Plus size={14} /> Add FAQ
       </button>
     </div>

@@ -5,22 +5,24 @@ import * as XLSX from 'xlsx';
 import { Search, LayoutGrid, List, Eye, Edit, Clock, Plus, X, RefreshCw, ChevronLeft, ChevronRight, Download, CalendarDays, ChevronDown } from 'lucide-react';
 import { getAllEnquires, createInquiry, updateEnquiry, getStatusCounts } from '../../services/EnquiresService';
 import { usePermission } from '../../hooks/usePermission';
+import { useAdminTheme } from '../../context/AdminThemeContext';
 import type { RootState } from '../../store/Store';
 
 type Status = 'Pending' | 'Number Suggested' | 'Number Confirmed' | 'Awaiting Payment' | 'Paid' | 'Dispatched' | 'Delivered';
 
 const STATUSES: Status[] = ['Pending', 'Number Suggested', 'Number Confirmed', 'Awaiting Payment', 'Paid', 'Dispatched', 'Delivered'];
 
-const STATUS_COLORS: Record<string, { bg: string; text: string; border: string; activeBg: string }> = {
-  'Pending':           { bg: '#FFF3E0', text: '#FF9800',  border: '#FFE0B2', activeBg: '#FF9800'  },
-  'Number Suggested':  { bg: '#E3F2FD', text: '#2196F3',  border: '#BBDEFB', activeBg: '#2196F3'  },
-  'Number Confirmed':  { bg: '#E8F5E9', text: '#4CAF50',  border: '#C8E6C9', activeBg: '#4CAF50'  },
-  'Awaiting Payment':  { bg: '#FFF8E1', text: '#FBC02D',  border: '#FFF9C4', activeBg: '#FBC02D'  },
-  'Paid':              { bg: '#E0F2F1', text: '#009688',  border: '#B2DFDB', activeBg: '#009688'  },
-  'Dispatched':        { bg: '#F3E5F5', text: '#9C27B0',  border: '#E1BEE7', activeBg: '#9C27B0'  },
-  'Delivered':         { bg: '#E8F5E9', text: '#388E3C',  border: '#C8E6C9', activeBg: '#388E3C'  },
-  'Cancelled':         { bg: '#FFEBEE', text: '#D32F2F',  border: '#FFCDD2', activeBg: '#D32F2F'  },
+const STATUS_COLORS: Record<string, { bg: string; text: string; border: string; activeBg: string; darkBg: string; darkBorder: string; darkText: string }> = {
+  'Pending':           { bg: '#FFF3E0', text: '#FF9800',  border: '#FFE0B2', activeBg: '#FF9800',  darkBg: 'rgba(255,152,0,0.12)',  darkBorder: 'rgba(255,152,0,0.3)',  darkText: '#FFAD42' },
+  'Number Suggested':  { bg: '#E3F2FD', text: '#2196F3',  border: '#BBDEFB', activeBg: '#2196F3',  darkBg: 'rgba(33,150,243,0.12)', darkBorder: 'rgba(33,150,243,0.3)', darkText: '#64B5F6' },
+  'Number Confirmed':  { bg: '#E8F5E9', text: '#4CAF50',  border: '#C8E6C9', activeBg: '#4CAF50',  darkBg: 'rgba(76,175,80,0.12)',  darkBorder: 'rgba(76,175,80,0.3)',  darkText: '#81C784' },
+  'Awaiting Payment':  { bg: '#FFF8E1', text: '#FBC02D',  border: '#FFF9C4', activeBg: '#FBC02D',  darkBg: 'rgba(251,192,45,0.12)', darkBorder: 'rgba(251,192,45,0.3)', darkText: '#FFD54F' },
+  'Paid':              { bg: '#E0F2F1', text: '#009688',  border: '#B2DFDB', activeBg: '#009688',  darkBg: 'rgba(0,150,136,0.12)',  darkBorder: 'rgba(0,150,136,0.3)',  darkText: '#4DB6AC' },
+  'Dispatched':        { bg: '#F3E5F5', text: '#9C27B0',  border: '#E1BEE7', activeBg: '#9C27B0',  darkBg: 'rgba(156,39,176,0.12)', darkBorder: 'rgba(156,39,176,0.3)', darkText: '#CE93D8' },
+  'Delivered':         { bg: '#E8F5E9', text: '#388E3C',  border: '#C8E6C9', activeBg: '#388E3C',  darkBg: 'rgba(56,142,60,0.12)',  darkBorder: 'rgba(56,142,60,0.3)',  darkText: '#A5D6A7' },
+  'Cancelled':         { bg: '#FFEBEE', text: '#D32F2F',  border: '#FFCDD2', activeBg: '#D32F2F',  darkBg: 'rgba(211,47,47,0.12)',  darkBorder: 'rgba(211,47,47,0.3)',  darkText: '#EF9A9A' },
 };
+const FALLBACK_STATUS_COLOR = { bg: '#F5F5F5', text: '#757575', border: '#E0E0E0', darkBg: 'rgba(255,255,255,0.08)', darkBorder: 'rgba(255,255,255,0.15)', darkText: '#9CA3AF' };
 
 const SOURCE_OPTIONS = ['Website', 'WhatsApp', 'Referral', 'Event', 'Social Media', 'Cold Call', 'Walk-in', 'Other'];
 
@@ -35,8 +37,8 @@ const INDIAN_STATES = [
 
 const LIMIT = 10;
 
-const inp = 'w-full px-3 py-2 border border-gray-200 rounded-xl text-sm focus:outline-none focus:border-[#D32F2F] bg-gray-50';
-const lbl = 'block text-xs font-semibold text-[#212121] mb-1';
+const inp = 'w-full px-3 py-2 border border-gray-200 dark:border-white/10 rounded-xl text-sm focus:outline-none focus:border-[#D32F2F] bg-gray-50 dark:bg-white/5 text-[#212121] dark:text-white placeholder:text-gray-400 dark:placeholder:text-gray-500';
+const lbl = 'block text-xs font-semibold text-[#212121] dark:text-gray-300 mb-1';
 
 const emptyForm = {
   inquiryType:          'customer',
@@ -144,12 +146,12 @@ function LeadFormModal({ initial, editId, existingActivityLog, onClose, onSaved 
 
   /* Red border + bg when field has an error */
   const fi = (k: string) => fieldErrors[k]
-    ? 'w-full px-3 py-2 border-2 border-red-400 rounded-xl text-sm focus:outline-none focus:border-red-500 bg-red-50/60'
+    ? 'w-full px-3 py-2 border-2 border-red-400 dark:border-red-500/60 rounded-xl text-sm focus:outline-none focus:border-red-500 bg-red-50/60 dark:bg-red-900/20 text-[#212121] dark:text-white'
     : inp;
 
   /* Small inline error message */
   const FE = ({ k }: { k: string }) =>
-    fieldErrors[k] ? <p className="text-xs text-red-500 mt-1 font-medium">{fieldErrors[k]}</p> : null;
+    fieldErrors[k] ? <p className="text-xs text-red-500 dark:text-red-400 mt-1 font-medium">{fieldErrors[k]}</p> : null;
 
   const handleSave = async () => {
     const errs: Record<string, string> = {};
@@ -231,7 +233,7 @@ function LeadFormModal({ initial, editId, existingActivityLog, onClose, onSaved 
       onClick={onClose}
     >
       <div
-        className="bg-white rounded-2xl max-w-lg w-full my-4 shadow-2xl overflow-hidden"
+        className="bg-white dark:bg-[#1e2133] rounded-2xl max-w-lg w-full my-4 shadow-2xl dark:shadow-black/50 overflow-hidden"
         onClick={(e) => e.stopPropagation()}
       >
         {/* ── Gradient Header ── */}
@@ -260,20 +262,20 @@ function LeadFormModal({ initial, editId, existingActivityLog, onClose, onSaved 
 
           {/* ── Inquiry Type ── */}
           <div>
-            <span className={secLbl + ' text-[#9E9E9E]'}>Inquiry Type</span>
+            <span className={secLbl + ' text-[#9E9E9E] dark:text-gray-500'}>Inquiry Type</span>
             <div className="flex gap-3">
               {(['customer', 'numerologist'] as const).map(t => (
-                <label key={t} className={`flex-1 flex items-center gap-2 px-3 py-2.5 rounded-xl border-2 cursor-pointer transition-all ${form.inquiryType === t ? 'border-[#D32F2F] bg-red-50' : 'border-gray-200 hover:border-gray-300'}`}>
+                <label key={t} className={`flex-1 flex items-center gap-2 px-3 py-2.5 rounded-xl border-2 cursor-pointer transition-all ${form.inquiryType === t ? 'border-[#D32F2F] bg-red-50 dark:bg-red-900/20' : 'border-gray-200 dark:border-white/10 hover:border-gray-300 dark:hover:border-white/20'}`}>
                   <input type="radio" name="inquiryType" value={t} checked={form.inquiryType === t} onChange={() => setForm(p => ({ ...p, inquiryType: t }))} className="accent-[#D32F2F]" />
-                  <span className="text-sm font-medium capitalize text-[#212121]">{t}</span>
+                  <span className="text-sm font-medium capitalize text-[#212121] dark:text-gray-200">{t}</span>
                 </label>
               ))}
             </div>
           </div>
 
           {/* ── Contact Details ── */}
-          <div className={cardCls + ' bg-blue-50/40 border-blue-100'}>
-            <span className={secLbl + ' text-blue-600'}>
+          <div className={cardCls + ' bg-blue-50/40 dark:bg-blue-900/10 border-blue-100 dark:border-blue-500/20'}>
+            <span className={secLbl + ' text-blue-600 dark:text-blue-400'}>
               {form.inquiryType === 'customer' ? 'Customer Details' : 'Numerologist Details'}
             </span>
 
@@ -351,8 +353,8 @@ function LeadFormModal({ initial, editId, existingActivityLog, onClose, onSaved 
           </div>
 
           {/* ── Requirements ── */}
-          <div className={cardCls + ' bg-amber-50/40 border-amber-100'}>
-            <span className={secLbl + ' text-amber-600'}>Requirements</span>
+          <div className={cardCls + ' bg-amber-50/40 dark:bg-amber-900/10 border-amber-100 dark:border-amber-500/20'}>
+            <span className={secLbl + ' text-amber-600 dark:text-amber-400'}>Requirements</span>
 
             {/* VIP Number */}
             <div className="pb-1">
@@ -369,14 +371,14 @@ function LeadFormModal({ initial, editId, existingActivityLog, onClose, onSaved 
                       }))}
                       className="accent-[#D32F2F] w-4 h-4"
                     />
-                    <span className="text-sm font-medium capitalize text-[#212121]">{v}</span>
+                    <span className="text-sm font-medium capitalize text-[#212121] dark:text-gray-200">{v}</span>
                   </label>
                 ))}
               </div>
             </div>
 
             {form.isVipNumber === 'yes' && (
-              <div className="bg-green-50 rounded-xl p-3 border border-green-100">
+              <div className="bg-green-50 dark:bg-green-900/10 rounded-xl p-3 border border-green-100 dark:border-green-500/20">
                 <label className={lbl}>Enter VIP Number *</label>
                 <input
                   type="text" value={form.vipNumber} onChange={set('vipNumber')}
@@ -385,7 +387,7 @@ function LeadFormModal({ initial, editId, existingActivityLog, onClose, onSaved 
                 />
                 <FE k="vipNumber" />
                 {!fieldErrors.vipNumber && (
-                  <p className="text-xs text-green-700 mt-2 font-medium">Status will be auto-set to <strong>Number Confirmed</strong></p>
+                  <p className="text-xs text-green-700 dark:text-green-400 mt-2 font-medium">Status will be auto-set to <strong>Number Confirmed</strong></p>
                 )}
               </div>
             )}
@@ -403,7 +405,7 @@ function LeadFormModal({ initial, editId, existingActivityLog, onClose, onSaved 
                         onChange={() => setForm(p => ({ ...p, hasNumerologistRef: v, numerologistRefName: '', numerologistRefMobile: '' }))}
                         className="accent-[#D32F2F] w-4 h-4"
                       />
-                      <span className="text-sm font-medium capitalize text-[#212121]">{v}</span>
+                      <span className="text-sm font-medium capitalize text-[#212121] dark:text-gray-200">{v}</span>
                     </label>
                   ))}
                 </div>
@@ -451,8 +453,8 @@ function LeadFormModal({ initial, editId, existingActivityLog, onClose, onSaved 
           </div>
 
           {/* ── Source & Status ── */}
-          <div className={cardCls + ' bg-gray-50 border-gray-100'}>
-            <span className={secLbl + ' text-[#9E9E9E]'}>Source & Status</span>
+          <div className={cardCls + ' bg-gray-50 dark:bg-white/5 border-gray-100 dark:border-white/10'}>
+            <span className={secLbl + ' text-[#9E9E9E] dark:text-gray-500'}>Source & Status</span>
             <div className="grid grid-cols-2 gap-3">
               <div>
                 <label className={lbl}>Source *</label>
@@ -472,14 +474,14 @@ function LeadFormModal({ initial, editId, existingActivityLog, onClose, onSaved 
           </div>
 
           {apiError && (
-            <p className="text-red-500 text-xs text-center bg-red-50 py-2 px-3 rounded-xl border border-red-100">
+            <p className="text-red-500 dark:text-red-400 text-xs text-center bg-red-50 dark:bg-red-900/15 py-2 px-3 rounded-xl border border-red-100 dark:border-red-500/25">
               {apiError}
             </p>
           )}
         </div>
 
-        <div className="px-6 py-4 border-t border-gray-100 flex gap-3">
-          <button onClick={onClose} className="flex-1 py-2.5 border-2 border-gray-200 text-[#616161] rounded-xl text-sm font-semibold hover:border-[#D32F2F] hover:text-[#D32F2F] transition-colors">
+        <div className="px-6 py-4 border-t border-gray-100 dark:border-white/10 flex gap-3">
+          <button onClick={onClose} className="flex-1 py-2.5 border-2 border-gray-200 dark:border-white/10 text-[#616161] dark:text-gray-400 rounded-xl text-sm font-semibold hover:border-[#D32F2F] hover:text-[#D32F2F] transition-colors">
             Cancel
           </button>
           <button onClick={handleSave} disabled={loading} className="flex-1 py-2.5 bg-gradient-to-r from-[#D32F2F] to-[#B71C1C] text-white rounded-xl text-sm font-semibold hover:from-[#B71C1C] hover:to-[#C62828] disabled:opacity-50 transition-all shadow-sm">
@@ -493,10 +495,13 @@ function LeadFormModal({ initial, editId, existingActivityLog, onClose, onSaved 
 
 /* ── Status Badge ──────────────────────────────────────────────────────── */
 function StatusBadge({ status }: { status: string }) {
-  const c = STATUS_COLORS[status] ?? { bg: '#F5F5F5', text: '#757575', border: '#E0E0E0' };
+  const isDark = useAdminTheme();
+  const c = STATUS_COLORS[status] ?? FALLBACK_STATUS_COLOR;
   return (
     <span className="text-xs px-2 py-0.5 rounded-full font-medium whitespace-nowrap border"
-      style={{ background: c.bg, color: c.text, borderColor: c.border }}>
+      style={isDark
+        ? { background: c.darkBg, color: c.darkText, borderColor: c.darkBorder }
+        : { background: c.bg, color: c.text, borderColor: c.border }}>
       {status || 'Pending'}
     </span>
   );
@@ -523,33 +528,33 @@ function Pagination({ page, total, limit, onChange }: {
   if (totalPages <= 1) return null;
 
   return (
-    <div className="px-4 py-3 flex flex-wrap items-center justify-between gap-3 border-t border-gray-100">
-      <span className="text-xs text-[#616161]">
+    <div className="px-4 py-3 flex flex-wrap items-center justify-between gap-3 border-t border-gray-100 dark:border-white/10">
+      <span className="text-xs text-[#616161] dark:text-gray-400">
         {total === 0
           ? '0 results'
           : `${(page - 1) * limit + 1}–${Math.min(page * limit, total)} of ${total}`}
       </span>
       <div className="flex items-center gap-1.5">
         <button onClick={() => onChange(page - 1)} disabled={page === 1}
-          className="w-8 h-8 rounded-lg border border-gray-200 flex items-center justify-center disabled:opacity-40 hover:border-[#D32F2F] transition-colors">
+          className="w-8 h-8 rounded-lg border border-gray-200 dark:border-white/10 flex items-center justify-center disabled:opacity-40 hover:border-[#D32F2F] transition-colors">
           <ChevronLeft size={13} />
         </button>
         {getPageNumbers(page, totalPages).map((p, idx) =>
           p === '...' ? (
-            <span key={`ellipsis-${idx}`} className="w-8 h-8 flex items-center justify-center text-xs text-[#9E9E9E]">…</span>
+            <span key={`ellipsis-${idx}`} className="w-8 h-8 flex items-center justify-center text-xs text-[#9E9E9E] dark:text-gray-600">…</span>
           ) : (
             <button key={p} onClick={() => onChange(p as number)}
               className={`w-8 h-8 rounded-lg text-xs font-medium transition-colors ${
                 page === p
                   ? 'bg-[#D32F2F] text-white'
-                  : 'border border-gray-200 hover:border-[#D32F2F] text-[#616161]'
+                  : 'border border-gray-200 dark:border-white/10 hover:border-[#D32F2F] text-[#616161] dark:text-gray-400'
               }`}>
               {p}
             </button>
           )
         )}
         <button onClick={() => onChange(page + 1)} disabled={page === totalPages || totalPages === 0}
-          className="w-8 h-8 rounded-lg border border-gray-200 flex items-center justify-center disabled:opacity-40 hover:border-[#D32F2F] transition-colors">
+          className="w-8 h-8 rounded-lg border border-gray-200 dark:border-white/10 flex items-center justify-center disabled:opacity-40 hover:border-[#D32F2F] transition-colors">
           <ChevronRight size={13} />
         </button>
       </div>
@@ -578,6 +583,7 @@ export default function Inquiries() {
   const dateMenuRef = useRef<HTMLDivElement>(null);
   const navigate    = useNavigate();
   const { can }     = usePermission();
+  const isDark      = useAdminTheme();
   const canView     = can('Inquiry', 'read');
   const canEdit     = can('Inquiry', 'update');
   const showActions = canView || canEdit;
@@ -740,12 +746,12 @@ export default function Inquiries() {
       <div className="flex items-center justify-between mb-5 flex-wrap gap-3">
         <div>
           <h1
-            className="text-2xl font-bold text-[#212121]"
+            className="text-2xl font-bold text-[#212121] dark:text-white"
             style={{ fontFamily: "Poppins, sans-serif" }}
           >
             Inquiries
           </h1>
-          <p className="text-[#616161] text-sm">
+          <p className="text-[#616161] dark:text-gray-400 text-sm">
             {loading
               ? "Loading…"
               : `${total} ${activeStatus ? `"${activeStatus}"` : "total"} inquiries`}
@@ -755,19 +761,19 @@ export default function Inquiries() {
           <div className="relative">
             <Search
               size={15}
-              className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400"
+              className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400 dark:text-gray-500"
             />
             <input
               type="text"
               placeholder="Search name, mobile number..."
               value={search}
               onChange={(e) => handleSearchChange(e.target.value)}
-              className="pl-8 pr-4 py-2 border border-gray-200 rounded-xl text-sm focus:outline-none focus:border-[#D32F2F] w-78"
+              className="pl-8 pr-4 py-2 border border-gray-200 dark:border-white/10 rounded-xl text-sm focus:outline-none focus:border-[#D32F2F] w-78 bg-white dark:bg-white/5 text-[#212121] dark:text-white placeholder:text-gray-400 dark:placeholder:text-gray-500"
             />
             {search && (
               <button
                 onClick={() => handleSearchChange("")}
-                className="absolute right-2.5 top-1/2 -translate-y-1/2 text-gray-400 hover:text-gray-600"
+                className="absolute right-2.5 top-1/2 -translate-y-1/2 text-gray-400 dark:text-gray-500 hover:text-gray-600 dark:hover:text-gray-300"
               >
                 <X size={12} />
               </button>
@@ -776,7 +782,7 @@ export default function Inquiries() {
           <button
             onClick={refresh}
             title="Refresh"
-            className="p-2 border border-gray-200 rounded-xl text-[#616161] hover:border-[#D32F2F] hover:text-[#D32F2F] transition-colors"
+            className="p-2 border border-gray-200 dark:border-white/10 rounded-xl text-[#616161] dark:text-gray-400 hover:border-[#D32F2F] hover:text-[#D32F2F] transition-colors"
           >
             <RefreshCw size={14} className={loading ? "animate-spin" : ""} />
           </button>
@@ -784,7 +790,7 @@ export default function Inquiries() {
             onClick={handleExportExcel}
             disabled={exporting}
             title="Download Excel"
-            className="flex items-center gap-2 px-3 py-2 border border-gray-200 rounded-xl text-sm font-semibold text-[#616161] hover:border-[#D32F2F] hover:text-[#D32F2F] transition-colors disabled:opacity-50"
+            className="flex items-center gap-2 px-3 py-2 border border-gray-200 dark:border-white/10 rounded-xl text-sm font-semibold text-[#616161] dark:text-gray-400 hover:border-[#D32F2F] hover:text-[#D32F2F] transition-colors disabled:opacity-50"
           >
             <Download size={14} className={exporting ? "animate-pulse" : ""} />
             {exporting ? "Exporting…" : "Excel"}
@@ -822,13 +828,13 @@ export default function Inquiries() {
           className={`flex items-center gap-1.5 px-3 py-1.5 rounded-xl text-xs font-semibold border transition-all ${
             activeStatus === null
               ? "bg-[#D32F2F] text-white border-[#D32F2F]"
-              : "bg-white text-[#616161] border-gray-200 hover:border-gray-400"
+              : "bg-white dark:bg-white/5 text-[#616161] dark:text-gray-400 border-gray-200 dark:border-white/10 hover:border-gray-400 dark:hover:border-white/20"
           }`}
         >
           All
           {statusCounts["All"] !== undefined && (
             <span
-              className={`font-bold px-1.5 py-0.5 rounded-full text-[10px] ${activeStatus === null ? "bg-white/20" : "bg-gray-100"}`}
+              className={`font-bold px-1.5 py-0.5 rounded-full text-[10px] ${activeStatus === null ? "bg-white/20" : "bg-gray-100 dark:bg-white/10"}`}
             >
               {statusCounts["All"]}
             </span>
@@ -853,13 +859,15 @@ export default function Inquiries() {
                       borderColor: c.activeBg,
                       color: "#fff",
                     }
-                  : { background: c.bg, color: c.text, borderColor: c.border }
+                  : isDark
+                    ? { background: c.darkBg, color: c.darkText, borderColor: c.darkBorder }
+                    : { background: c.bg, color: c.text, borderColor: c.border }
               }
             >
               {s}
               {count !== undefined && (
                 <span
-                  className={`font-bold px-1.5 py-0.5 rounded-full text-[10px] ${isActive ? "bg-white/25" : "bg-white/60"}`}
+                  className={`font-bold px-1.5 py-0.5 rounded-full text-[10px] ${isActive ? "bg-white/25" : isDark ? "bg-black/30" : "bg-white/60"}`}
                 >
                   {count}
                 </span>
@@ -875,7 +883,7 @@ export default function Inquiries() {
             className={`flex items-center gap-1.5 h-[34px] px-3 rounded-xl text-xs font-semibold border transition-all ${
               dateFilterKey
                 ? "bg-[#D32F2F] text-white border-[#D32F2F]"
-                : "bg-white text-[#616161] border-gray-200 hover:border-gray-400"
+                : "bg-white dark:bg-white/5 text-[#616161] dark:text-gray-400 border-gray-200 dark:border-white/10 hover:border-gray-400 dark:hover:border-white/20"
             }`}
           >
             <CalendarDays size={13} />
@@ -887,14 +895,14 @@ export default function Inquiries() {
             <button
               onClick={clearDateFilter}
               title="Clear date filter"
-              className="flex items-center justify-center h-[34px] w-[34px] rounded-xl border border-gray-200 text-[#616161] hover:border-[#D32F2F] hover:text-[#D32F2F] transition-colors"
+              className="flex items-center justify-center h-[34px] w-[34px] rounded-xl border border-gray-200 dark:border-white/10 text-[#616161] dark:text-gray-400 hover:border-[#D32F2F] hover:text-[#D32F2F] transition-colors"
             >
               <X size={13} />
             </button>
           )}
 
           {dateMenuOpen && (
-            <div className="absolute right-0 top-full mt-1 z-50 bg-white border border-gray-200 rounded-xl shadow-xl p-2 w-56">
+            <div className="absolute right-0 top-full mt-1 z-50 bg-white dark:bg-[#1e2133] border border-gray-200 dark:border-white/10 rounded-xl shadow-xl dark:shadow-black/50 p-2 w-56">
               {DATE_FILTER_OPTIONS.map(({ key, label }) => {
                 const isActive = dateFilterKey === key;
                 return (
@@ -903,8 +911,8 @@ export default function Inquiries() {
                     onClick={() => handleDateFilter(key)}
                     className={`w-full text-left px-3 py-2 rounded-lg text-xs font-semibold transition-colors ${
                       isActive
-                        ? "bg-red-50 text-[#D32F2F]"
-                        : "text-[#616161] hover:bg-gray-50"
+                        ? "bg-red-50 dark:bg-red-900/20 text-[#D32F2F]"
+                        : "text-[#616161] dark:text-gray-400 hover:bg-gray-50 dark:hover:bg-white/5"
                     }`}
                   >
                     {label}
@@ -913,25 +921,25 @@ export default function Inquiries() {
               })}
 
               {dateFilterKey === "custom" && (
-                <div className="mt-1 pt-2 border-t border-gray-100 space-y-2 px-1">
+                <div className="mt-1 pt-2 border-t border-gray-100 dark:border-white/10 space-y-2 px-1">
                   <div>
-                    <label className="block text-[10px] font-semibold text-[#9E9E9E] mb-1">Start date</label>
+                    <label className="block text-[10px] font-semibold text-[#9E9E9E] dark:text-gray-500 mb-1">Start date</label>
                     <input
                       type="date"
                       value={customStart}
                       max={customEnd || undefined}
                       onChange={(e) => handleCustomDateChange("start", e.target.value)}
-                      className="w-full px-2.5 py-1.5 border border-gray-200 rounded-lg text-xs focus:outline-none focus:border-[#D32F2F]"
+                      className="w-full px-2.5 py-1.5 border border-gray-200 dark:border-white/10 rounded-lg text-xs focus:outline-none focus:border-[#D32F2F] bg-white dark:bg-[#13151e] text-[#212121] dark:text-white"
                     />
                   </div>
                   <div>
-                    <label className="block text-[10px] font-semibold text-[#9E9E9E] mb-1">End date</label>
+                    <label className="block text-[10px] font-semibold text-[#9E9E9E] dark:text-gray-500 mb-1">End date</label>
                     <input
                       type="date"
                       value={customEnd}
                       min={customStart || undefined}
                       onChange={(e) => handleCustomDateChange("end", e.target.value)}
-                      className="w-full px-2.5 py-1.5 border border-gray-200 rounded-lg text-xs focus:outline-none focus:border-[#D32F2F]"
+                      className="w-full px-2.5 py-1.5 border border-gray-200 dark:border-white/10 rounded-lg text-xs focus:outline-none focus:border-[#D32F2F] bg-white dark:bg-[#13151e] text-[#212121] dark:text-white"
                     />
                   </div>
                 </div>
@@ -940,7 +948,7 @@ export default function Inquiries() {
               {dateFilterKey && (
                 <button
                   onClick={clearDateFilter}
-                  className="w-full flex items-center gap-1 mt-1 px-3 py-2 rounded-lg text-xs text-[#616161] hover:bg-gray-50 hover:text-[#D32F2F] border-t border-gray-100"
+                  className="w-full flex items-center gap-1 mt-1 px-3 py-2 rounded-lg text-xs text-[#616161] dark:text-gray-400 hover:bg-gray-50 dark:hover:bg-white/5 hover:text-[#D32F2F] border-t border-gray-100 dark:border-white/10"
                 >
                   <X size={10} /> Clear date filter
                 </button>
@@ -952,7 +960,7 @@ export default function Inquiries() {
 
       {/* Error banner */}
       {fetchError && (
-        <div className="bg-red-50 border border-red-200 rounded-2xl px-4 py-3 text-sm text-red-600 mb-4 flex items-center justify-between">
+        <div className="bg-red-50 dark:bg-red-900/15 border border-red-200 dark:border-red-500/25 rounded-2xl px-4 py-3 text-sm text-red-600 dark:text-red-400 mb-4 flex items-center justify-between">
           {fetchError}
           <button
             onClick={refresh}
@@ -965,16 +973,16 @@ export default function Inquiries() {
 
       {/* Loading skeleton */}
       {loading && (
-        <div className="bg-white rounded-2xl border border-gray-100 overflow-hidden">
+        <div className="bg-white dark:bg-[#1a1d26] rounded-2xl border border-gray-100 dark:border-white/6 overflow-hidden">
           {[...Array(LIMIT)].map((_, i) => (
             <div
               key={i}
-              className="flex items-center gap-4 px-4 py-3 border-b border-gray-50 last:border-0"
+              className="flex items-center gap-4 px-4 py-3 border-b border-gray-50 dark:border-white/5 last:border-0"
             >
-              <div className="w-6 h-3 bg-gray-100 rounded animate-pulse" />
-              <div className="w-32 h-3 bg-gray-100 rounded animate-pulse" />
-              <div className="w-24 h-3 bg-gray-100 rounded animate-pulse" />
-              <div className="w-20 h-3 bg-gray-100 rounded animate-pulse ml-auto" />
+              <div className="w-6 h-3 bg-gray-100 dark:bg-white/5 rounded animate-pulse" />
+              <div className="w-32 h-3 bg-gray-100 dark:bg-white/5 rounded animate-pulse" />
+              <div className="w-24 h-3 bg-gray-100 dark:bg-white/5 rounded animate-pulse" />
+              <div className="w-20 h-3 bg-gray-100 dark:bg-white/5 rounded animate-pulse ml-auto" />
             </div>
           ))}
         </div>
@@ -982,16 +990,16 @@ export default function Inquiries() {
 
       {/* ── Table ── */}
       {!loading && view === "table" && (
-        <div className="bg-white rounded-2xl border border-gray-100 overflow-hidden">
+        <div className="bg-white dark:bg-[#1a1d26] rounded-2xl border border-gray-100 dark:border-white/6 overflow-hidden">
           {leads.length === 0 ? (
-            <div className="text-center py-16 text-[#616161]">
-              <List size={28} className="text-gray-300 mx-auto mb-3" />
+            <div className="text-center py-16 text-[#616161] dark:text-gray-400">
+              <List size={28} className="text-gray-300 dark:text-gray-600 mx-auto mb-3" />
               <p className="font-medium text-sm">
                 {search || activeStatus
                   ? "No results found"
                   : "No inquiries yet"}
               </p>
-              <p className="text-xs text-gray-400 mt-1">
+              <p className="text-xs text-gray-400 dark:text-gray-600 mt-1">
                 {search || activeStatus
                   ? "Try a different search or filter."
                   : "Booking form submissions will appear here."}
@@ -1002,7 +1010,7 @@ export default function Inquiries() {
               <div className="overflow-x-auto">
                 <table className="w-full">
                   <thead>
-                    <tr className="bg-gray-50 border-b border-gray-100">
+                    <tr className="bg-gray-50 dark:bg-white/5 border-b border-gray-100 dark:border-white/10">
                       {[
                         "#",
                         "Name",
@@ -1016,7 +1024,7 @@ export default function Inquiries() {
                       ].map((h) => (
                         <th
                           key={h}
-                          className="text-left px-4 py-3 text-xs font-semibold text-[#616161] uppercase tracking-wider whitespace-nowrap"
+                          className="text-left px-4 py-3 text-xs font-semibold text-[#616161] dark:text-gray-400 uppercase tracking-wider whitespace-nowrap"
                         >
                           {h}
                         </th>
@@ -1038,7 +1046,7 @@ export default function Inquiries() {
                       return (
                         <tr
                           key={inq.id}
-                          className="border-b border-gray-50 hover:bg-gray-50 transition-colors"
+                          className="border-b border-gray-50 dark:border-white/5 hover:bg-gray-50 dark:hover:bg-white/5 transition-colors"
                         >
                           <td
                             className="px-4 py-3 text-xs font-mono font-semibold text-[#D32F2F] cursor-pointer"
@@ -1049,33 +1057,33 @@ export default function Inquiries() {
                             #{inq.id}
                           </td>
                           <td
-                            className="px-4 py-3 text-sm font-medium text-[#212121] whitespace-nowrap cursor-pointer"
+                            className="px-4 py-3 text-sm font-medium text-[#212121] dark:text-white whitespace-nowrap cursor-pointer"
                             onClick={() =>
                               navigate(`/admin/inquiries/${inq.id}`)
                             }
                           >
                             {inq.name || "—"}
                           </td>
-                          <td className="px-4 py-3 text-sm text-[#616161] whitespace-nowrap">
+                          <td className="px-4 py-3 text-sm text-[#616161] dark:text-gray-400 whitespace-nowrap">
                             {inq.mobile || "—"}
                           </td>
                           <td className="px-4 py-3">
                             <span
-                              className={`text-xs px-2 py-0.5 rounded-full font-medium capitalize ${inq.inquiryType === "numerologist" ? "bg-purple-50 text-purple-700" : "bg-blue-50 text-blue-700"}`}
+                              className={`text-xs px-2 py-0.5 rounded-full font-medium capitalize ${inq.inquiryType === "numerologist" ? "bg-purple-50 dark:bg-purple-900/20 text-purple-700 dark:text-purple-300" : "bg-blue-50 dark:bg-blue-900/20 text-blue-700 dark:text-blue-300"}`}
                             >
                               {inq.inquiryType || "customer"}
                             </span>
                           </td>
-                          <td className="px-4 py-3 text-sm text-[#616161] whitespace-nowrap">
+                          <td className="px-4 py-3 text-sm text-[#616161] dark:text-gray-400 whitespace-nowrap">
                             {location}
                           </td>
-                          <td className="px-4 py-3 text-xs text-[#616161] whitespace-nowrap">
+                          <td className="px-4 py-3 text-xs text-[#616161] dark:text-gray-400 whitespace-nowrap">
                             {inq.source || "—"}
                           </td>
                           <td className="px-4 py-3">
                             <StatusBadge status={inq.status || "Pending"} />
                           </td>
-                          <td className="px-4 py-3 text-xs text-[#616161] whitespace-nowrap">
+                          <td className="px-4 py-3 text-xs text-[#616161] dark:text-gray-400 whitespace-nowrap">
                             <span className="flex items-center gap-1">
                               <Clock size={10} />
                               {date}
@@ -1086,7 +1094,7 @@ export default function Inquiries() {
                               <div className="flex gap-1">
                                 {canView && (
                                   <button
-                                    className="p-1.5 text-blue-500 hover:bg-blue-50 rounded-lg"
+                                    className="p-1.5 text-blue-500 hover:bg-blue-50 dark:hover:bg-blue-900/20 rounded-lg"
                                     title="View"
                                     onClick={() =>
                                       navigate(`/admin/inquiries/${inq.id}`)
@@ -1097,7 +1105,7 @@ export default function Inquiries() {
                                 )}
                                 {canEdit && (
                                   <button
-                                    className="p-1.5 text-amber-500 hover:bg-amber-50 rounded-lg"
+                                    className="p-1.5 text-amber-500 hover:bg-amber-50 dark:hover:bg-amber-900/20 rounded-lg"
                                     title="Edit"
                                     onClick={() => openEdit(inq)}
                                   >
@@ -1134,14 +1142,14 @@ export default function Inquiries() {
               <div key={s} className="flex-shrink-0 w-60">
                 <div className="flex items-center justify-between mb-3">
                   <h3
-                    className="text-sm font-bold text-[#212121]"
+                    className="text-sm font-bold text-[#212121] dark:text-white"
                     style={{ fontFamily: "Poppins, sans-serif" }}
                   >
                     {s}
                   </h3>
                   <span
                     className="text-xs font-bold px-2 py-0.5 rounded-full"
-                    style={{ background: c.bg, color: c.text }}
+                    style={isDark ? { background: c.darkBg, color: c.darkText } : { background: c.bg, color: c.text }}
                   >
                     {statusCounts[s] ?? cards.length}
                   </span>
@@ -1157,7 +1165,7 @@ export default function Inquiries() {
                     return (
                       <div
                         key={inq.id}
-                        className="bg-white rounded-xl p-4 border border-gray-100 hover:shadow-md transition-shadow cursor-pointer"
+                        className="bg-white dark:bg-[#1a1d26] rounded-xl p-4 border border-gray-100 dark:border-white/6 hover:shadow-md dark:hover:shadow-black/30 transition-shadow cursor-pointer"
                         onClick={() => navigate(`/admin/inquiries/${inq.id}`)}
                       >
                         <div className="flex items-center justify-between mb-2">
@@ -1165,7 +1173,7 @@ export default function Inquiries() {
                             #{inq.id}
                           </span>
                           <button
-                            className="p-1 text-amber-400 hover:bg-amber-50 rounded"
+                            className="p-1 text-amber-400 hover:bg-amber-50 dark:hover:bg-amber-900/20 rounded"
                             onClick={(e) => {
                               e.stopPropagation();
                               openEdit(inq);
@@ -1174,30 +1182,30 @@ export default function Inquiries() {
                             <Edit size={11} />
                           </button>
                         </div>
-                        <div className="font-semibold text-[#212121] text-sm mb-0.5">
+                        <div className="font-semibold text-[#212121] dark:text-white text-sm mb-0.5">
                           {inq.name || "—"}
                         </div>
-                        <div className="text-xs text-[#616161] mb-1">
+                        <div className="text-xs text-[#616161] dark:text-gray-400 mb-1">
                           {[inq.district, inq.state]
                             .filter(Boolean)
                             .join(", ") || "—"}
                         </div>
-                        <div className="text-xs text-[#616161] mb-2">
+                        <div className="text-xs text-[#616161] dark:text-gray-400 mb-2">
                           {inq.mobile || ""}
                         </div>
                         {inq.source && (
-                          <div className="text-xs text-gray-400 mb-1">
+                          <div className="text-xs text-gray-400 dark:text-gray-600 mb-1">
                             via {inq.source}
                           </div>
                         )}
                         <div className="flex items-center justify-between mt-2">
                           <span
-                            className={`text-xs px-2 py-0.5 rounded-full font-medium capitalize ${inq.inquiryType === "numerologist" ? "bg-purple-50 text-purple-700" : "bg-blue-50 text-blue-700"}`}
+                            className={`text-xs px-2 py-0.5 rounded-full font-medium capitalize ${inq.inquiryType === "numerologist" ? "bg-purple-50 dark:bg-purple-900/20 text-purple-700 dark:text-purple-300" : "bg-blue-50 dark:bg-blue-900/20 text-blue-700 dark:text-blue-300"}`}
                           >
                             {inq.inquiryType || "customer"}
                           </span>
                           {date && (
-                            <span className="flex items-center gap-1 text-xs text-[#616161]">
+                            <span className="flex items-center gap-1 text-xs text-[#616161] dark:text-gray-400">
                               <Clock size={9} />
                               {date}
                             </span>
@@ -1207,7 +1215,7 @@ export default function Inquiries() {
                     );
                   })}
                   {cards.length === 0 && (
-                    <div className="bg-gray-50 rounded-xl p-4 text-center text-xs text-gray-400 border-2 border-dashed border-gray-200">
+                    <div className="bg-gray-50 dark:bg-white/5 rounded-xl p-4 text-center text-xs text-gray-400 dark:text-gray-600 border-2 border-dashed border-gray-200 dark:border-white/10">
                       No inquiries
                     </div>
                   )}

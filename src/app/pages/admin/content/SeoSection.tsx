@@ -15,17 +15,17 @@ export default function SeoSection({ seoPages, setSeoPages }: Props) {
   return (
     <div className="space-y-5">
       {seoPages.map((s, i) => (
-        <div key={s.page} className="border border-gray-200 rounded-xl p-5">
-          <h3 className="font-bold text-[#212121] mb-4 text-sm" style={{ fontFamily: 'Poppins, sans-serif' }}>{s.page}</h3>
+        <div key={s.page} className="border border-gray-200 dark:border-white/10 rounded-xl p-5">
+          <h3 className="font-bold text-[#212121] dark:text-white mb-4 text-sm" style={{ fontFamily: 'Poppins, sans-serif' }}>{s.page}</h3>
           <div className="space-y-3">
             {seoFields.map(([label, field]) => (
               <div key={field}>
-                <label className="block text-xs font-semibold text-[#616161] mb-1">{label}</label>
+                <label className="block text-xs font-semibold text-[#616161] dark:text-gray-400 mb-1">{label}</label>
                 {field === 'desc'
                   ? <textarea value={s[field]} onChange={e => update(i, field, e.target.value)} rows={2} placeholder={label}
-                      className="w-full px-3 py-2 border border-gray-200 rounded-xl text-sm focus:outline-none focus:border-[#D32F2F] resize-none" />
+                      className="w-full px-3 py-2 border border-gray-200 dark:border-white/10 rounded-xl text-sm focus:outline-none focus:border-[#D32F2F] resize-none bg-white dark:bg-white/5 text-[#212121] dark:text-white placeholder:text-gray-400 dark:placeholder:text-gray-500" />
                   : <input value={s[field]} onChange={e => update(i, field, e.target.value)} placeholder={label}
-                      className="w-full px-3 py-2 border border-gray-200 rounded-xl text-sm focus:outline-none focus:border-[#D32F2F]" />}
+                      className="w-full px-3 py-2 border border-gray-200 dark:border-white/10 rounded-xl text-sm focus:outline-none focus:border-[#D32F2F] bg-white dark:bg-white/5 text-[#212121] dark:text-white placeholder:text-gray-400 dark:placeholder:text-gray-500" />}
               </div>
             ))}
           </div>

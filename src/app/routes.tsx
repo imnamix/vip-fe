@@ -6,6 +6,8 @@ import About from './pages/About';
 import Services from './pages/Services';
 import EventsGallery from './pages/EventsGallery';
 import Contact from './pages/Contact';
+import TermsAndConditions from './pages/TermsAndConditions';
+import PrivacyPolicy from './pages/PrivacyPolicy';
 import AdminLogin from './pages/admin/AdminLogin';
 import Dashboard from './pages/admin/Dashboard';
 import Customers from './pages/admin/Customers';
@@ -45,6 +47,8 @@ export const router = createBrowserRouter([
       { path: 'services', Component: Services },
       { path: 'events-gallery', Component: EventsGallery },
       { path: 'contact', Component: Contact },
+      { path: 'terms-and-conditions', Component: TermsAndConditions },
+      { path: 'privacy-policy', Component: PrivacyPolicy },
     ],
   },
   { path: '/admin/login', Component: AdminLogin },

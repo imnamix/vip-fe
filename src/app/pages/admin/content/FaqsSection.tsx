@@ -146,7 +146,7 @@ export default function FaqsSection() {
 
   if (loading) {
     return (
-      <div className="flex items-center justify-center py-20 text-[#616161] text-sm gap-2">
+      <div className="flex items-center justify-center py-20 text-[#616161] dark:text-gray-400 text-sm gap-2">
         <Loader2 size={16} className="animate-spin" /> Loading FAQs…
       </div>
     );
@@ -155,16 +155,16 @@ export default function FaqsSection() {
   return (
     <div className="space-y-6">
       {error && (
-        <div className="flex items-center gap-2 px-4 py-3 bg-red-50 border border-red-200 rounded-xl text-sm text-red-600">
+        <div className="flex items-center gap-2 px-4 py-3 bg-red-50 dark:bg-red-900/15 border border-red-200 dark:border-red-500/25 rounded-xl text-sm text-red-600 dark:text-red-400">
           <AlertCircle size={14} /> {error}
         </div>
       )}
 
       <div className="space-y-4">
         {items.map((item, idx) => (
-          <div key={item.localId} className="border border-gray-200 rounded-xl">
+          <div key={item.localId} className="border border-gray-200 dark:border-white/10 rounded-xl">
             {/* ── Header ── */}
-            <div className={`flex items-center justify-between bg-gray-50 px-4 py-2.5 ${expandedIds.has(item.localId) ? 'rounded-t-xl' : 'rounded-xl'}`}>
+            <div className={`flex items-center justify-between bg-gray-50 dark:bg-white/5 px-4 py-2.5 ${expandedIds.has(item.localId) ? 'rounded-t-xl' : 'rounded-xl'}`}>
               <button
                 type="button"
                 onClick={() => toggleExpand(item.localId)}
@@ -172,12 +172,12 @@ export default function FaqsSection() {
               >
                 <ChevronDown
                   size={15}
-                  className={`text-[#616161] flex-shrink-0 transition-transform duration-200 ${expandedIds.has(item.localId) ? 'rotate-180' : ''}`}
+                  className={`text-[#616161] dark:text-gray-400 flex-shrink-0 transition-transform duration-200 ${expandedIds.has(item.localId) ? 'rotate-180' : ''}`}
                 />
                 <span className="flex-shrink-0 w-5 h-5 rounded-full bg-[#D32F2F] text-white text-[10px] font-bold flex items-center justify-center">
                   {idx + 1}
                 </span>
-                <span className="font-semibold text-[#212121] text-sm truncate">
+                <span className="font-semibold text-[#212121] dark:text-white text-sm truncate">
                   {item.question || `FAQ ${idx + 1}`}
                 </span>
                 {(fieldErrors[item.localId]?.question || fieldErrors[item.localId]?.answer) && (
@@ -188,7 +188,7 @@ export default function FaqsSection() {
                 <button
                   type="button"
                   onClick={() => toggleExpand(item.localId)}
-                  className="px-2.5 py-1 text-xs text-[#616161] border border-gray-200 rounded-lg hover:bg-white transition-colors"
+                  className="px-2.5 py-1 text-xs text-[#616161] dark:text-gray-400 border border-gray-200 dark:border-white/10 rounded-lg hover:bg-white dark:hover:bg-white/10 transition-colors"
                 >
                   {expandedIds.has(item.localId) ? 'Collapse' : 'Expand'}
                 </button>
@@ -196,7 +196,7 @@ export default function FaqsSection() {
                   <button
                     type="button"
                     onClick={() => removeItem(item.localId, item.serverId)}
-                    className="p-1.5 text-[#D32F2F] hover:bg-red-50 rounded-lg transition-colors"
+                    className="p-1.5 text-[#D32F2F] hover:bg-red-50 dark:hover:bg-red-900/20 rounded-lg transition-colors"
                   >
                     <Trash2 size={13} />
                   </button>
@@ -208,14 +208,14 @@ export default function FaqsSection() {
             {expandedIds.has(item.localId) && (
               <div className="p-4 space-y-3">
                 <div>
-                  <label className="block text-xs font-semibold text-[#616161] mb-1">
+                  <label className="block text-xs font-semibold text-[#616161] dark:text-gray-400 mb-1">
                     Question <span className="text-red-500">*</span>
                   </label>
                   <input
                     value={item.question}
                     onChange={e => updateItem(item.localId, 'question', e.target.value)}
                     placeholder="Enter the question"
-                    className={`w-full px-3 py-2 border rounded-xl text-sm focus:outline-none transition-colors ${fieldErrors[item.localId]?.question ? 'border-red-400 bg-red-50 focus:border-red-500' : 'border-gray-200 focus:border-[#D32F2F]'}`}
+                    className={`w-full px-3 py-2 border rounded-xl text-sm focus:outline-none transition-colors text-[#212121] dark:text-white placeholder:text-gray-400 dark:placeholder:text-gray-500 ${fieldErrors[item.localId]?.question ? 'border-red-400 dark:border-red-500/60 bg-red-50 dark:bg-red-900/20 focus:border-red-500' : 'border-gray-200 dark:border-white/10 bg-white dark:bg-white/5 focus:border-[#D32F2F]'}`}
                   />
                   {fieldErrors[item.localId]?.question && (
                     <p className="mt-1 text-xs text-red-500 flex items-center gap-1">
@@ -225,7 +225,7 @@ export default function FaqsSection() {
                 </div>
 
                 <div>
-                  <label className="block text-xs font-semibold text-[#616161] mb-1">
+                  <label className="block text-xs font-semibold text-[#616161] dark:text-gray-400 mb-1">
                     Answer <span className="text-red-500">*</span>
                   </label>
                   <textarea
@@ -233,7 +233,7 @@ export default function FaqsSection() {
                     onChange={e => updateItem(item.localId, 'answer', e.target.value)}
                     rows={4}
                     placeholder="Enter the answer"
-                    className={`w-full px-3 py-2 border rounded-xl text-sm focus:outline-none resize-none transition-colors ${fieldErrors[item.localId]?.answer ? 'border-red-400 bg-red-50 focus:border-red-500' : 'border-gray-200 focus:border-[#D32F2F]'}`}
+                    className={`w-full px-3 py-2 border rounded-xl text-sm focus:outline-none resize-none transition-colors text-[#212121] dark:text-white placeholder:text-gray-400 dark:placeholder:text-gray-500 ${fieldErrors[item.localId]?.answer ? 'border-red-400 dark:border-red-500/60 bg-red-50 dark:bg-red-900/20 focus:border-red-500' : 'border-gray-200 dark:border-white/10 bg-white dark:bg-white/5 focus:border-[#D32F2F]'}`}
                   />
                   {fieldErrors[item.localId]?.answer && (
                     <p className="mt-1 text-xs text-red-500 flex items-center gap-1">
@@ -250,7 +250,7 @@ export default function FaqsSection() {
           <button
             type="button"
             onClick={addItem}
-            className="w-full py-3 border-2 border-dashed border-[#D32F2F]/40 text-[#D32F2F] rounded-xl text-sm font-medium hover:border-[#D32F2F] hover:bg-red-50 transition-colors flex items-center justify-center gap-2"
+            className="w-full py-3 border-2 border-dashed border-[#D32F2F]/40 text-[#D32F2F] rounded-xl text-sm font-medium hover:border-[#D32F2F] hover:bg-red-50 dark:hover:bg-red-900/10 transition-colors flex items-center justify-center gap-2"
           >
             <Plus size={14} /> Add FAQ
           </button>
@@ -258,9 +258,9 @@ export default function FaqsSection() {
       </div>
 
       {/* Save */}
-      <div className="flex items-center justify-end gap-3 pt-2 border-t border-gray-100">
+      <div className="flex items-center justify-end gap-3 pt-2 border-t border-gray-100 dark:border-white/10">
         {saved && (
-          <div className="flex items-center gap-1.5 text-green-600 text-sm font-medium">
+          <div className="flex items-center gap-1.5 text-green-600 dark:text-green-400 text-sm font-medium">
             <CheckCircle size={14} /> Saved successfully
           </div>
         )}

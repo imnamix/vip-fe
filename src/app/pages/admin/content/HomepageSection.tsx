@@ -93,7 +93,7 @@ export default function HomepageSection() {
 
   if (loading) {
     return (
-      <div className="flex items-center justify-center py-20 text-[#616161] text-sm gap-2">
+      <div className="flex items-center justify-center py-20 text-[#616161] dark:text-gray-400 text-sm gap-2">
         <Loader2 size={16} className="animate-spin" /> Loading homepage data…
       </div>
     );
@@ -102,14 +102,14 @@ export default function HomepageSection() {
   return (
     <div className="space-y-6">
       {error && (
-        <div className="flex items-center gap-2 px-4 py-3 bg-red-50 border border-red-200 rounded-xl text-sm text-red-600">
+        <div className="flex items-center gap-2 px-4 py-3 bg-red-50 dark:bg-red-900/15 border border-red-200 dark:border-red-500/25 rounded-xl text-sm text-red-600 dark:text-red-400">
           <AlertCircle size={14} /> {error}
         </div>
       )}
 
       <div>
         <h3
-          className="font-bold text-[#212121] mb-4 text-sm"
+          className="font-bold text-[#212121] dark:text-white mb-4 text-sm"
           style={{ fontFamily: "Poppins, sans-serif" }}
         >
           Hero Banner Slides
@@ -119,7 +119,7 @@ export default function HomepageSection() {
 
       <div className="flex items-center justify-end gap-3 pt-2">
         {saved && (
-          <div className="flex items-center gap-1.5 text-green-600 text-sm font-medium">
+          <div className="flex items-center gap-1.5 text-green-600 dark:text-green-400 text-sm font-medium">
             <CheckCircle size={14} /> Saved successfully
           </div>
         )}

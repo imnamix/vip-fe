@@ -54,6 +54,12 @@ const QUILL_MODULES = {
   ],
 };
 
+const inputCls = "w-full px-3 py-2.5 border border-gray-200 dark:border-white/10 rounded-xl text-sm focus:outline-none focus:border-[#D32F2F] bg-white dark:bg-white/5 text-[#212121] dark:text-white placeholder:text-gray-400 dark:placeholder:text-gray-500";
+const errorInputCls = "w-full px-3 py-2.5 border rounded-xl text-sm focus:outline-none border-[#D32F2F] bg-red-50 dark:bg-red-900/20 focus:border-[#D32F2F] text-[#212121] dark:text-white";
+const labelCls = "block text-xs font-semibold text-[#616161] dark:text-gray-400 uppercase tracking-wider mb-1.5";
+const cardCls = "bg-white dark:bg-[#1a1d26] rounded-2xl border border-gray-100 dark:border-white/6 p-5";
+const cardTitleCls = "font-bold text-[#212121] dark:text-white mb-4 text-sm";
+
 export default function EventForm() {
   const { id } = useParams<{ id: string }>();
   const navigate = useNavigate();
@@ -255,7 +261,7 @@ export default function EventForm() {
 
   if (loading) {
     return (
-      <div className="flex items-center justify-center py-20 text-[#616161] text-sm gap-2">
+      <div className="flex items-center justify-center py-20 text-[#616161] dark:text-gray-400 text-sm gap-2">
         <Loader2 size={16} className="animate-spin" /> Loading event…
       </div>
     );
@@ -266,7 +272,7 @@ export default function EventForm() {
       <button
         type="button"
         onClick={() => navigate("/admin/events")}
-        className="flex items-center gap-1.5 text-[#616161] hover:text-[#D32F2F] text-sm font-medium mb-2 transition-colors"
+        className="flex items-center gap-1.5 text-[#616161] dark:text-gray-400 hover:text-[#D32F2F] text-sm font-medium mb-2 transition-colors"
       >
         <ChevronLeft size={15} /> Back to Events
       </button>
@@ -274,7 +280,7 @@ export default function EventForm() {
         {/* Header */}
         <div className="mb-5">
           <h1
-            className="text-xl font-bold text-[#212121]"
+            className="text-xl font-bold text-[#212121] dark:text-white"
             style={{ fontFamily: "Poppins, sans-serif" }}
           >
             {isEdit ? "Edit Event" : "Create Event"}
@@ -283,21 +289,18 @@ export default function EventForm() {
 
         <form onSubmit={handleSubmit} className="space-y-5">
           {/* ── Event Details ── */}
-          <div className="bg-white rounded-2xl border border-gray-100 p-5">
-            <h3
-              className="font-bold text-[#212121] mb-4 text-sm"
-              style={{ fontFamily: "Poppins, sans-serif" }}
-            >
+          <div className={cardCls}>
+            <h3 className={cardTitleCls} style={{ fontFamily: "Poppins, sans-serif" }}>
               Event Details
             </h3>
             <div className="space-y-4">
               {/* Event Image */}
               <div>
-                <label className="block text-xs font-semibold text-[#616161] uppercase tracking-wider mb-1.5">
+                <label className={labelCls}>
                   Event Image
                 </label>
                 {form.image ? (
-                  <div className="border border-gray-200 rounded-xl p-3">
+                  <div className="border border-gray-200 dark:border-white/10 rounded-xl p-3">
                     <div
                       className="relative group cursor-pointer"
                       onClick={() => setImgPreview(form.image)}
@@ -316,14 +319,14 @@ export default function EventForm() {
                     <button
                       type="button"
                       onClick={() => setField("image", "")}
-                      className="mt-2 flex items-center gap-1 px-3 py-1.5 text-xs text-red-600 border border-red-200 rounded-lg hover:bg-red-50 transition-colors"
+                      className="mt-2 flex items-center gap-1 px-3 py-1.5 text-xs text-red-600 dark:text-red-400 border border-red-200 dark:border-red-500/25 rounded-lg hover:bg-red-50 dark:hover:bg-red-900/20 transition-colors"
                     >
                       <Trash2 size={12} /> Remove
                     </button>
                   </div>
                 ) : (
                   <label
-                    className={`flex flex-col items-center gap-2 py-8 border-2 border-dashed rounded-xl cursor-pointer transition-colors ${uploadingImage ? "opacity-60 pointer-events-none border-gray-200" : "border-[#D32F2F]/40 hover:border-[#D32F2F] hover:bg-red-50"}`}
+                    className={`flex flex-col items-center gap-2 py-8 border-2 border-dashed rounded-xl cursor-pointer transition-colors ${uploadingImage ? "opacity-60 pointer-events-none border-gray-200 dark:border-white/10" : "border-[#D32F2F]/40 hover:border-[#D32F2F] hover:bg-red-50 dark:hover:bg-red-900/10"}`}
                   >
                     {uploadingImage ? (
                       <Loader2
@@ -336,7 +339,7 @@ export default function EventForm() {
                     <span className="text-xs text-[#D32F2F] font-medium">
                       {uploadingImage ? "Uploading…" : "Upload Event Image"}
                     </span>
-                    <span className="text-xs text-[#9E9E9E]">Recommended: 1024 x 600 px</span>
+                    <span className="text-xs text-[#9E9E9E] dark:text-gray-500">Recommended: 1024 x 600 px</span>
                     <input
                       type="file"
                       accept="image/*"
@@ -350,17 +353,17 @@ export default function EventForm() {
 
               {/* Title */}
               <div>
-                <label className="block text-xs font-semibold text-[#616161] uppercase tracking-wider mb-1.5">
+                <label className={labelCls}>
                   Title <span className="text-[#D32F2F]">*</span>
                 </label>
                 <input
                   value={form.title}
                   onChange={(e) => setField("title", e.target.value)}
                   placeholder="Event title"
-                  className={`w-full px-3 py-2.5 border rounded-xl text-sm focus:outline-none ${errors.title ? "border-[#D32F2F] bg-red-50 focus:border-[#D32F2F]" : "border-gray-200 focus:border-[#D32F2F]"}`}
+                  className={errors.title ? errorInputCls : inputCls}
                 />
                 {errors.title && (
-                  <p className="mt-1 text-xs text-red-500 flex items-center gap-1">
+                  <p className="mt-1 text-xs text-red-500 dark:text-red-400 flex items-center gap-1">
                     <AlertCircle size={11} /> {errors.title}
                   </p>
                 )}
@@ -368,10 +371,10 @@ export default function EventForm() {
 
               {/* Description */}
               <div>
-                <label className="block text-xs font-semibold text-[#616161] uppercase tracking-wider mb-1.5">
+                <label className={labelCls}>
                   Description
                 </label>
-                <div className="rounded-xl overflow-hidden border border-gray-200 [&_.ql-toolbar]:rounded-t-xl [&_.ql-toolbar]:bg-gray-50 [&_.ql-toolbar]:border-gray-200 [&_.ql-container]:rounded-b-xl [&_.ql-container]:border-gray-200 [&_.ql-editor]:min-h-[140px] [&_.ql-editor]:text-sm">
+                <div className="rounded-xl overflow-hidden border border-gray-200 dark:border-white/10 [&_.ql-toolbar]:rounded-t-xl [&_.ql-toolbar]:bg-gray-50 dark:[&_.ql-toolbar]:bg-white/5 [&_.ql-toolbar]:border-gray-200 dark:[&_.ql-toolbar]:border-white/10 [&_.ql-container]:rounded-b-xl [&_.ql-container]:border-gray-200 dark:[&_.ql-container]:border-white/10 [&_.ql-editor]:min-h-[140px] [&_.ql-editor]:text-sm dark:[&_.ql-editor]:bg-white/5 dark:[&_.ql-editor]:text-white dark:[&_.ql-editor.ql-blank::before]:text-gray-500 dark:[&_.ql-stroke]:stroke-gray-400 dark:[&_.ql-fill]:fill-gray-400 dark:[&_.ql-picker]:text-gray-400">
                   <ReactQuill
                     theme="snow"
                     value={form.description}
@@ -384,62 +387,62 @@ export default function EventForm() {
               {/* Date / Start Time / End Time */}
               <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
                 <div>
-                  <label className="block text-xs font-semibold text-[#616161] uppercase tracking-wider mb-1.5">
+                  <label className={labelCls}>
                     Date <span className="text-[#D32F2F]">*</span>
                   </label>
                   <input
                     type="date"
                     value={form.date}
                     onChange={(e) => setField("date", e.target.value)}
-                    className={`w-full px-3 py-2.5 border rounded-xl text-sm focus:outline-none ${errors.date ? "border-[#D32F2F] bg-red-50 focus:border-[#D32F2F]" : "border-gray-200 focus:border-[#D32F2F]"}`}
+                    className={errors.date ? errorInputCls : inputCls}
                   />
                   {errors.date && (
-                    <p className="mt-1 text-xs text-red-500 flex items-center gap-1">
+                    <p className="mt-1 text-xs text-red-500 dark:text-red-400 flex items-center gap-1">
                       <AlertCircle size={11} /> {errors.date}
                     </p>
                   )}
                 </div>
                 <div>
-                  <label className="block text-xs font-semibold text-[#616161] uppercase tracking-wider mb-1.5">
+                  <label className={labelCls}>
                     Start Time
                   </label>
                   <input
                     type="time"
                     value={form.startTime}
                     onChange={(e) => setField("startTime", e.target.value)}
-                    className="w-full px-3 py-2.5 border border-gray-200 rounded-xl text-sm focus:outline-none focus:border-[#D32F2F]"
+                    className={inputCls}
                   />
                 </div>
                 <div>
-                  <label className="block text-xs font-semibold text-[#616161] uppercase tracking-wider mb-1.5">
+                  <label className={labelCls}>
                     End Time
                   </label>
                   <input
                     type="time"
                     value={form.endTime}
                     onChange={(e) => setField("endTime", e.target.value)}
-                    className="w-full px-3 py-2.5 border border-gray-200 rounded-xl text-sm focus:outline-none focus:border-[#D32F2F]"
+                    className={inputCls}
                   />
                 </div>
               </div>
 
               {/* Venue */}
               <div>
-                <label className="block text-xs font-semibold text-[#616161] uppercase tracking-wider mb-1.5">
+                <label className={labelCls}>
                   Venue
                 </label>
                 <input
                   value={form.venue}
                   onChange={(e) => setField("venue", e.target.value)}
                   placeholder="Event venue or location"
-                  className="w-full px-3 py-2.5 border border-gray-200 rounded-xl text-sm focus:outline-none focus:border-[#D32F2F]"
+                  className={inputCls}
                 />
               </div>
 
               {/* Seats / Fees */}
               <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                 <div>
-                  <label className="block text-xs font-semibold text-[#616161] uppercase tracking-wider mb-1.5">
+                  <label className={labelCls}>
                     Seats
                   </label>
                   <input
@@ -448,18 +451,18 @@ export default function EventForm() {
                     value={form.seats}
                     onChange={(e) => setField("seats", e.target.value)}
                     placeholder="e.g. 200"
-                    className="w-full px-3 py-2.5 border border-gray-200 rounded-xl text-sm focus:outline-none focus:border-[#D32F2F]"
+                    className={inputCls}
                   />
                 </div>
                 <div>
-                  <label className="block text-xs font-semibold text-[#616161] uppercase tracking-wider mb-1.5">
+                  <label className={labelCls}>
                     Fees
                   </label>
                   <input
                     value={form.fees}
                     onChange={(e) => setField("fees", e.target.value)}
                     placeholder="e.g. ₹4999 or Free"
-                    className="w-full px-3 py-2.5 border border-gray-200 rounded-xl text-sm focus:outline-none focus:border-[#D32F2F]"
+                    className={inputCls}
                   />
                 </div>
               </div>
@@ -467,13 +470,13 @@ export default function EventForm() {
               {/* Status / Event Type */}
               <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                 <div>
-                  <label className="block text-xs font-semibold text-[#616161] uppercase tracking-wider mb-1.5">
+                  <label className={labelCls}>
                     Status
                   </label>
                   <select
                     value={form.status}
                     onChange={(e) => setField("status", e.target.value)}
-                    className="w-full px-3 py-2.5 border border-gray-200 rounded-xl text-sm focus:outline-none focus:border-[#D32F2F] bg-white"
+                    className={inputCls}
                   >
                     {STATUS_OPTIONS.map((s) => (
                       <option key={s}>{s}</option>
@@ -481,13 +484,13 @@ export default function EventForm() {
                   </select>
                 </div>
                 <div>
-                  <label className="block text-xs font-semibold text-[#616161] uppercase tracking-wider mb-1.5">
+                  <label className={labelCls}>
                     Event Type
                   </label>
                   <select
                     value={form.eventType}
                     onChange={(e) => setField("eventType", e.target.value)}
-                    className="w-full px-3 py-2.5 border border-gray-200 rounded-xl text-sm focus:outline-none focus:border-[#D32F2F] bg-white"
+                    className={inputCls}
                   >
                     <option value="">— Select type —</option>
                     {EVENT_TYPE_OPTIONS.map((t) => (
@@ -500,11 +503,8 @@ export default function EventForm() {
           </div>
 
           {/* ── Schedule ── */}
-          <div className="bg-white rounded-2xl border border-gray-100 p-5">
-            <h3
-              className="font-bold text-[#212121] mb-4 text-sm"
-              style={{ fontFamily: "Poppins, sans-serif" }}
-            >
+          <div className={cardCls}>
+            <h3 className={cardTitleCls} style={{ fontFamily: "Poppins, sans-serif" }}>
               Schedule
             </h3>
             <div className="space-y-3">
@@ -514,18 +514,18 @@ export default function EventForm() {
                     type="time"
                     value={s.time}
                     onChange={(e) => updateSchedule(i, "time", e.target.value)}
-                    className="w-28 flex-shrink-0 px-3 py-2 border border-gray-200 rounded-xl text-sm focus:outline-none focus:border-[#D32F2F]"
+                    className={`w-28 flex-shrink-0 ${inputCls} px-3 py-2`}
                   />
                   <input
                     value={s.title}
                     onChange={(e) => updateSchedule(i, "title", e.target.value)}
                     placeholder="Session title"
-                    className="flex-1 px-3 py-2 border border-gray-200 rounded-xl text-sm focus:outline-none focus:border-[#D32F2F]"
+                    className={`flex-1 ${inputCls} px-3 py-2`}
                   />
                   <button
                     type="button"
                     onClick={() => removeScheduleRow(i)}
-                    className="p-1.5 text-[#D32F2F] hover:bg-red-50 rounded-lg transition-colors flex-shrink-0"
+                    className="p-1.5 text-[#D32F2F] hover:bg-red-50 dark:hover:bg-red-900/20 rounded-lg transition-colors flex-shrink-0"
                   >
                     <Trash2 size={13} />
                   </button>
@@ -535,18 +535,15 @@ export default function EventForm() {
             <button
               type="button"
               onClick={addScheduleRow}
-              className="mt-3 w-full py-2.5 border-2 border-dashed border-[#D32F2F]/40 text-[#D32F2F] rounded-xl text-sm font-medium hover:border-[#D32F2F] hover:bg-red-50 transition-colors flex items-center justify-center gap-1.5"
+              className="mt-3 w-full py-2.5 border-2 border-dashed border-[#D32F2F]/40 text-[#D32F2F] rounded-xl text-sm font-medium hover:border-[#D32F2F] hover:bg-red-50 dark:hover:bg-red-900/10 transition-colors flex items-center justify-center gap-1.5"
             >
               <Plus size={13} /> Add Session
             </button>
           </div>
 
           {/* ── Event Gallery ── */}
-          <div className="bg-white rounded-2xl border border-gray-100 p-5">
-            <h3
-              className="font-bold text-[#212121] mb-4 text-sm"
-              style={{ fontFamily: "Poppins, sans-serif" }}
-            >
+          <div className={cardCls}>
+            <h3 className={cardTitleCls} style={{ fontFamily: "Poppins, sans-serif" }}>
               Event Gallery
             </h3>
             {form.gallery.length > 0 && (
@@ -557,7 +554,7 @@ export default function EventForm() {
                       src={url}
                       alt={`Gallery ${i + 1}`}
                       onClick={() => setImgPreview(url)}
-                      className="w-full h-24 object-cover rounded-xl border border-gray-200 cursor-pointer hover:opacity-90 transition-opacity"
+                      className="w-full h-24 object-cover rounded-xl border border-gray-200 dark:border-white/10 cursor-pointer hover:opacity-90 transition-opacity"
                     />
                     <button
                       type="button"
@@ -571,7 +568,7 @@ export default function EventForm() {
               </div>
             )}
             <label
-              className={`flex flex-col items-center gap-2 py-7 border-2 border-dashed rounded-xl cursor-pointer transition-colors ${uploadingGallery ? "opacity-60 pointer-events-none border-gray-200" : "border-[#D32F2F]/40 hover:border-[#D32F2F] hover:bg-red-50"}`}
+              className={`flex flex-col items-center gap-2 py-7 border-2 border-dashed rounded-xl cursor-pointer transition-colors ${uploadingGallery ? "opacity-60 pointer-events-none border-gray-200 dark:border-white/10" : "border-[#D32F2F]/40 hover:border-[#D32F2F] hover:bg-red-50 dark:hover:bg-red-900/10"}`}
             >
               {uploadingGallery ? (
                 <Loader2 size={20} className="animate-spin text-[#D32F2F]" />
@@ -581,10 +578,10 @@ export default function EventForm() {
               <span className="text-xs text-[#D32F2F] font-medium">
                 {uploadingGallery ? "Uploading…" : "Upload Gallery Images"}
               </span>
-              <span className="text-[10px] text-[#9E9E9E]">
+              <span className="text-[10px] text-[#9E9E9E] dark:text-gray-500">
                 Select multiple images at once
               </span>
-              <span className="text-[10px] text-[#9E9E9E]">
+              <span className="text-[10px] text-[#9E9E9E] dark:text-gray-500">
                 Recommended: 800 x 600 px
               </span>
               <input
@@ -600,12 +597,12 @@ export default function EventForm() {
 
           {/* ── Feedback ── */}
           {saved && (
-            <div className="flex items-center gap-2 px-4 py-3 bg-green-50 border border-green-200 rounded-xl text-sm text-green-700">
+            <div className="flex items-center gap-2 px-4 py-3 bg-green-50 dark:bg-green-900/15 border border-green-200 dark:border-green-500/25 rounded-xl text-sm text-green-700 dark:text-green-400">
               <CheckCircle size={15} /> {isEdit ? "Event updated successfully!" : "Event created successfully!"}
             </div>
           )}
           {saveError && (
-            <div className="flex items-center gap-2 px-4 py-3 bg-red-50 border border-red-200 rounded-xl text-sm text-red-600">
+            <div className="flex items-center gap-2 px-4 py-3 bg-red-50 dark:bg-red-900/15 border border-red-200 dark:border-red-500/25 rounded-xl text-sm text-red-600 dark:text-red-400">
               <AlertCircle size={15} /> {saveError}
             </div>
           )}
@@ -615,7 +612,7 @@ export default function EventForm() {
             <button
               type="button"
               onClick={() => navigate("/admin/events")}
-              className="flex-1 py-2.5 border border-gray-200 text-[#616161] rounded-xl font-semibold text-sm hover:bg-gray-50 transition-colors"
+              className="flex-1 py-2.5 border border-gray-200 dark:border-white/10 text-[#616161] dark:text-gray-400 rounded-xl font-semibold text-sm hover:bg-gray-50 dark:hover:bg-white/5 transition-colors"
             >
               Cancel
             </button>

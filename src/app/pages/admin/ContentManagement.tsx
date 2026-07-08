@@ -54,13 +54,13 @@ export default function ContentManagement() {
       {/* Page header */}
       <div className="flex items-center justify-between mb-6">
         <div>
-          <h1 className="text-2xl font-bold text-[#212121]" style={{ fontFamily: 'Poppins, sans-serif' }}>
+          <h1 className="text-2xl font-bold text-[#212121] dark:text-white" style={{ fontFamily: 'Poppins, sans-serif' }}>
             Content Management
           </h1>
-          <p className="text-[#616161] text-sm">Manage website content, slides, and SEO settings</p>
+          <p className="text-[#616161] dark:text-gray-400 text-sm">Manage website content, slides, and SEO settings</p>
         </div>
         {saved && (
-          <div className="flex items-center gap-2 bg-green-50 text-green-700 px-4 py-2 rounded-xl text-sm font-medium border border-green-200">
+          <div className="flex items-center gap-2 bg-green-50 dark:bg-green-900/15 text-green-700 dark:text-green-400 px-4 py-2 rounded-xl text-sm font-medium border border-green-200 dark:border-green-500/25">
             <CheckCircle size={14} /> Saved successfully
           </div>
         )}
@@ -70,15 +70,15 @@ export default function ContentManagement() {
 
         {/* ── DESKTOP sidebar (md+): always visible ── */}
         <div className="hidden md:block w-44 flex-shrink-0 sticky top-20">
-          <div className="bg-white rounded-2xl border border-gray-100 overflow-hidden">
+          <div className="bg-white dark:bg-[#1a1d26] rounded-2xl border border-gray-100 dark:border-white/6 overflow-hidden">
             {modules.map(m => {
               const MIcon = m.icon;
               return (
                 <button key={m.key} onClick={() => setActiveModule(m.key)}
-                  className={`w-full flex items-center gap-2.5 px-4 py-3 text-sm font-medium transition-colors border-b border-gray-50 last:border-0 ${
+                  className={`w-full flex items-center gap-2.5 px-4 py-3 text-sm font-medium transition-colors border-b border-gray-50 dark:border-white/5 last:border-0 ${
                     activeModule === m.key
-                      ? 'bg-red-50 text-[#D32F2F] border-l-[3px] border-l-[#D32F2F]'
-                      : 'text-[#616161] hover:bg-gray-50'
+                      ? 'bg-red-50 dark:bg-red-900/20 text-[#D32F2F] border-l-[3px] border-l-[#D32F2F]'
+                      : 'text-[#616161] dark:text-gray-400 hover:bg-gray-50 dark:hover:bg-white/5'
                   }`}>
                   <MIcon size={14} />
                   {m.label}
@@ -90,12 +90,12 @@ export default function ContentManagement() {
 
         {/* ── MOBILE icon strip (< md): icons only ── */}
         <div className="md:hidden flex-shrink-0 sticky top-20 z-10">
-          <div className="bg-white rounded-2xl border border-gray-100 overflow-hidden flex flex-col">
+          <div className="bg-white dark:bg-[#1a1d26] rounded-2xl border border-gray-100 dark:border-white/6 overflow-hidden flex flex-col">
             {/* hamburger to open full sidebar */}
             <button
               type="button"
               onClick={() => setSidebarOpen(true)}
-              className="flex items-center justify-center w-12 h-11 text-[#616161] hover:bg-gray-50 border-b border-gray-100 transition-colors"
+              className="flex items-center justify-center w-12 h-11 text-[#616161] dark:text-gray-400 hover:bg-gray-50 dark:hover:bg-white/5 border-b border-gray-100 dark:border-white/10 transition-colors"
               aria-label="Open menu"
             >
               <Menu size={18} />
@@ -106,10 +106,10 @@ export default function ContentManagement() {
               return (
                 <button key={m.key} onClick={() => setActiveModule(m.key)}
                   title={m.label}
-                  className={`flex items-center justify-center w-12 h-11 border-b border-gray-50 last:border-0 transition-colors ${
+                  className={`flex items-center justify-center w-12 h-11 border-b border-gray-50 dark:border-white/5 last:border-0 transition-colors ${
                     activeModule === m.key
-                      ? 'bg-red-50 text-[#D32F2F] border-l-[3px] border-l-[#D32F2F]'
-                      : 'text-[#9E9E9E] hover:bg-gray-50 hover:text-[#616161]'
+                      ? 'bg-red-50 dark:bg-red-900/20 text-[#D32F2F] border-l-[3px] border-l-[#D32F2F]'
+                      : 'text-[#9E9E9E] dark:text-gray-500 hover:bg-gray-50 dark:hover:bg-white/5 hover:text-[#616161] dark:hover:text-gray-300'
                   }`}>
                   <MIcon size={16} />
                 </button>
@@ -127,15 +127,15 @@ export default function ContentManagement() {
               onClick={() => setSidebarOpen(false)}
             />
             {/* drawer */}
-            <div className="md:hidden fixed left-0 top-0 h-full w-56 z-50 bg-white shadow-2xl flex flex-col">
-              <div className="flex items-center justify-between px-4 py-4 border-b border-gray-100">
-                <span className="text-sm font-bold text-[#212121]" style={{ fontFamily: 'Poppins, sans-serif' }}>
+            <div className="md:hidden fixed left-0 top-0 h-full w-56 z-50 bg-white dark:bg-[#1a1d26] shadow-2xl dark:shadow-black/50 flex flex-col">
+              <div className="flex items-center justify-between px-4 py-4 border-b border-gray-100 dark:border-white/10">
+                <span className="text-sm font-bold text-[#212121] dark:text-white" style={{ fontFamily: 'Poppins, sans-serif' }}>
                   Sections
                 </span>
                 <button
                   type="button"
                   onClick={() => setSidebarOpen(false)}
-                  className="w-8 h-8 flex items-center justify-center rounded-lg text-[#616161] hover:bg-gray-100 transition-colors"
+                  className="w-8 h-8 flex items-center justify-center rounded-lg text-[#616161] dark:text-gray-400 hover:bg-gray-100 dark:hover:bg-white/10 transition-colors"
                 >
                   <X size={16} />
                 </button>
@@ -145,10 +145,10 @@ export default function ContentManagement() {
                   const MIcon = m.icon;
                   return (
                     <button key={m.key} onClick={() => setActiveModule(m.key)}
-                      className={`w-full flex items-center gap-3 px-5 py-3.5 text-sm font-medium transition-colors border-b border-gray-50 last:border-0 ${
+                      className={`w-full flex items-center gap-3 px-5 py-3.5 text-sm font-medium transition-colors border-b border-gray-50 dark:border-white/5 last:border-0 ${
                         activeModule === m.key
-                          ? 'bg-red-50 text-[#D32F2F] border-l-[3px] border-l-[#D32F2F]'
-                          : 'text-[#616161] hover:bg-gray-50'
+                          ? 'bg-red-50 dark:bg-red-900/20 text-[#D32F2F] border-l-[3px] border-l-[#D32F2F]'
+                          : 'text-[#616161] dark:text-gray-400 hover:bg-gray-50 dark:hover:bg-white/5'
                       }`}>
                       <MIcon size={15} />
                       {m.label}
@@ -161,13 +161,13 @@ export default function ContentManagement() {
         )}
 
         {/* ── Content area ── */}
-        <div className="flex-1 min-w-0 bg-white rounded-2xl border border-gray-100 p-4 md:p-6">
+        <div className="flex-1 min-w-0 bg-white dark:bg-[#1a1d26] rounded-2xl border border-gray-100 dark:border-white/6 p-4 md:p-6">
           <div className="flex items-center justify-between mb-6">
             <div className="flex items-center gap-3">
-              <div className="w-10 h-10 bg-red-50 rounded-xl flex items-center justify-center flex-shrink-0">
+              <div className="w-10 h-10 bg-red-50 dark:bg-red-900/20 rounded-xl flex items-center justify-center flex-shrink-0">
                 <Icon size={17} className="text-[#D32F2F]" />
               </div>
-              <h2 className="font-bold text-[#212121] text-base md:text-lg truncate" style={{ fontFamily: 'Poppins, sans-serif' }}>
+              <h2 className="font-bold text-[#212121] dark:text-white text-base md:text-lg truncate" style={{ fontFamily: 'Poppins, sans-serif' }}>
                 {mod.label}
               </h2>
             </div>

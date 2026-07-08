@@ -111,15 +111,15 @@ export default function BrandInfoSection() {
 
   // ── Field helpers ────────────────────────────────────────────────────────
   const fieldClass = (key: keyof BrandState) =>
-    `w-full px-3 py-2 border rounded-xl text-sm focus:outline-none transition-colors ${
+    `w-full px-3 py-2 border rounded-xl text-sm focus:outline-none transition-colors text-[#212121] dark:text-white placeholder:text-gray-400 dark:placeholder:text-gray-500 ${
       errors[key]
-        ? "border-red-400 focus:border-red-500 bg-red-50"
-        : "border-gray-200 focus:border-[#D32F2F]"
+        ? "border-red-400 dark:border-red-500/60 focus:border-red-500 bg-red-50 dark:bg-red-900/20"
+        : "border-gray-200 dark:border-white/10 focus:border-[#D32F2F] bg-white dark:bg-white/5"
     }`;
 
   const FieldError = ({ name }: { name: keyof BrandState }) =>
     errors[name] ? (
-      <p className="flex items-center gap-1 mt-1 text-xs text-red-500">
+      <p className="flex items-center gap-1 mt-1 text-xs text-red-500 dark:text-red-400">
         <AlertCircle size={11} /> {errors[name]}
       </p>
     ) : null;
@@ -127,7 +127,7 @@ export default function BrandInfoSection() {
   // ── Render ────────────────────────────────────────────────────────────────
   if (loading) {
     return (
-      <div className="flex items-center justify-center py-20 text-[#616161] text-sm">
+      <div className="flex items-center justify-center py-20 text-[#616161] dark:text-gray-400 text-sm">
         Loading brand info…
       </div>
     );
@@ -137,7 +137,7 @@ export default function BrandInfoSection() {
     <div className="space-y-6">
       {/* Global API error */}
       {error && (
-        <div className="flex items-center gap-2 px-4 py-3 bg-red-50 border border-red-200 rounded-xl text-sm text-red-600">
+        <div className="flex items-center gap-2 px-4 py-3 bg-red-50 dark:bg-red-900/15 border border-red-200 dark:border-red-500/25 rounded-xl text-sm text-red-600 dark:text-red-400">
           <AlertCircle size={14} /> {error}
         </div>
       )}
@@ -145,8 +145,8 @@ export default function BrandInfoSection() {
       {/* Logo & Favicon */}
       <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
         {/* Brand Logo */}
-        <div className="border border-gray-200 rounded-xl p-4">
-          <label className="block text-xs font-semibold text-[#616161] uppercase tracking-wider mb-3">
+        <div className="border border-gray-200 dark:border-white/10 rounded-xl p-4">
+          <label className="block text-xs font-semibold text-[#616161] dark:text-gray-400 uppercase tracking-wider mb-3">
             Brand Logo
           </label>
           {brand.logo ? (
@@ -155,28 +155,28 @@ export default function BrandInfoSection() {
                 className="relative group cursor-pointer"
                 onClick={() => setPreview({ url: brand.logo, title: "Brand Logo" })}
               >
-                <img src={brand.logo} alt="Brand Logo" className="w-full h-32 object-contain rounded-lg bg-gray-50" />
+                <img src={brand.logo} alt="Brand Logo" className="w-full h-32 object-contain rounded-lg bg-gray-50 dark:bg-white/5" />
                 <div className="absolute inset-0 bg-black/30 opacity-0 group-hover:opacity-100 transition-opacity rounded-lg flex items-center justify-center">
                   <span className="text-white text-xs font-medium bg-black/50 px-3 py-1.5 rounded-full">Click to preview</span>
                 </div>
               </div>
-              <button type="button" onClick={() => set("logo", "")} className="mt-2 flex items-center gap-1 px-3 py-1.5 text-xs text-red-600 border border-red-200 rounded-lg hover:bg-red-50 transition-colors">
+              <button type="button" onClick={() => set("logo", "")} className="mt-2 flex items-center gap-1 px-3 py-1.5 text-xs text-red-600 dark:text-red-400 border border-red-200 dark:border-red-500/25 rounded-lg hover:bg-red-50 dark:hover:bg-red-900/20 transition-colors">
                 <Trash2 size={12} /> Remove
               </button>
             </div>
           ) : (
-            <label className={`flex flex-col items-center gap-2 py-8 border-2 border-dashed rounded-xl cursor-pointer transition-colors ${uploadingKey === "logo" ? "opacity-60 pointer-events-none border-gray-200" : "border-[#D32F2F]/40 hover:border-[#D32F2F] hover:bg-red-50"}`}>
+            <label className={`flex flex-col items-center gap-2 py-8 border-2 border-dashed rounded-xl cursor-pointer transition-colors ${uploadingKey === "logo" ? "opacity-60 pointer-events-none border-gray-200 dark:border-white/10" : "border-[#D32F2F]/40 hover:border-[#D32F2F] hover:bg-red-50 dark:hover:bg-red-900/10"}`}>
               {uploadingKey === "logo" ? <Loader2 size={20} className="animate-spin text-[#D32F2F]" /> : <Image size={20} className="text-[#D32F2F]" />}
               <span className="text-xs text-[#D32F2F] font-medium">{uploadingKey === "logo" ? "Uploading…" : "Upload Logo"}</span>
-              <span className="text-xs text-[#9E9E9E]">Recommended: 240 x 80 px</span>
+              <span className="text-xs text-[#9E9E9E] dark:text-gray-500">Recommended: 240 x 80 px</span>
               <input type="file" accept="image/*" className="hidden" onChange={handleImageUpload("logo")} disabled={uploadingKey === "logo"} />
             </label>
           )}
         </div>
 
         {/* Favicon */}
-        <div className="border border-gray-200 rounded-xl p-4">
-          <label className="block text-xs font-semibold text-[#616161] uppercase tracking-wider mb-3">
+        <div className="border border-gray-200 dark:border-white/10 rounded-xl p-4">
+          <label className="block text-xs font-semibold text-[#616161] dark:text-gray-400 uppercase tracking-wider mb-3">
             Favicon
           </label>
           {brand.favicon ? (
@@ -185,20 +185,20 @@ export default function BrandInfoSection() {
                 className="relative group cursor-pointer"
                 onClick={() => setPreview({ url: brand.favicon, title: "Favicon" })}
               >
-                <img src={brand.favicon} alt="Favicon" className="w-full h-32 object-contain rounded-lg bg-gray-50" />
+                <img src={brand.favicon} alt="Favicon" className="w-full h-32 object-contain rounded-lg bg-gray-50 dark:bg-white/5" />
                 <div className="absolute inset-0 bg-black/30 opacity-0 group-hover:opacity-100 transition-opacity rounded-lg flex items-center justify-center">
                   <span className="text-white text-xs font-medium bg-black/50 px-3 py-1.5 rounded-full">Click to preview</span>
                 </div>
               </div>
-              <button type="button" onClick={() => set("favicon", "")} className="mt-2 flex items-center gap-1 px-3 py-1.5 text-xs text-red-600 border border-red-200 rounded-lg hover:bg-red-50 transition-colors">
+              <button type="button" onClick={() => set("favicon", "")} className="mt-2 flex items-center gap-1 px-3 py-1.5 text-xs text-red-600 dark:text-red-400 border border-red-200 dark:border-red-500/25 rounded-lg hover:bg-red-50 dark:hover:bg-red-900/20 transition-colors">
                 <Trash2 size={12} /> Remove
               </button>
             </div>
           ) : (
-            <label className={`flex flex-col items-center gap-2 py-8 border-2 border-dashed rounded-xl cursor-pointer transition-colors ${uploadingKey === "favicon" ? "opacity-60 pointer-events-none border-gray-200" : "border-[#D32F2F]/40 hover:border-[#D32F2F] hover:bg-red-50"}`}>
+            <label className={`flex flex-col items-center gap-2 py-8 border-2 border-dashed rounded-xl cursor-pointer transition-colors ${uploadingKey === "favicon" ? "opacity-60 pointer-events-none border-gray-200 dark:border-white/10" : "border-[#D32F2F]/40 hover:border-[#D32F2F] hover:bg-red-50 dark:hover:bg-red-900/10"}`}>
               {uploadingKey === "favicon" ? <Loader2 size={20} className="animate-spin text-[#D32F2F]" /> : <Image size={20} className="text-[#D32F2F]" />}
               <span className="text-xs text-[#D32F2F] font-medium">{uploadingKey === "favicon" ? "Uploading…" : "Upload Favicon"}</span>
-              <span className="text-xs text-[#9E9E9E]">Recommended: 512 x 512 px</span>
+              <span className="text-xs text-[#9E9E9E] dark:text-gray-500">Recommended: 512 x 512 px</span>
               <input type="file" accept="image/*" className="hidden" onChange={handleImageUpload("favicon")} disabled={uploadingKey === "favicon"} />
             </label>
           )}
@@ -206,9 +206,9 @@ export default function BrandInfoSection() {
       </div>
 
       {/* Company Details */}
-      <div className="border border-gray-200 rounded-xl p-5">
+      <div className="border border-gray-200 dark:border-white/10 rounded-xl p-5">
         <h3
-          className="font-bold text-[#212121] mb-4 text-sm"
+          className="font-bold text-[#212121] dark:text-white mb-4 text-sm"
           style={{ fontFamily: "Poppins, sans-serif" }}
         >
           Company Details
@@ -216,7 +216,7 @@ export default function BrandInfoSection() {
         <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
           {/* Company Name */}
           <div>
-            <label className="block text-xs font-semibold text-[#616161] mb-1">
+            <label className="block text-xs font-semibold text-[#616161] dark:text-gray-400 mb-1">
               Company Name <span className="text-red-500">*</span>
             </label>
             <input
@@ -230,7 +230,7 @@ export default function BrandInfoSection() {
 
           {/* Phone */}
           <div>
-            <label className="block text-xs font-semibold text-[#616161] mb-1">
+            <label className="block text-xs font-semibold text-[#616161] dark:text-gray-400 mb-1">
               Phone <span className="text-red-500">*</span>
             </label>
             <input
@@ -244,7 +244,7 @@ export default function BrandInfoSection() {
 
           {/* Email */}
           <div>
-            <label className="block text-xs font-semibold text-[#616161] mb-1">
+            <label className="block text-xs font-semibold text-[#616161] dark:text-gray-400 mb-1">
               Email <span className="text-red-500">*</span>
             </label>
             <input
@@ -258,7 +258,7 @@ export default function BrandInfoSection() {
 
           {/* Address */}
           <div>
-            <label className="block text-xs font-semibold text-[#616161] mb-1">
+            <label className="block text-xs font-semibold text-[#616161] dark:text-gray-400 mb-1">
               Address
             </label>
             <input
@@ -273,9 +273,9 @@ export default function BrandInfoSection() {
       </div>
 
       {/* Global SEO */}
-      <div className="border border-gray-200 rounded-xl p-5">
+      <div className="border border-gray-200 dark:border-white/10 rounded-xl p-5">
         <h3
-          className="font-bold text-[#212121] mb-4 text-sm"
+          className="font-bold text-[#212121] dark:text-white mb-4 text-sm"
           style={{ fontFamily: "Poppins, sans-serif" }}
         >
           Global SEO & Meta
@@ -283,7 +283,7 @@ export default function BrandInfoSection() {
         <div className="space-y-3">
           {/* Meta Title */}
           <div>
-            <label className="block text-xs font-semibold text-[#616161] mb-1">
+            <label className="block text-xs font-semibold text-[#616161] dark:text-gray-400 mb-1">
               Default Meta Title
             </label>
             <input
@@ -309,7 +309,7 @@ export default function BrandInfoSection() {
 
           {/* Meta Description */}
           <div>
-            <label className="block text-xs font-semibold text-[#616161] mb-1">
+            <label className="block text-xs font-semibold text-[#616161] dark:text-gray-400 mb-1">
               Default Meta Description
             </label>
             <textarea
@@ -331,12 +331,12 @@ export default function BrandInfoSection() {
 
           {/* OG Image — 50% width on lg, left-aligned */}
           <div className="w-full">
-            <label className="block text-xs font-semibold text-[#616161] mb-2">
+            <label className="block text-xs font-semibold text-[#616161] dark:text-gray-400 mb-2">
               OG Image
             </label>
             <div>
               {brand.ogImage ? (
-                <div className="border border-gray-200 rounded-xl p-3">
+                <div className="border border-gray-200 dark:border-white/10 rounded-xl p-3">
                   <div
                     className="relative group cursor-pointer"
                     onClick={() => setPreview({ url: brand.ogImage, title: "OG Image" })}
@@ -347,17 +347,17 @@ export default function BrandInfoSection() {
                     </div>
                   </div>
                   <div className="mt-2 flex items-center justify-between">
-                    <span className="text-xs text-[#9E9E9E]">Recommended: 1200 x 630 px</span>
-                    <button type="button" onClick={() => set("ogImage", "")} className="flex items-center gap-1 px-3 py-1.5 text-xs text-red-600 border border-red-200 rounded-lg hover:bg-red-50 transition-colors">
+                    <span className="text-xs text-[#9E9E9E] dark:text-gray-500">Recommended: 1200 x 630 px</span>
+                    <button type="button" onClick={() => set("ogImage", "")} className="flex items-center gap-1 px-3 py-1.5 text-xs text-red-600 dark:text-red-400 border border-red-200 dark:border-red-500/25 rounded-lg hover:bg-red-50 dark:hover:bg-red-900/20 transition-colors">
                       <Trash2 size={12} /> Remove
                     </button>
                   </div>
                 </div>
               ) : (
-                <label className={`flex flex-col items-center gap-2 py-8 border-2 border-dashed rounded-xl cursor-pointer transition-colors ${uploadingKey === "ogImage" ? "opacity-60 pointer-events-none border-gray-200" : "border-[#D32F2F]/40 hover:border-[#D32F2F] hover:bg-red-50"}`}>
+                <label className={`flex flex-col items-center gap-2 py-8 border-2 border-dashed rounded-xl cursor-pointer transition-colors ${uploadingKey === "ogImage" ? "opacity-60 pointer-events-none border-gray-200 dark:border-white/10" : "border-[#D32F2F]/40 hover:border-[#D32F2F] hover:bg-red-50 dark:hover:bg-red-900/10"}`}>
                   {uploadingKey === "ogImage" ? <Loader2 size={20} className="animate-spin text-[#D32F2F]" /> : <Image size={20} className="text-[#D32F2F]" />}
                   <span className="text-xs text-[#D32F2F] font-medium">{uploadingKey === "ogImage" ? "Uploading…" : "Upload OG Image"}</span>
-                  <span className="text-xs text-[#9E9E9E]">Recommended: 1200 x 630 px</span>
+                  <span className="text-xs text-[#9E9E9E] dark:text-gray-500">Recommended: 1200 x 630 px</span>
                   <input type="file" accept="image/*" className="hidden" onChange={handleImageUpload("ogImage")} disabled={uploadingKey === "ogImage"} />
                 </label>
               )}
@@ -366,7 +366,7 @@ export default function BrandInfoSection() {
 
           {/* Keywords */}
           <div>
-            <label className="block text-xs font-semibold text-[#616161] mb-1">
+            <label className="block text-xs font-semibold text-[#616161] dark:text-gray-400 mb-1">
               Keywords
             </label>
             <input
@@ -382,7 +382,7 @@ export default function BrandInfoSection() {
       {/* Save Button */}
       <div className="flex items-center justify-end gap-3 pt-2">
         {saved && (
-          <div className="flex items-center gap-1.5 text-green-600 text-sm font-medium">
+          <div className="flex items-center gap-1.5 text-green-600 dark:text-green-400 text-sm font-medium">
             <CheckCircle size={14} /> Saved successfully
           </div>
         )}

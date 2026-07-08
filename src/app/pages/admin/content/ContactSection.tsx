@@ -22,7 +22,7 @@ function SectionHeader({ icon: Icon, children }: { icon: React.ElementType; chil
   return (
     <div className="flex items-center gap-2 mb-4">
       <Icon size={15} className="text-[#D32F2F] flex-shrink-0" />
-      <h3 className="font-bold text-[#212121] text-sm leading-none m-0" style={{ fontFamily: 'Poppins, sans-serif' }}>
+      <h3 className="font-bold text-[#212121] dark:text-white text-sm leading-none m-0" style={{ fontFamily: 'Poppins, sans-serif' }}>
         {children}
       </h3>
     </div>
@@ -32,7 +32,7 @@ function SectionHeader({ icon: Icon, children }: { icon: React.ElementType; chil
 function Field({ label, required, children }: { label: string; required?: boolean; children: React.ReactNode }) {
   return (
     <div>
-      <label className="block text-xs font-semibold text-[#616161] uppercase tracking-wider mb-1.5">
+      <label className="block text-xs font-semibold text-[#616161] dark:text-gray-400 uppercase tracking-wider mb-1.5">
         {label}{required && <span className="text-red-500 ml-0.5">*</span>}
       </label>
       {children}
@@ -49,7 +49,7 @@ function TextInput({ value, onChange, placeholder, type = 'text' }: {
       value={value}
       onChange={e => onChange(e.target.value)}
       placeholder={placeholder}
-      className="w-full px-3 py-2 border border-gray-200 rounded-xl text-sm focus:outline-none focus:border-[#D32F2F]"
+      className="w-full px-3 py-2 border border-gray-200 dark:border-white/10 rounded-xl text-sm focus:outline-none focus:border-[#D32F2F] bg-white dark:bg-white/5 text-[#212121] dark:text-white placeholder:text-gray-400 dark:placeholder:text-gray-500"
     />
   );
 }
@@ -58,9 +58,9 @@ function SaveBar({ saving, saved, onSave, label = 'Save Changes', canUpdate = tr
   saving: boolean; saved: boolean; onSave: () => void; label?: string; canUpdate?: boolean;
 }) {
   return (
-    <div className="flex items-center justify-end gap-3 pt-3 mt-3 border-t border-gray-100">
+    <div className="flex items-center justify-end gap-3 pt-3 mt-3 border-t border-gray-100 dark:border-white/10">
       {saved && (
-        <div className="flex items-center gap-1.5 text-green-600 text-sm font-medium">
+        <div className="flex items-center gap-1.5 text-green-600 dark:text-green-400 text-sm font-medium">
           <CheckCircle size={14} /> Saved successfully
         </div>
       )}
@@ -115,14 +115,14 @@ function BannerSlideEditor({ slides, setSlidesFn, showErrors = false, canWrite =
   return (
     <div className="space-y-4">
       {slides.map((slide, idx) => (
-        <div key={slide.id} className="border border-gray-200 rounded-xl overflow-hidden">
-          <div className="flex items-center justify-between bg-gray-50 px-4 py-2.5">
-            <span className="font-semibold text-[#212121] text-sm">Slide {idx + 1}</span>
+        <div key={slide.id} className="border border-gray-200 dark:border-white/10 rounded-xl overflow-hidden">
+          <div className="flex items-center justify-between bg-gray-50 dark:bg-white/5 px-4 py-2.5">
+            <span className="font-semibold text-[#212121] dark:text-white text-sm">Slide {idx + 1}</span>
             {canDelete && (
               <button
                 type="button"
                 onClick={() => setSlidesFn(slides.filter(s => s.id !== slide.id))}
-                className="p-1.5 text-[#D32F2F] hover:bg-red-50 rounded-lg transition-colors"
+                className="p-1.5 text-[#D32F2F] hover:bg-red-50 dark:hover:bg-red-900/20 rounded-lg transition-colors"
               >
                 <Trash2 size={13} />
               </button>
@@ -131,7 +131,7 @@ function BannerSlideEditor({ slides, setSlidesFn, showErrors = false, canWrite =
           <div className="p-4 space-y-3">
             <Field label="Banner Image" required>
               {slide.image ? (
-                <div className="border border-gray-200 rounded-xl p-3">
+                <div className="border border-gray-200 dark:border-white/10 rounded-xl p-3">
                   <div className="relative group cursor-pointer" onClick={() => setPreview({ url: slide.image, title: 'Slide Image' })}>
                     <img src={slide.image} alt="Slide" className="w-full h-40 object-cover rounded-lg" />
                     <div className="absolute inset-0 bg-black/30 opacity-0 group-hover:opacity-100 transition-opacity rounded-lg flex items-center justify-center">
@@ -142,7 +142,7 @@ function BannerSlideEditor({ slides, setSlidesFn, showErrors = false, canWrite =
                     <button
                       type="button"
                       onClick={() => update(slide.id, 'image', '')}
-                      className="mt-2 flex items-center gap-1 px-3 py-1.5 text-xs text-red-600 border border-red-200 rounded-lg hover:bg-red-50 transition-colors"
+                      className="mt-2 flex items-center gap-1 px-3 py-1.5 text-xs text-red-600 dark:text-red-400 border border-red-200 dark:border-red-500/25 rounded-lg hover:bg-red-50 dark:hover:bg-red-900/20 transition-colors"
                     >
                       <Trash2 size={12} /> Remove
                     </button>
@@ -152,16 +152,16 @@ function BannerSlideEditor({ slides, setSlidesFn, showErrors = false, canWrite =
                 <>
                   <label className={`flex flex-col items-center gap-2 py-8 border-2 border-dashed rounded-xl cursor-pointer transition-colors ${
                     uploadingId === slide.id
-                      ? 'opacity-60 pointer-events-none border-gray-200'
+                      ? 'opacity-60 pointer-events-none border-gray-200 dark:border-white/10'
                       : showErrors
-                        ? 'border-red-400 bg-red-50 hover:border-red-500'
-                        : 'border-[#D32F2F]/40 hover:border-[#D32F2F] hover:bg-red-50'
+                        ? 'border-red-400 bg-red-50 dark:bg-red-900/20 hover:border-red-500'
+                        : 'border-[#D32F2F]/40 hover:border-[#D32F2F] hover:bg-red-50 dark:hover:bg-red-900/10'
                   }`}>
                     {uploadingId === slide.id ? <Loader size={20} className="animate-spin text-[#D32F2F]" /> : <Image size={20} className={showErrors ? 'text-red-500' : 'text-[#D32F2F]'} />}
                     <span className={`text-xs font-medium ${showErrors ? 'text-red-500' : 'text-[#D32F2F]'}`}>
                       {uploadingId === slide.id ? 'Uploading…' : 'Upload Banner Image'}
                     </span>
-                    <span className="text-xs text-[#9E9E9E]">Recommended: 2048 x 410 px</span>
+                    <span className="text-xs text-[#9E9E9E] dark:text-gray-500">Recommended: 2048 x 410 px</span>
                     <input type="file" accept="image/*" className="hidden" onChange={handleImageUpload(slide.id)} disabled={uploadingId === slide.id} />
                   </label>
                   {showErrors && (
@@ -181,7 +181,7 @@ function BannerSlideEditor({ slides, setSlidesFn, showErrors = false, canWrite =
                 onChange={e => update(slide.id, 'description', e.target.value)}
                 rows={2}
                 placeholder="Slide description"
-                className="w-full px-3 py-2 border border-gray-200 rounded-xl text-sm focus:outline-none focus:border-[#D32F2F] resize-none"
+                className="w-full px-3 py-2 border border-gray-200 dark:border-white/10 rounded-xl text-sm focus:outline-none focus:border-[#D32F2F] resize-none bg-white dark:bg-white/5 text-[#212121] dark:text-white placeholder:text-gray-400 dark:placeholder:text-gray-500"
               />
             </Field>
           </div>
@@ -191,7 +191,7 @@ function BannerSlideEditor({ slides, setSlidesFn, showErrors = false, canWrite =
         <button
           type="button"
           onClick={() => setSlidesFn([...slides, { id: Date.now(), image: '', title: '', description: '' }])}
-          className="w-full py-3 border-2 border-dashed border-[#D32F2F]/40 text-[#D32F2F] rounded-xl text-sm font-medium hover:border-[#D32F2F] hover:bg-red-50 transition-colors flex items-center justify-center gap-2"
+          className="w-full py-3 border-2 border-dashed border-[#D32F2F]/40 text-[#D32F2F] rounded-xl text-sm font-medium hover:border-[#D32F2F] hover:bg-red-50 dark:hover:bg-red-900/10 transition-colors flex items-center justify-center gap-2"
         >
           <Plus size={14} /> Add Slide
         </button>
@@ -264,7 +264,7 @@ export default function ContactSection() {
 
   if (loading) {
     return (
-      <div className="flex items-center justify-center py-20 text-[#616161] text-sm gap-2">
+      <div className="flex items-center justify-center py-20 text-[#616161] dark:text-gray-400 text-sm gap-2">
         <Loader2 size={16} className="animate-spin" /> Loading contact data…
       </div>
     );
@@ -273,7 +273,7 @@ export default function ContactSection() {
   return (
     <div className="space-y-8">
       {error && (
-        <div className="flex items-center gap-2 px-4 py-3 bg-red-50 border border-red-200 rounded-xl text-sm text-red-600">
+        <div className="flex items-center gap-2 px-4 py-3 bg-red-50 dark:bg-red-900/15 border border-red-200 dark:border-red-500/25 rounded-xl text-sm text-red-600 dark:text-red-400">
           <AlertCircle size={14} /> {error}
         </div>
       )}
@@ -282,7 +282,7 @@ export default function ContactSection() {
       <div>
         <SectionHeader icon={Image}>Banner Slides</SectionHeader>
         {slidesError && (
-          <div className="flex items-center gap-2 px-4 py-3 mb-3 bg-red-50 border border-red-200 rounded-xl text-sm text-red-600">
+          <div className="flex items-center gap-2 px-4 py-3 mb-3 bg-red-50 dark:bg-red-900/15 border border-red-200 dark:border-red-500/25 rounded-xl text-sm text-red-600 dark:text-red-400">
             <AlertCircle size={14} /> {slidesError}
           </div>
         )}
@@ -297,7 +297,7 @@ export default function ContactSection() {
       </div>
 
       {/* ── Contact Numbers ── */}
-      <div className="border-t border-gray-100 pt-6">
+      <div className="border-t border-gray-100 dark:border-white/10 pt-6">
         <SectionHeader icon={Phone}>Contact Numbers</SectionHeader>
         <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
           <Field label="Contact Number">
@@ -310,7 +310,7 @@ export default function ContactSection() {
       </div>
 
       {/* ── Email Addresses ── */}
-      <div className="border-t border-gray-100 pt-6">
+      <div className="border-t border-gray-100 dark:border-white/10 pt-6">
         <SectionHeader icon={Mail}>Email Addresses</SectionHeader>
         <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
           <Field label="Office Email">
@@ -323,7 +323,7 @@ export default function ContactSection() {
       </div>
 
       {/* ── Address ── */}
-      <div className="border-t border-gray-100 pt-6">
+      <div className="border-t border-gray-100 dark:border-white/10 pt-6">
         <SectionHeader icon={MapPin}>Office Address</SectionHeader>
         <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
           <Field label="Office Number">
@@ -354,19 +354,19 @@ export default function ContactSection() {
       </div>
 
       {/* ── Working Hours ── */}
-      <div className="border-t border-gray-100 pt-6">
+      <div className="border-t border-gray-100 dark:border-white/10 pt-6">
         <SectionHeader icon={Clock}>Working Hours</SectionHeader>
         <textarea
           value={data.workingHours}
           onChange={e => setField('workingHours', e.target.value)}
           rows={3}
           placeholder={"Mon–Sat: 9 AM – 8 PM\nSunday: 10 AM – 5 PM"}
-          className="w-full px-3 py-2 border border-gray-200 rounded-xl text-sm focus:outline-none focus:border-[#D32F2F] resize-none"
+          className="w-full px-3 py-2 border border-gray-200 dark:border-white/10 rounded-xl text-sm focus:outline-none focus:border-[#D32F2F] resize-none bg-white dark:bg-white/5 text-[#212121] dark:text-white placeholder:text-gray-400 dark:placeholder:text-gray-500"
         />
       </div>
 
       {/* ── Business Details ── */}
-      <div className="border-t border-gray-100 pt-6">
+      <div className="border-t border-gray-100 dark:border-white/10 pt-6">
         <SectionHeader icon={Hash}>Business Details</SectionHeader>
         <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
           <Field label="GST Number">
@@ -374,12 +374,12 @@ export default function ContactSection() {
           </Field>
           <Field label="Google Map Link">
             <div className="relative">
-              <Link size={14} className="absolute left-3 top-1/2 -translate-y-1/2 text-[#9E9E9E]" />
+              <Link size={14} className="absolute left-3 top-1/2 -translate-y-1/2 text-[#9E9E9E] dark:text-gray-500" />
               <input
                 value={data.googleMapLink}
                 onChange={e => setField('googleMapLink', e.target.value)}
                 placeholder="https://maps.google.com/..."
-                className="w-full pl-9 pr-3 py-2 border border-gray-200 rounded-xl text-sm focus:outline-none focus:border-[#D32F2F]"
+                className="w-full pl-9 pr-3 py-2 border border-gray-200 dark:border-white/10 rounded-xl text-sm focus:outline-none focus:border-[#D32F2F] bg-white dark:bg-white/5 text-[#212121] dark:text-white placeholder:text-gray-400 dark:placeholder:text-gray-500"
               />
             </div>
           </Field>
@@ -387,7 +387,7 @@ export default function ContactSection() {
       </div>
 
       {/* ── Social Links ── */}
-      <div className="border-t border-gray-100 pt-6">
+      <div className="border-t border-gray-100 dark:border-white/10 pt-6">
         <SectionHeader icon={Share2}>Social Media Links</SectionHeader>
         <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
           <Field label="Facebook">
@@ -397,7 +397,7 @@ export default function ContactSection() {
                 value={data.socialLinks.facebook}
                 onChange={e => setSocial('facebook', e.target.value)}
                 placeholder="https://facebook.com/yourpage"
-                className="w-full pl-9 pr-3 py-2 border border-gray-200 rounded-xl text-sm focus:outline-none focus:border-[#D32F2F]"
+                className="w-full pl-9 pr-3 py-2 border border-gray-200 dark:border-white/10 rounded-xl text-sm focus:outline-none focus:border-[#D32F2F] bg-white dark:bg-white/5 text-[#212121] dark:text-white placeholder:text-gray-400 dark:placeholder:text-gray-500"
               />
             </div>
           </Field>
@@ -408,7 +408,7 @@ export default function ContactSection() {
                 value={data.socialLinks.instagram}
                 onChange={e => setSocial('instagram', e.target.value)}
                 placeholder="https://instagram.com/yourhandle"
-                className="w-full pl-9 pr-3 py-2 border border-gray-200 rounded-xl text-sm focus:outline-none focus:border-[#D32F2F]"
+                className="w-full pl-9 pr-3 py-2 border border-gray-200 dark:border-white/10 rounded-xl text-sm focus:outline-none focus:border-[#D32F2F] bg-white dark:bg-white/5 text-[#212121] dark:text-white placeholder:text-gray-400 dark:placeholder:text-gray-500"
               />
             </div>
           </Field>
@@ -419,18 +419,18 @@ export default function ContactSection() {
                 value={data.socialLinks.youtube}
                 onChange={e => setSocial('youtube', e.target.value)}
                 placeholder="https://youtube.com/@yourchannel"
-                className="w-full pl-9 pr-3 py-2 border border-gray-200 rounded-xl text-sm focus:outline-none focus:border-[#D32F2F]"
+                className="w-full pl-9 pr-3 py-2 border border-gray-200 dark:border-white/10 rounded-xl text-sm focus:outline-none focus:border-[#D32F2F] bg-white dark:bg-white/5 text-[#212121] dark:text-white placeholder:text-gray-400 dark:placeholder:text-gray-500"
               />
             </div>
           </Field>
           <Field label="X (Twitter)">
             <div className="relative">
-              <Twitter size={14} className="absolute left-3 top-1/2 -translate-y-1/2 text-[#212121]" />
+              <Twitter size={14} className="absolute left-3 top-1/2 -translate-y-1/2 text-[#212121] dark:text-gray-300" />
               <input
                 value={data.socialLinks.x}
                 onChange={e => setSocial('x', e.target.value)}
                 placeholder="https://x.com/yourhandle"
-                className="w-full pl-9 pr-3 py-2 border border-gray-200 rounded-xl text-sm focus:outline-none focus:border-[#D32F2F]"
+                className="w-full pl-9 pr-3 py-2 border border-gray-200 dark:border-white/10 rounded-xl text-sm focus:outline-none focus:border-[#D32F2F] bg-white dark:bg-white/5 text-[#212121] dark:text-white placeholder:text-gray-400 dark:placeholder:text-gray-500"
               />
             </div>
           </Field>
@@ -441,7 +441,7 @@ export default function ContactSection() {
                 value={data.socialLinks.linkedin}
                 onChange={e => setSocial('linkedin', e.target.value)}
                 placeholder="https://linkedin.com/company/yourpage"
-                className="w-full pl-9 pr-3 py-2 border border-gray-200 rounded-xl text-sm focus:outline-none focus:border-[#D32F2F]"
+                className="w-full pl-9 pr-3 py-2 border border-gray-200 dark:border-white/10 rounded-xl text-sm focus:outline-none focus:border-[#D32F2F] bg-white dark:bg-white/5 text-[#212121] dark:text-white placeholder:text-gray-400 dark:placeholder:text-gray-500"
               />
             </div>
           </Field>

@@ -46,16 +46,16 @@ export default function SlideEditor({ slides, setSlides, label = 'Slide', showEr
       {slides.map((slide, idx) => (
         <div
           key={slide.id}
-          className="border border-gray-200 rounded-xl overflow-hidden"
+          className="border border-gray-200 dark:border-white/10 rounded-xl overflow-hidden"
         >
-          <div className="flex items-center justify-between bg-gray-50 px-4 py-2.5">
-            <span className="font-semibold text-[#212121] text-sm">
+          <div className="flex items-center justify-between bg-gray-50 dark:bg-white/5 px-4 py-2.5">
+            <span className="font-semibold text-[#212121] dark:text-white text-sm">
               {label} {idx + 1}
             </span>
             {canDelete && (
               <button
                 onClick={() => remove(slide.id)}
-                className="p-1.5 text-[#D32F2F] hover:bg-red-50 rounded-lg transition-colors"
+                className="p-1.5 text-[#D32F2F] hover:bg-red-50 dark:hover:bg-red-900/20 rounded-lg transition-colors"
               >
                 <Trash2 size={13} />
               </button>
@@ -64,12 +64,12 @@ export default function SlideEditor({ slides, setSlides, label = 'Slide', showEr
           <div className="p-4 space-y-3">
             {/* Background Image */}
             <div className="w-full">
-              <label className="block text-xs font-semibold text-[#616161] uppercase tracking-wider mb-1.5">
+              <label className="block text-xs font-semibold text-[#616161] dark:text-gray-400 uppercase tracking-wider mb-1.5">
                 Banner Image <span className="text-red-500">*</span>
               </label>
               <div>
                 {slide.image ? (
-                  <div className="border border-gray-200 rounded-xl p-3">
+                  <div className="border border-gray-200 dark:border-white/10 rounded-xl p-3">
                     <div
                       className="relative group cursor-pointer"
                       onClick={() => setPreview({ url: slide.image, title: "Slide Image" })}
@@ -87,7 +87,7 @@ export default function SlideEditor({ slides, setSlides, label = 'Slide', showEr
                       <button
                         type="button"
                         onClick={() => update(slide.id, "image", "")}
-                        className="mt-2 flex items-center gap-1 px-3 py-1.5 text-xs text-red-600 border border-red-200 rounded-lg hover:bg-red-50 transition-colors"
+                        className="mt-2 flex items-center gap-1 px-3 py-1.5 text-xs text-red-600 dark:text-red-400 border border-red-200 dark:border-red-500/25 rounded-lg hover:bg-red-50 dark:hover:bg-red-900/20 transition-colors"
                       >
                         <Trash2 size={12} /> Remove
                       </button>
@@ -97,10 +97,10 @@ export default function SlideEditor({ slides, setSlides, label = 'Slide', showEr
                   <>
                     <label className={`flex flex-col items-center gap-2 py-8 border-2 border-dashed rounded-xl cursor-pointer transition-colors ${
                       uploadingId === slide.id
-                        ? "opacity-60 pointer-events-none border-gray-200"
+                        ? "opacity-60 pointer-events-none border-gray-200 dark:border-white/10"
                         : showErrors
-                          ? "border-red-400 bg-red-50 hover:border-red-500"
-                          : "border-[#D32F2F]/40 hover:border-[#D32F2F] hover:bg-red-50"
+                          ? "border-red-400 bg-red-50 dark:bg-red-900/20 hover:border-red-500"
+                          : "border-[#D32F2F]/40 hover:border-[#D32F2F] hover:bg-red-50 dark:hover:bg-red-900/10"
                     }`}>
                       {uploadingId === slide.id
                         ? <Loader2 size={20} className="animate-spin text-[#D32F2F]" />
@@ -109,7 +109,7 @@ export default function SlideEditor({ slides, setSlides, label = 'Slide', showEr
                       <span className={`text-xs font-medium ${showErrors ? "text-red-500" : "text-[#D32F2F]"}`}>
                         {uploadingId === slide.id ? "Uploading…" : "Upload Background Image"}
                       </span>
-                      <span className="text-xs text-[#9E9E9E]">Recommended: {recommendedSize}</span>
+                      <span className="text-xs text-[#9E9E9E] dark:text-gray-500">Recommended: {recommendedSize}</span>
                       <input
                         type="file"
                         accept="image/*"
@@ -129,20 +129,20 @@ export default function SlideEditor({ slides, setSlides, label = 'Slide', showEr
             </div>
             {/* Title */}
             <div>
-              <label className="block text-xs font-semibold text-[#616161] uppercase tracking-wider mb-1.5">
+              <label className="block text-xs font-semibold text-[#616161] dark:text-gray-400 uppercase tracking-wider mb-1.5">
                 Title
               </label>
               <input
                 value={slide.title}
                 onChange={(e) => update(slide.id, "title", e.target.value)}
                 placeholder="Slide title"
-                className="w-full px-3 py-2 border border-gray-200 rounded-xl text-sm focus:outline-none focus:border-[#D32F2F]"
+                className="w-full px-3 py-2 border border-gray-200 dark:border-white/10 rounded-xl text-sm focus:outline-none focus:border-[#D32F2F] bg-white dark:bg-white/5 text-[#212121] dark:text-white placeholder:text-gray-400 dark:placeholder:text-gray-500"
               />
             </div>
 
             {/* Description */}
             <div>
-              <label className="block text-xs font-semibold text-[#616161] uppercase tracking-wider mb-1.5">
+              <label className="block text-xs font-semibold text-[#616161] dark:text-gray-400 uppercase tracking-wider mb-1.5">
                 Description
               </label>
               <textarea
@@ -152,7 +152,7 @@ export default function SlideEditor({ slides, setSlides, label = 'Slide', showEr
                 }
                 rows={2}
                 placeholder="Slide description"
-                className="w-full px-3 py-2 border border-gray-200 rounded-xl text-sm focus:outline-none focus:border-[#D32F2F] resize-none"
+                className="w-full px-3 py-2 border border-gray-200 dark:border-white/10 rounded-xl text-sm focus:outline-none focus:border-[#D32F2F] resize-none bg-white dark:bg-white/5 text-[#212121] dark:text-white placeholder:text-gray-400 dark:placeholder:text-gray-500"
               />
             </div>
           </div>
@@ -161,7 +161,7 @@ export default function SlideEditor({ slides, setSlides, label = 'Slide', showEr
       {canWrite && (
         <button
           onClick={add}
-          className="w-full py-3 border-2 border-dashed border-[#D32F2F]/40 text-[#D32F2F] rounded-xl text-sm font-medium hover:border-[#D32F2F] hover:bg-red-50 transition-colors flex items-center justify-center gap-2"
+          className="w-full py-3 border-2 border-dashed border-[#D32F2F]/40 text-[#D32F2F] rounded-xl text-sm font-medium hover:border-[#D32F2F] hover:bg-red-50 dark:hover:bg-red-900/10 transition-colors flex items-center justify-center gap-2"
         >
           <Plus size={14} /> Add {label}
         </button>

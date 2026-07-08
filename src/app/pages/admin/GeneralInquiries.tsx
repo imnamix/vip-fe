@@ -13,9 +13,24 @@ import { usePermission } from '../../hooks/usePermission';
 const LIMIT = 10;
 
 const STATUS_COLORS: Record<string, { bg: string; text: string }> = {
-  Pending:   { bg: 'bg-orange-50', text: 'text-orange-600' },
-  Resolved:  { bg: 'bg-green-50',  text: 'text-green-600'  },
-  Closed:    { bg: 'bg-gray-100',  text: 'text-gray-500'   },
+  Pending:   { bg: 'bg-orange-50 dark:bg-orange-900/20', text: 'text-orange-600 dark:text-orange-400' },
+  Resolved:  { bg: 'bg-green-50 dark:bg-green-900/20',  text: 'text-green-600 dark:text-green-400'  },
+  Closed:    { bg: 'bg-gray-100 dark:bg-white/10',  text: 'text-gray-500 dark:text-gray-400'   },
+};
+
+const STATUS_FILTER_COLORS: Record<'All' | 'Pending' | 'Resolved', { active: string; inactive: string }> = {
+  All: {
+    active:   'bg-[#D32F2F] text-white border-[#D32F2F]',
+    inactive: 'bg-white dark:bg-white/5 text-[#616161] dark:text-gray-400 border-gray-200 dark:border-white/10 hover:border-gray-400 dark:hover:border-white/20',
+  },
+  Pending: {
+    active:   'bg-yellow-500 text-white border-yellow-500',
+    inactive: 'bg-yellow-50 dark:bg-yellow-900/20 text-yellow-700 dark:text-yellow-400 border-yellow-200 dark:border-yellow-500/20 hover:border-yellow-400 dark:hover:border-yellow-500/40',
+  },
+  Resolved: {
+    active:   'bg-green-500 text-white border-green-500',
+    inactive: 'bg-green-50 dark:bg-green-900/20 text-green-700 dark:text-green-400 border-green-200 dark:border-green-500/20 hover:border-green-400 dark:hover:border-green-500/40',
+  },
 };
 
 function getPageNumbers(current: number, total: number): (number | '...')[] {
@@ -70,7 +85,7 @@ function ViewPopup({ inquiry, onClose, onStatusUpdate }: {
             <h2 className="text-base font-bold text-[#212121] dark:text-white" style={{ fontFamily: 'Poppins, sans-serif' }}>
               Inquiry Details
             </h2>
-            <p className="text-xs text-[#9E9E9E] mt-0.5">#{inquiry.id}</p>
+            <p className="text-xs text-[#9E9E9E] dark:text-gray-500 mt-0.5">#{inquiry.id}</p>
           </div>
           <button
             onClick={onClose}
@@ -160,7 +175,7 @@ function DeleteConfirm({ name, onConfirm, onCancel, loading }: {
   return (
     <div className="fixed inset-0 bg-black/50 z-50 flex items-center justify-center p-4" onClick={onCancel}>
       <div className="bg-white dark:bg-[#1e2133] rounded-2xl w-full max-w-sm shadow-xl p-6" onClick={e => e.stopPropagation()}>
-        <div className="w-12 h-12 bg-red-100 rounded-full flex items-center justify-center mx-auto mb-4">
+        <div className="w-12 h-12 bg-red-100 dark:bg-red-900/20 rounded-full flex items-center justify-center mx-auto mb-4">
           <Trash2 size={22} className="text-[#D32F2F]" />
         </div>
         <h3 className="text-center font-bold text-[#212121] dark:text-white mb-1" style={{ fontFamily: 'Poppins, sans-serif' }}>
@@ -200,6 +215,7 @@ export default function GeneralInquiries() {
   const [viewItem,    setViewItem]    = useState<any | null>(null);
   const [deleteItem,  setDeleteItem]  = useState<any | null>(null);
   const [deleting,    setDeleting]    = useState(false);
+  const [statusFilter, setStatusFilter] = useState<'All' | 'Pending' | 'Resolved'>('All');
   const searchTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
   const { can }      = usePermission();
   const canView       = can('General Inquiry', 'read');
@@ -208,18 +224,18 @@ export default function GeneralInquiries() {
 
   const [stats, setStats] = useState({ total: 0, pending: 0, today: 0 });
 
-  const fetchData = async (p: number, q: string) => {
+  const fetchData = async (p: number, q: string, status: 'All' | 'Pending' | 'Resolved' = statusFilter) => {
     setLoading(true);
     setFetchError('');
     try {
-      const res = await getAllGeneralInquiries(p, LIMIT, q || undefined);
+      const res = await getAllGeneralInquiries(p, LIMIT, q || undefined, status === 'All' ? undefined : status);
       const data: any[] = res?.data ?? [];
       const count: number = res?.count ?? 0;
       setRows(data);
       setTotal(count);
 
-      // compute stats from full first-page context when on page 1 with no search
-      if (p === 1 && !q) {
+      // compute stats from full first-page context when on page 1 with no search/status filter
+      if (p === 1 && !q && status === 'All') {
         const todayStr = new Date().toDateString();
         const pendingCount = data.filter((r: any) => r.status === 'Pending').length;
         const todayCount   = data.filter((r: any) => new Date(r.created_at).toDateString() === todayStr).length;
@@ -232,7 +248,7 @@ export default function GeneralInquiries() {
     }
   };
 
-  useEffect(() => { fetchData(1, ''); }, []);
+  useEffect(() => { fetchData(1, '', 'All'); }, []);
 
   const handleStatusUpdate = async (id: number, status: string) => {
     await updateGeneralInquiry(id, { status });
@@ -242,10 +258,16 @@ export default function GeneralInquiries() {
   const handleSearch = (q: string) => {
     setSearch(q);
     if (searchTimer.current) clearTimeout(searchTimer.current);
-    searchTimer.current = setTimeout(() => { setPage(1); fetchData(1, q); }, 350);
+    searchTimer.current = setTimeout(() => { setPage(1); fetchData(1, q, statusFilter); }, 350);
   };
 
-  const handlePage = (p: number) => { setPage(p); fetchData(p, search); };
+  const handleStatusFilter = (s: 'All' | 'Pending' | 'Resolved') => {
+    setStatusFilter(s);
+    setPage(1);
+    fetchData(1, search, s);
+  };
+
+  const handlePage = (p: number) => { setPage(p); fetchData(p, search, statusFilter); };
 
   const confirmDelete = async () => {
     if (!deleteItem) return;
@@ -253,7 +275,7 @@ export default function GeneralInquiries() {
     try {
       await deleteGeneralInquiries([deleteItem.id]);
       setDeleteItem(null);
-      fetchData(page, search);
+      fetchData(page, search, statusFilter);
     } catch {
       // keep modal open, user can retry
     } finally {
@@ -307,7 +329,7 @@ export default function GeneralInquiries() {
           </p>
         </div>
         <button
-          onClick={() => fetchData(page, search)}
+          onClick={() => fetchData(page, search, statusFilter)}
           title="Refresh"
           className="p-2 border border-gray-200 dark:border-white/10 rounded-xl text-[#616161] dark:text-gray-400 hover:border-[#D32F2F] hover:text-[#D32F2F] transition-colors"
         >
@@ -335,28 +357,45 @@ export default function GeneralInquiries() {
         })}
       </div>
 
-      {/* Search bar */}
-      <div className="bg-white dark:bg-[#1a1d26] rounded-2xl border border-gray-100 dark:border-white/5 p-4 mb-4 flex flex-wrap gap-3 items-center">
-        <div className="relative w-full md:w-1/2">
-          <Search size={13} className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400 pointer-events-none" />
+      {/* Search bar + status filters */}
+      <div className="bg-white dark:bg-[#1a1d26] rounded-2xl border border-gray-100 dark:border-white/5 p-4 mb-4 flex flex-wrap gap-3 items-center justify-between">
+        <div className="relative flex-1 min-w-[200px]">
+          <Search size={13} className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400 dark:text-gray-500 pointer-events-none" />
           <input
             type="text"
             placeholder="Search name or mobile…"
             value={search}
             onChange={e => handleSearch(e.target.value)}
-            className="w-full pl-8 pr-8 py-2 border border-gray-200 dark:border-white/10 rounded-xl text-sm focus:outline-none focus:border-[#D32F2F] bg-white dark:bg-white/5 text-[#212121] dark:text-white placeholder:text-gray-400"
+            className="w-full pl-8 pr-8 py-2 border border-gray-200 dark:border-white/10 rounded-xl text-sm focus:outline-none focus:border-[#D32F2F] bg-white dark:bg-white/5 text-[#212121] dark:text-white placeholder:text-gray-400 dark:placeholder:text-gray-500"
           />
           {search && (
-            <button onClick={() => handleSearch('')} className="absolute right-2.5 top-1/2 -translate-y-1/2 text-gray-400 hover:text-gray-600">
+            <button onClick={() => handleSearch('')} className="absolute right-2.5 top-1/2 -translate-y-1/2 text-gray-400 dark:text-gray-500 hover:text-gray-600 dark:hover:text-gray-300">
               <X size={12} />
             </button>
           )}
+        </div>
+
+        <div className="flex items-center gap-2">
+          {(['All', 'Pending', 'Resolved'] as const).map(s => {
+            const active = statusFilter === s;
+            const activeClass = STATUS_FILTER_COLORS[s].active;
+            const inactiveClass = STATUS_FILTER_COLORS[s].inactive;
+            return (
+              <button
+                key={s}
+                onClick={() => handleStatusFilter(s)}
+                className={`px-3 py-1.5 rounded-xl text-xs font-semibold border transition-colors ${active ? activeClass : inactiveClass}`}
+              >
+                {s}
+              </button>
+            );
+          })}
         </div>
       </div>
 
       {/* Error */}
       {fetchError && (
-        <div className="bg-red-50 border border-red-200 rounded-2xl px-4 py-3 text-sm text-red-600 mb-4 flex items-center justify-between">
+        <div className="bg-red-50 dark:bg-red-900/15 border border-red-200 dark:border-red-500/25 rounded-2xl px-4 py-3 text-sm text-red-600 dark:text-red-400 mb-4 flex items-center justify-between">
           {fetchError}
           <button onClick={() => fetchData(page, search)} className="text-[#D32F2F] font-semibold text-xs hover:underline">Retry</button>
         </div>
@@ -403,19 +442,18 @@ export default function GeneralInquiries() {
                     rows.map((row, idx) => {
                       const sc = STATUS_COLORS[row.status] ?? STATUS_COLORS['Pending'];
                       return (
-                        <tr key={row.id} className="hover:bg-gray-50 dark:hover:bg-white/5 transition-colors">
+                        <tr
+                          key={row.id}
+                          onClick={() => canView && setViewItem(row)}
+                          className={`hover:bg-gray-50 dark:hover:bg-white/5 transition-colors ${canView ? 'cursor-pointer' : ''}`}
+                        >
                           <td className="px-4 py-3 text-xs font-mono font-semibold text-[#D32F2F]">
                             {(page - 1) * LIMIT + idx + 1}
                           </td>
                           <td className="px-4 py-3">
-                            <div className="flex items-center gap-2">
-                              <div className="w-7 h-7 rounded-full bg-gradient-to-br from-[#D32F2F] to-[#FBC02D] flex items-center justify-center text-white text-xs font-bold flex-shrink-0">
-                                {(row.name || '?')[0].toUpperCase()}
-                              </div>
-                              <span className="text-sm font-medium text-[#212121] dark:text-white whitespace-nowrap">
-                                {row.name || '—'}
-                              </span>
-                            </div>
+                            <span className="text-sm font-medium text-[#212121] dark:text-white whitespace-nowrap">
+                              {row.name || '—'}
+                            </span>
                           </td>
                           <td className="px-4 py-3 text-sm text-[#616161] dark:text-gray-400 whitespace-nowrap">
                             {row.mobile || '—'}
@@ -435,7 +473,7 @@ export default function GeneralInquiries() {
                           </td>
                           {showActions && (
                             <td className="px-4 py-3">
-                              <div className="flex items-center gap-1">
+                              <div className="flex items-center gap-1" onClick={e => e.stopPropagation()}>
                                 {canView && (
                                   <button
                                     onClick={() => setViewItem(row)}
@@ -483,7 +521,7 @@ export default function GeneralInquiries() {
                   </button>
                   {getPageNumbers(page, totalPages).map((p, i) =>
                     p === '...' ? (
-                      <span key={`e-${i}`} className="w-8 h-8 flex items-center justify-center text-xs text-[#9E9E9E]">…</span>
+                      <span key={`e-${i}`} className="w-8 h-8 flex items-center justify-center text-xs text-[#9E9E9E] dark:text-gray-600">…</span>
                     ) : (
                       <button
                         key={p}

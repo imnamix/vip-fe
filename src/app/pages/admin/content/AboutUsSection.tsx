@@ -65,20 +65,20 @@ function IconPicker({ value, onChange }: { value: string; onChange: (name: strin
       <button
         type="button"
         onClick={() => setOpen(o => !o)}
-        className="w-full flex items-center gap-2 px-3 py-2 border border-gray-200 rounded-xl text-sm hover:border-[#D32F2F] focus:outline-none focus:border-[#D32F2F] bg-white"
+        className="w-full flex items-center gap-2 px-3 py-2 border border-gray-200 dark:border-white/10 rounded-xl text-sm hover:border-[#D32F2F] focus:outline-none focus:border-[#D32F2F] bg-white dark:bg-white/5"
       >
         <span className="flex items-center justify-center w-5 h-5 text-[#D32F2F] flex-shrink-0">
-          {value ? renderIcon(value, 16) : <span className="w-4 h-4 border border-dashed border-gray-300 rounded block" />}
+          {value ? renderIcon(value, 16) : <span className="w-4 h-4 border border-dashed border-gray-300 dark:border-gray-600 rounded block" />}
         </span>
-        <span className={value ? 'text-[#212121]' : 'text-[#9E9E9E]'}>{value || 'Select icon'}</span>
-        <ChevronDown size={14} className="ml-auto text-[#616161]" />
+        <span className={value ? 'text-[#212121] dark:text-white' : 'text-[#9E9E9E] dark:text-gray-500'}>{value || 'Select icon'}</span>
+        <ChevronDown size={14} className="ml-auto text-[#616161] dark:text-gray-400" />
       </button>
       {open && (
-        <div className="absolute left-0 top-full mt-1 z-50 bg-white border border-gray-200 rounded-xl shadow-xl p-3 w-64">
+        <div className="absolute left-0 top-full mt-1 z-50 bg-white dark:bg-[#1e2133] border border-gray-200 dark:border-white/10 rounded-xl shadow-xl dark:shadow-black/50 p-3 w-64">
           <button
             type="button"
             onClick={() => { onChange(''); setOpen(false); }}
-            className={`w-full mb-2 px-3 py-1.5 rounded-lg text-xs font-medium border transition-colors ${!value ? 'bg-red-100 text-[#D32F2F] border-[#D32F2F]/30' : 'text-[#616161] border-gray-200 hover:bg-gray-50'}`}
+            className={`w-full mb-2 px-3 py-1.5 rounded-lg text-xs font-medium border transition-colors ${!value ? 'bg-red-100 dark:bg-red-900/20 text-[#D32F2F] border-[#D32F2F]/30' : 'text-[#616161] dark:text-gray-400 border-gray-200 dark:border-white/10 hover:bg-gray-50 dark:hover:bg-white/5'}`}
           >
             None
           </button>
@@ -88,7 +88,7 @@ function IconPicker({ value, onChange }: { value: string; onChange: (name: strin
                 <button
                   type="button"
                   onClick={() => { onChange(name); setOpen(false); }}
-                  className={`p-2 rounded-lg flex items-center justify-center hover:bg-red-50 transition-colors w-full ${value === name ? 'bg-red-100 text-[#D32F2F]' : 'text-[#616161]'}`}
+                  className={`p-2 rounded-lg flex items-center justify-center hover:bg-red-50 dark:hover:bg-red-900/20 transition-colors w-full ${value === name ? 'bg-red-100 dark:bg-red-900/20 text-[#D32F2F]' : 'text-[#616161] dark:text-gray-400'}`}
                 >
                   <Component size={18} />
                 </button>
@@ -130,7 +130,7 @@ function SingleImageUpload({ value, onChange, label, canDelete = true, hint }: {
 
   if (value) {
     return (
-      <div className="border border-gray-200 rounded-xl p-3">
+      <div className="border border-gray-200 dark:border-white/10 rounded-xl p-3">
         <div className="relative group cursor-pointer" onClick={() => setImgPreview(true)}>
           <img src={value} alt={label} className="w-full h-40 object-cover rounded-lg" />
           <div className="absolute inset-0 bg-black/30 opacity-0 group-hover:opacity-100 transition-opacity rounded-lg flex items-center justify-center">
@@ -141,7 +141,7 @@ function SingleImageUpload({ value, onChange, label, canDelete = true, hint }: {
           <button
             type="button"
             onClick={() => onChange('')}
-            className="mt-2 flex items-center gap-1 px-3 py-1.5 text-xs text-red-600 border border-red-200 rounded-lg hover:bg-red-50 transition-colors"
+            className="mt-2 flex items-center gap-1 px-3 py-1.5 text-xs text-red-600 dark:text-red-400 border border-red-200 dark:border-red-500/25 rounded-lg hover:bg-red-50 dark:hover:bg-red-900/20 transition-colors"
           >
             <Trash2 size={12} /> Remove
           </button>
@@ -152,10 +152,10 @@ function SingleImageUpload({ value, onChange, label, canDelete = true, hint }: {
   }
 
   return (
-    <label className={`flex flex-col items-center gap-2 py-8 border-2 border-dashed rounded-xl cursor-pointer transition-colors ${uploading ? 'opacity-60 pointer-events-none border-gray-200' : 'border-[#D32F2F]/40 hover:border-[#D32F2F] hover:bg-red-50'}`}>
+    <label className={`flex flex-col items-center gap-2 py-8 border-2 border-dashed rounded-xl cursor-pointer transition-colors ${uploading ? 'opacity-60 pointer-events-none border-gray-200 dark:border-white/10' : 'border-[#D32F2F]/40 hover:border-[#D32F2F] hover:bg-red-50 dark:hover:bg-red-900/10'}`}>
       {uploading ? <Loader2 size={20} className="animate-spin text-[#D32F2F]" /> : <Image size={20} className="text-[#D32F2F]" />}
       <span className="text-xs text-[#D32F2F] font-medium">{uploading ? 'Uploading…' : `Upload ${label}`}</span>
-      {hint && <span className="text-xs text-[#9E9E9E]">{hint}</span>}
+      {hint && <span className="text-xs text-[#9E9E9E] dark:text-gray-500">{hint}</span>}
       <input type="file" accept="image/*" className="hidden" onChange={handleUpload} disabled={uploading} />
     </label>
   );
@@ -165,7 +165,7 @@ function SingleImageUpload({ value, onChange, label, canDelete = true, hint }: {
 
 function SectionTitle({ children }: { children: React.ReactNode }) {
   return (
-    <h3 className="font-bold text-[#212121] mb-4 text-sm" style={{ fontFamily: 'Poppins, sans-serif' }}>
+    <h3 className="font-bold text-[#212121] dark:text-white mb-4 text-sm" style={{ fontFamily: 'Poppins, sans-serif' }}>
       {children}
     </h3>
   );
@@ -383,7 +383,7 @@ export default function AboutUsSection() {
 
   if (loading) {
     return (
-      <div className="flex items-center justify-center py-20 text-[#616161] text-sm gap-2">
+      <div className="flex items-center justify-center py-20 text-[#616161] dark:text-gray-400 text-sm gap-2">
         <Loader2 size={16} className="animate-spin" /> Loading about us data…
       </div>
     );
@@ -392,7 +392,7 @@ export default function AboutUsSection() {
   return (
     <div className="space-y-8">
       {error && (
-        <div className="flex items-center gap-2 px-4 py-3 bg-red-50 border border-red-200 rounded-xl text-sm text-red-600">
+        <div className="flex items-center gap-2 px-4 py-3 bg-red-50 dark:bg-red-900/15 border border-red-200 dark:border-red-500/25 rounded-xl text-sm text-red-600 dark:text-red-400">
           <AlertCircle size={14} /> {error}
         </div>
       )}
@@ -401,14 +401,14 @@ export default function AboutUsSection() {
       <div>
         <SectionTitle>Page Banner Slides</SectionTitle>
         {bannerError && (
-          <div className="flex items-center gap-2 px-4 py-3 mb-3 bg-red-50 border border-red-200 rounded-xl text-sm text-red-600">
+          <div className="flex items-center gap-2 px-4 py-3 mb-3 bg-red-50 dark:bg-red-900/15 border border-red-200 dark:border-red-500/25 rounded-xl text-sm text-red-600 dark:text-red-400">
             <AlertCircle size={14} /> {bannerError}
           </div>
         )}
         <SlideEditor slides={slides} setSlides={setSlides} label="Slide" showErrors={slideShowErrors} canWrite={canWrite} canDelete={canDelete} recommendedSize="2048 x 410 px" />
-        <div className="flex items-center justify-end gap-3 pt-3 mt-3 border-t border-gray-100">
+        <div className="flex items-center justify-end gap-3 pt-3 mt-3 border-t border-gray-100 dark:border-white/10">
           {savedBanner && (
-            <div className="flex items-center gap-1.5 text-green-600 text-sm font-medium">
+            <div className="flex items-center gap-1.5 text-green-600 dark:text-green-400 text-sm font-medium">
               <CheckCircle size={14} /> Saved successfully
             </div>
           )}
@@ -427,21 +427,21 @@ export default function AboutUsSection() {
       </div>
 
       {/* ── Homepage About Us ── */}
-      <div className="border-t border-gray-100 pt-6">
+      <div className="border-t border-gray-100 dark:border-white/10 pt-6">
         <SectionTitle>Homepage About Us Section</SectionTitle>
         <div className="space-y-3">
           <div>
-            <label className="block text-xs font-semibold text-[#616161] mb-1">Title</label>
+            <label className="block text-xs font-semibold text-[#616161] dark:text-gray-400 mb-1">Title</label>
             <input
               value={hpTitle}
               onChange={e => setHpTitle(e.target.value)}
               placeholder="Homepage about us title"
-              className="w-full px-3 py-2 border border-gray-200 rounded-xl text-sm focus:outline-none focus:border-[#D32F2F]"
+              className="w-full px-3 py-2 border border-gray-200 dark:border-white/10 rounded-xl text-sm focus:outline-none focus:border-[#D32F2F] bg-white dark:bg-white/5 text-[#212121] dark:text-white placeholder:text-gray-400 dark:placeholder:text-gray-500"
             />
           </div>
           <div>
-            <label className="block text-xs font-semibold text-[#616161] mb-2">Description</label>
-            <div className="rounded-xl overflow-hidden border border-gray-200 [&_.ql-toolbar]:rounded-t-xl [&_.ql-toolbar]:bg-gray-50 [&_.ql-toolbar]:border-gray-200 [&_.ql-container]:rounded-b-xl [&_.ql-container]:border-gray-200 [&_.ql-editor]:min-h-[150px] [&_.ql-editor]:text-sm">
+            <label className="block text-xs font-semibold text-[#616161] dark:text-gray-400 mb-2">Description</label>
+            <div className="rounded-xl overflow-hidden border border-gray-200 dark:border-white/10 [&_.ql-toolbar]:rounded-t-xl [&_.ql-toolbar]:bg-gray-50 dark:[&_.ql-toolbar]:bg-white/5 [&_.ql-toolbar]:border-gray-200 dark:[&_.ql-toolbar]:border-white/10 [&_.ql-container]:rounded-b-xl [&_.ql-container]:border-gray-200 dark:[&_.ql-container]:border-white/10 [&_.ql-editor]:min-h-[150px] [&_.ql-editor]:text-sm dark:[&_.ql-editor]:bg-white/5 dark:[&_.ql-editor]:text-white dark:[&_.ql-editor.ql-blank::before]:text-gray-500 dark:[&_.ql-stroke]:stroke-gray-400 dark:[&_.ql-fill]:fill-gray-400 dark:[&_.ql-picker]:text-gray-400">
               <ReactQuill
                 theme="snow"
                 value={hpDesc}
@@ -460,7 +460,7 @@ export default function AboutUsSection() {
             </div>
           </div>
           <div>
-            <label className="block text-xs font-semibold text-[#616161] mb-1">Image</label>
+            <label className="block text-xs font-semibold text-[#616161] dark:text-gray-400 mb-1">Image</label>
             <SingleImageUpload value={hpImage} onChange={setHpImage} label="Homepage About Us Image" canDelete={canDelete} hint="Recommended: 1024 x 600 px" />
           </div>
           <label className="flex items-center gap-2 cursor-pointer select-none mt-1">
@@ -470,28 +470,28 @@ export default function AboutUsSection() {
               onChange={e => setSameAsHp(e.target.checked)}
               className="w-4 h-4 accent-[#D32F2F] rounded"
             />
-            <span className="text-xs font-semibold text-[#616161]">Same as About Page</span>
+            <span className="text-xs font-semibold text-[#616161] dark:text-gray-400">Same as About Page</span>
           </label>
         </div>
       </div>
 
       {/* ── About Page Section ── */}
-      <div className="border-t border-gray-100 pt-6">
+      <div className="border-t border-gray-100 dark:border-white/10 pt-6">
         <SectionTitle>About Page Section</SectionTitle>
-      
+
         <div className={`space-y-3 `}>
           <div>
-            <label className="block text-xs font-semibold text-[#616161] mb-1">Title</label>
+            <label className="block text-xs font-semibold text-[#616161] dark:text-gray-400 mb-1">Title</label>
             <input
               value={apTitle}
               onChange={e => setApTitle(e.target.value)}
               placeholder="About page title"
-              className="w-full px-3 py-2 border border-gray-200 rounded-xl text-sm focus:outline-none focus:border-[#D32F2F]"
+              className="w-full px-3 py-2 border border-gray-200 dark:border-white/10 rounded-xl text-sm focus:outline-none focus:border-[#D32F2F] bg-white dark:bg-white/5 text-[#212121] dark:text-white placeholder:text-gray-400 dark:placeholder:text-gray-500"
             />
           </div>
           <div>
-            <label className="block text-xs font-semibold text-[#616161] mb-2">Description</label>
-            <div className="rounded-xl overflow-hidden border border-gray-200 [&_.ql-toolbar]:rounded-t-xl [&_.ql-toolbar]:bg-gray-50 [&_.ql-toolbar]:border-gray-200 [&_.ql-container]:rounded-b-xl [&_.ql-container]:border-gray-200 [&_.ql-editor]:min-h-[150px] [&_.ql-editor]:text-sm">
+            <label className="block text-xs font-semibold text-[#616161] dark:text-gray-400 mb-2">Description</label>
+            <div className="rounded-xl overflow-hidden border border-gray-200 dark:border-white/10 [&_.ql-toolbar]:rounded-t-xl [&_.ql-toolbar]:bg-gray-50 dark:[&_.ql-toolbar]:bg-white/5 [&_.ql-toolbar]:border-gray-200 dark:[&_.ql-toolbar]:border-white/10 [&_.ql-container]:rounded-b-xl [&_.ql-container]:border-gray-200 dark:[&_.ql-container]:border-white/10 [&_.ql-editor]:min-h-[150px] [&_.ql-editor]:text-sm dark:[&_.ql-editor]:bg-white/5 dark:[&_.ql-editor]:text-white dark:[&_.ql-editor.ql-blank::before]:text-gray-500 dark:[&_.ql-stroke]:stroke-gray-400 dark:[&_.ql-fill]:fill-gray-400 dark:[&_.ql-picker]:text-gray-400">
               <ReactQuill
                 theme="snow"
                 value={apDesc}
@@ -510,14 +510,14 @@ export default function AboutUsSection() {
             </div>
           </div>
           <div>
-            <label className="block text-xs font-semibold text-[#616161] mb-1">Image</label>
+            <label className="block text-xs font-semibold text-[#616161] dark:text-gray-400 mb-1">Image</label>
             <SingleImageUpload value={apImage} onChange={setApImage} label="About Page Image" canDelete={canDelete} hint="Recommended: 1024 x 600 px" />
           </div>
         </div>
       </div>
 
       {/* ── Years of Experience ── */}
-      <div className="border-t border-gray-100 pt-6">
+      <div className="border-t border-gray-100 dark:border-white/10 pt-6">
         <SectionTitle>Years of Experience</SectionTitle>
         <div className="w-full sm:w-48">
           <input
@@ -526,24 +526,24 @@ export default function AboutUsSection() {
             value={yearsOfExperience}
             onChange={e => setYearsOfExperience(e.target.value)}
             placeholder="e.g. 15"
-            className="w-full px-3 py-2 border border-gray-200 rounded-xl text-sm focus:outline-none focus:border-[#D32F2F]"
+            className="w-full px-3 py-2 border border-gray-200 dark:border-white/10 rounded-xl text-sm focus:outline-none focus:border-[#D32F2F] bg-white dark:bg-white/5 text-[#212121] dark:text-white placeholder:text-gray-400 dark:placeholder:text-gray-500"
           />
         </div>
       </div>
 
       {/* ── Statistics ── */}
-      <div className="border-t border-gray-100 pt-6">
+      <div className="border-t border-gray-100 dark:border-white/10 pt-6">
         <SectionTitle>Statistics</SectionTitle>
         <div className="space-y-3">
           {statistics.map((stat, idx) => (
-            <div key={stat.id} className="border border-gray-200 rounded-xl">
-              <div className="flex items-center justify-between bg-gray-50 px-4 py-2.5 rounded-t-xl">
-                <span className="font-semibold text-[#212121] text-sm">Statistic {idx + 1}</span>
+            <div key={stat.id} className="border border-gray-200 dark:border-white/10 rounded-xl">
+              <div className="flex items-center justify-between bg-gray-50 dark:bg-white/5 px-4 py-2.5 rounded-t-xl">
+                <span className="font-semibold text-[#212121] dark:text-white text-sm">Statistic {idx + 1}</span>
                 {canDelete && (
                   <button
                     type="button"
                     onClick={() => removeStat(stat.id)}
-                    className="p-1.5 text-[#D32F2F] hover:bg-red-50 rounded-lg transition-colors"
+                    className="p-1.5 text-[#D32F2F] hover:bg-red-50 dark:hover:bg-red-900/20 rounded-lg transition-colors"
                   >
                     <Trash2 size={13} />
                   </button>
@@ -551,25 +551,25 @@ export default function AboutUsSection() {
               </div>
               <div className="p-4 grid grid-cols-1 sm:grid-cols-3 gap-3">
                 <div>
-                  <label className="block text-xs font-semibold text-[#616161] mb-1">Key (Label)</label>
+                  <label className="block text-xs font-semibold text-[#616161] dark:text-gray-400 mb-1">Key (Label)</label>
                   <input
                     value={stat.key}
                     onChange={e => updateStat(stat.id, 'key', e.target.value)}
                     placeholder="e.g. Projects Completed"
-                    className="w-full px-3 py-2 border border-gray-200 rounded-xl text-sm focus:outline-none focus:border-[#D32F2F]"
+                    className="w-full px-3 py-2 border border-gray-200 dark:border-white/10 rounded-xl text-sm focus:outline-none focus:border-[#D32F2F] bg-white dark:bg-white/5 text-[#212121] dark:text-white placeholder:text-gray-400 dark:placeholder:text-gray-500"
                   />
                 </div>
                 <div>
-                  <label className="block text-xs font-semibold text-[#616161] mb-1">Value</label>
+                  <label className="block text-xs font-semibold text-[#616161] dark:text-gray-400 mb-1">Value</label>
                   <input
                     value={stat.value}
                     onChange={e => updateStat(stat.id, 'value', e.target.value)}
                     placeholder="e.g. 500+"
-                    className="w-full px-3 py-2 border border-gray-200 rounded-xl text-sm focus:outline-none focus:border-[#D32F2F]"
+                    className="w-full px-3 py-2 border border-gray-200 dark:border-white/10 rounded-xl text-sm focus:outline-none focus:border-[#D32F2F] bg-white dark:bg-white/5 text-[#212121] dark:text-white placeholder:text-gray-400 dark:placeholder:text-gray-500"
                   />
                 </div>
                 <div>
-                  <label className="block text-xs font-semibold text-[#616161] mb-1">Icon</label>
+                  <label className="block text-xs font-semibold text-[#616161] dark:text-gray-400 mb-1">Icon</label>
                   <IconPicker value={stat.icon} onChange={val => updateStat(stat.id, 'icon', val)} />
                 </div>
               </div>
@@ -579,7 +579,7 @@ export default function AboutUsSection() {
             <button
               type="button"
               onClick={addStat}
-              className="w-full py-3 border-2 border-dashed border-[#D32F2F]/40 text-[#D32F2F] rounded-xl text-sm font-medium hover:border-[#D32F2F] hover:bg-red-50 transition-colors flex items-center justify-center gap-2"
+              className="w-full py-3 border-2 border-dashed border-[#D32F2F]/40 text-[#D32F2F] rounded-xl text-sm font-medium hover:border-[#D32F2F] hover:bg-red-50 dark:hover:bg-red-900/10 transition-colors flex items-center justify-center gap-2"
             >
               <Plus size={14} /> Add Statistic
             </button>
@@ -588,18 +588,18 @@ export default function AboutUsSection() {
       </div>
 
       {/* ── Why Choose Us ── */}
-      <div className="border-t border-gray-100 pt-6">
+      <div className="border-t border-gray-100 dark:border-white/10 pt-6">
         <SectionTitle>Why Choose Us</SectionTitle>
         <div className="space-y-3">
           {whyChooseUs.map((item, idx) => (
-            <div key={item.id} className="border border-gray-200 rounded-xl">
-              <div className="flex items-center justify-between bg-gray-50 px-4 py-2.5 rounded-t-xl">
-                <span className="font-semibold text-[#212121] text-sm">Reason {idx + 1}</span>
+            <div key={item.id} className="border border-gray-200 dark:border-white/10 rounded-xl">
+              <div className="flex items-center justify-between bg-gray-50 dark:bg-white/5 px-4 py-2.5 rounded-t-xl">
+                <span className="font-semibold text-[#212121] dark:text-white text-sm">Reason {idx + 1}</span>
                 {canDelete && (
                   <button
                     type="button"
                     onClick={() => removeWhy(item.id)}
-                    className="p-1.5 text-[#D32F2F] hover:bg-red-50 rounded-lg transition-colors"
+                    className="p-1.5 text-[#D32F2F] hover:bg-red-50 dark:hover:bg-red-900/20 rounded-lg transition-colors"
                   >
                     <Trash2 size={13} />
                   </button>
@@ -607,25 +607,25 @@ export default function AboutUsSection() {
               </div>
               <div className="p-4 grid grid-cols-1 sm:grid-cols-3 gap-3">
                 <div>
-                  <label className="block text-xs font-semibold text-[#616161] mb-1">Key (Heading)</label>
+                  <label className="block text-xs font-semibold text-[#616161] dark:text-gray-400 mb-1">Key (Heading)</label>
                   <input
                     value={item.key}
                     onChange={e => updateWhy(item.id, 'key', e.target.value)}
                     placeholder="e.g. Expert Team"
-                    className="w-full px-3 py-2 border border-gray-200 rounded-xl text-sm focus:outline-none focus:border-[#D32F2F]"
+                    className="w-full px-3 py-2 border border-gray-200 dark:border-white/10 rounded-xl text-sm focus:outline-none focus:border-[#D32F2F] bg-white dark:bg-white/5 text-[#212121] dark:text-white placeholder:text-gray-400 dark:placeholder:text-gray-500"
                   />
                 </div>
                 <div>
-                  <label className="block text-xs font-semibold text-[#616161] mb-1">Value (Detail)</label>
+                  <label className="block text-xs font-semibold text-[#616161] dark:text-gray-400 mb-1">Value (Detail)</label>
                   <input
                     value={item.value}
                     onChange={e => updateWhy(item.id, 'value', e.target.value)}
                     placeholder="e.g. 15+ years experience"
-                    className="w-full px-3 py-2 border border-gray-200 rounded-xl text-sm focus:outline-none focus:border-[#D32F2F]"
+                    className="w-full px-3 py-2 border border-gray-200 dark:border-white/10 rounded-xl text-sm focus:outline-none focus:border-[#D32F2F] bg-white dark:bg-white/5 text-[#212121] dark:text-white placeholder:text-gray-400 dark:placeholder:text-gray-500"
                   />
                 </div>
                 <div>
-                  <label className="block text-xs font-semibold text-[#616161] mb-1">Icon</label>
+                  <label className="block text-xs font-semibold text-[#616161] dark:text-gray-400 mb-1">Icon</label>
                   <IconPicker value={item.icon} onChange={val => updateWhy(item.id, 'icon', val)} />
                 </div>
               </div>
@@ -635,7 +635,7 @@ export default function AboutUsSection() {
             <button
               type="button"
               onClick={addWhy}
-              className="w-full py-3 border-2 border-dashed border-[#D32F2F]/40 text-[#D32F2F] rounded-xl text-sm font-medium hover:border-[#D32F2F] hover:bg-red-50 transition-colors flex items-center justify-center gap-2"
+              className="w-full py-3 border-2 border-dashed border-[#D32F2F]/40 text-[#D32F2F] rounded-xl text-sm font-medium hover:border-[#D32F2F] hover:bg-red-50 dark:hover:bg-red-900/10 transition-colors flex items-center justify-center gap-2"
             >
               <Plus size={14} /> Add Reason
             </button>
@@ -644,46 +644,46 @@ export default function AboutUsSection() {
       </div>
 
       {/* ── Mission / Vision / Our Values ── */}
-      <div className="border-t border-gray-100 pt-6">
+      <div className="border-t border-gray-100 dark:border-white/10 pt-6">
         <SectionTitle>Mission, Vision &amp; Our Values</SectionTitle>
         <div className="space-y-4">
           <div>
-            <label className="block text-xs font-semibold text-[#616161] mb-1">Mission</label>
+            <label className="block text-xs font-semibold text-[#616161] dark:text-gray-400 mb-1">Mission</label>
             <textarea
               value={mission}
               onChange={e => setMission(e.target.value)}
               rows={3}
               placeholder="Company mission statement"
-              className="w-full px-3 py-2 border border-gray-200 rounded-xl text-sm focus:outline-none focus:border-[#D32F2F] resize-none"
+              className="w-full px-3 py-2 border border-gray-200 dark:border-white/10 rounded-xl text-sm focus:outline-none focus:border-[#D32F2F] resize-none bg-white dark:bg-white/5 text-[#212121] dark:text-white placeholder:text-gray-400 dark:placeholder:text-gray-500"
             />
           </div>
           <div>
-            <label className="block text-xs font-semibold text-[#616161] mb-1">Vision</label>
+            <label className="block text-xs font-semibold text-[#616161] dark:text-gray-400 mb-1">Vision</label>
             <textarea
               value={vision}
               onChange={e => setVision(e.target.value)}
               rows={3}
               placeholder="Company vision statement"
-              className="w-full px-3 py-2 border border-gray-200 rounded-xl text-sm focus:outline-none focus:border-[#D32F2F] resize-none"
+              className="w-full px-3 py-2 border border-gray-200 dark:border-white/10 rounded-xl text-sm focus:outline-none focus:border-[#D32F2F] resize-none bg-white dark:bg-white/5 text-[#212121] dark:text-white placeholder:text-gray-400 dark:placeholder:text-gray-500"
             />
           </div>
           <div>
-            <label className="block text-xs font-semibold text-[#616161] mb-1">Our Values</label>
+            <label className="block text-xs font-semibold text-[#616161] dark:text-gray-400 mb-1">Our Values</label>
             <textarea
               value={ourValue}
               onChange={e => setOurValue(e.target.value)}
               rows={3}
               placeholder="Core values of the company"
-              className="w-full px-3 py-2 border border-gray-200 rounded-xl text-sm focus:outline-none focus:border-[#D32F2F] resize-none"
+              className="w-full px-3 py-2 border border-gray-200 dark:border-white/10 rounded-xl text-sm focus:outline-none focus:border-[#D32F2F] resize-none bg-white dark:bg-white/5 text-[#212121] dark:text-white placeholder:text-gray-400 dark:placeholder:text-gray-500"
             />
           </div>
         </div>
       </div>
 
       {/* ── Save ── */}
-      <div className="flex items-center justify-end gap-3 pt-2 border-t border-gray-100">
+      <div className="flex items-center justify-end gap-3 pt-2 border-t border-gray-100 dark:border-white/10">
         {saved && (
-          <div className="flex items-center gap-1.5 text-green-600 text-sm font-medium">
+          <div className="flex items-center gap-1.5 text-green-600 dark:text-green-400 text-sm font-medium">
             <CheckCircle size={14} /> Saved successfully
           </div>
         )}

@@ -1,5 +1,5 @@
 import { useState, useEffect } from "react";
-import { useNavigate, useOutletContext } from "react-router";
+import { useNavigate, useOutletContext, useSearchParams } from "react-router";
 import {
   X,
   Loader2,
@@ -129,6 +129,7 @@ export default function Services() {
   } | null>(null);
   const { openBooking } = useOutletContext<OutletCtx>();
   const navigate = useNavigate();
+  const [searchParams, setSearchParams] = useSearchParams();
 
   useEffect(() => {
     const load = async () => {
@@ -167,6 +168,18 @@ export default function Services() {
     };
     load();
   }, []);
+
+  // Deep-link support: /services?service=<id> opens that service's detail popup
+  useEffect(() => {
+    const serviceId = searchParams.get("service");
+    if (!serviceId || services.length === 0) return;
+    const match = services.find((s) => String(s.id) === serviceId);
+    if (match) setSelected(match);
+    setSearchParams((prev) => {
+      prev.delete("service");
+      return prev;
+    }, { replace: true });
+  }, [services, searchParams, setSearchParams]);
 
   return (
     <div>

@@ -30,10 +30,10 @@ const CATEGORIES: { value: Category; label: string }[] = [
 ];
 
 const CATEGORY_COLORS: Record<Category, string> = {
-  event: 'bg-blue-100 text-blue-700',
-  numerologist: 'bg-purple-100 text-purple-700',
-  testimonials: 'bg-green-100 text-green-700',
-  others: 'bg-gray-100 text-gray-600',
+  event: 'bg-blue-100 dark:bg-blue-900/20 text-blue-700 dark:text-blue-300',
+  numerologist: 'bg-purple-100 dark:bg-purple-900/20 text-purple-700 dark:text-purple-300',
+  testimonials: 'bg-green-100 dark:bg-green-900/20 text-green-700 dark:text-green-400',
+  others: 'bg-gray-100 dark:bg-white/10 text-gray-600 dark:text-gray-400',
 };
 
 // ─── Video Preview Modal ──────────────────────────────────────────────────────
@@ -104,7 +104,7 @@ function MediaUpload({
 
   if (value) {
     return (
-      <div className="border border-gray-200 rounded-xl p-3">
+      <div className="border border-gray-200 dark:border-white/10 rounded-xl p-3">
         {type === 'image' ? (
           <div
             className="relative group cursor-pointer"
@@ -133,7 +133,7 @@ function MediaUpload({
           <button
             type="button"
             onClick={() => onChange('')}
-            className="mt-2 flex items-center gap-1 px-3 py-1.5 text-xs text-red-600 border border-red-200 rounded-lg hover:bg-red-50 transition-colors"
+            className="mt-2 flex items-center gap-1 px-3 py-1.5 text-xs text-red-600 dark:text-red-400 border border-red-200 dark:border-red-500/25 rounded-lg hover:bg-red-50 dark:hover:bg-red-900/20 transition-colors"
           >
             <Trash2 size={12} /> Remove
           </button>
@@ -145,7 +145,7 @@ function MediaUpload({
   }
 
   return (
-    <label className={`flex flex-col items-center gap-2 py-8 border-2 border-dashed rounded-xl cursor-pointer transition-colors ${uploading ? 'opacity-60 pointer-events-none border-gray-200' : 'border-[#D32F2F]/40 hover:border-[#D32F2F] hover:bg-red-50'}`}>
+    <label className={`flex flex-col items-center gap-2 py-8 border-2 border-dashed rounded-xl cursor-pointer transition-colors ${uploading ? 'opacity-60 pointer-events-none border-gray-200 dark:border-white/10' : 'border-[#D32F2F]/40 hover:border-[#D32F2F] hover:bg-red-50 dark:hover:bg-red-900/10'}`}>
       {uploading
         ? <Loader2 size={20} className="animate-spin text-[#D32F2F]" />
         : type === 'image'
@@ -153,7 +153,7 @@ function MediaUpload({
           : <Video size={20} className="text-[#D32F2F]" />
       }
       <span className="text-xs text-[#D32F2F] font-medium">{uploading ? 'Uploading…' : label}</span>
-      {type === 'image' && <span className="text-xs text-[#9E9E9E]">Recommended: 1024 x 768 px</span>}
+      {type === 'image' && <span className="text-xs text-[#9E9E9E] dark:text-gray-500">Recommended: 1024 x 768 px</span>}
       <input type="file" accept={accept} className="hidden" onChange={handleUpload} disabled={uploading} />
     </label>
   );
@@ -289,7 +289,7 @@ export default function GallerySection() {
 
   if (loading) {
     return (
-      <div className="flex items-center justify-center py-20 text-[#616161] text-sm gap-2">
+      <div className="flex items-center justify-center py-20 text-[#616161] dark:text-gray-400 text-sm gap-2">
         <Loader2 size={16} className="animate-spin" /> Loading gallery…
       </div>
     );
@@ -298,7 +298,7 @@ export default function GallerySection() {
   return (
     <div className="space-y-6">
       {error && (
-        <div className="flex items-center gap-2 px-4 py-3 bg-red-50 border border-red-200 rounded-xl text-sm text-red-600">
+        <div className="flex items-center gap-2 px-4 py-3 bg-red-50 dark:bg-red-900/15 border border-red-200 dark:border-red-500/25 rounded-xl text-sm text-red-600 dark:text-red-400">
           <AlertCircle size={14} /> {error}
         </div>
       )}
@@ -311,11 +311,11 @@ export default function GallerySection() {
           return (
             <div
               key={item.localId}
-              className="border border-gray-200 rounded-xl"
+              className="border border-gray-200 dark:border-white/10 rounded-xl"
             >
               {/* ── Header ── */}
               <div
-                className={`flex items-center gap-2 bg-gray-50 px-4 py-2.5 ${expanded ? "rounded-t-xl" : "rounded-xl"}`}
+                className={`flex items-center gap-2 bg-gray-50 dark:bg-white/5 px-4 py-2.5 ${expanded ? "rounded-t-xl" : "rounded-xl"}`}
               >
                 {/* Sr. No. badge */}
                 <span className="flex-shrink-0 w-5 h-5 rounded-full bg-[#D32F2F] text-white text-[10px] font-bold flex items-center justify-center">
@@ -330,15 +330,15 @@ export default function GallerySection() {
                 >
                   <ChevronDown
                     size={14}
-                    className={`text-[#616161] flex-shrink-0 transition-transform duration-200 ${expanded ? "rotate-180" : ""}`}
+                    className={`text-[#616161] dark:text-gray-400 flex-shrink-0 transition-transform duration-200 ${expanded ? "rotate-180" : ""}`}
                   />
-                  <span className="font-semibold text-[#212121] text-sm truncate">
+                  <span className="font-semibold text-[#212121] dark:text-white text-sm truncate">
                     {item.title || `Gallery Item ${idx + 1}`}
                   </span>
 
                   {/* Type badge */}
                   <span
-                    className={`flex-shrink-0 flex items-center gap-1 px-2 py-0.5 rounded-full text-[10px] font-semibold ${item.type === "image" ? "bg-blue-50 text-blue-600" : "bg-orange-50 text-orange-600"}`}
+                    className={`flex-shrink-0 flex items-center gap-1 px-2 py-0.5 rounded-full text-[10px] font-semibold ${item.type === "image" ? "bg-blue-50 dark:bg-blue-900/20 text-blue-600 dark:text-blue-400" : "bg-orange-50 dark:bg-orange-900/20 text-orange-600 dark:text-orange-400"}`}
                   >
                     {item.type === "image" ? (
                       <Image size={9} />
@@ -368,7 +368,7 @@ export default function GallerySection() {
                   <button
                     type="button"
                     onClick={() => toggleExpand(item.localId)}
-                    className="px-2.5 py-1 text-xs text-[#616161] border border-gray-200 rounded-lg hover:bg-white transition-colors"
+                    className="px-2.5 py-1 text-xs text-[#616161] dark:text-gray-400 border border-gray-200 dark:border-white/10 rounded-lg hover:bg-white dark:hover:bg-white/10 transition-colors"
                   >
                     {expanded ? "Collapse" : "Expand"}
                   </button>
@@ -376,7 +376,7 @@ export default function GallerySection() {
                     <button
                       type="button"
                       onClick={() => removeItem(item.localId, item.serverId)}
-                      className="p-1.5 text-[#D32F2F] hover:bg-red-50 rounded-lg transition-colors"
+                      className="p-1.5 text-[#D32F2F] hover:bg-red-50 dark:hover:bg-red-900/20 rounded-lg transition-colors"
                     >
                       <Trash2 size={13} />
                     </button>
@@ -389,7 +389,7 @@ export default function GallerySection() {
                 <div className="p-4 space-y-4">
                   {/* Type toggle */}
                   <div>
-                    <label className="block text-xs font-semibold text-[#616161] mb-1.5">
+                    <label className="block text-xs font-semibold text-[#616161] dark:text-gray-400 mb-1.5">
                       Type
                     </label>
                     <div className="flex gap-2">
@@ -401,7 +401,7 @@ export default function GallerySection() {
                             updateItem(item.localId, "type", t);
                             updateItem(item.localId, "url", "");
                           }}
-                          className={`flex items-center gap-1.5 px-4 py-2 rounded-xl text-sm font-medium border transition-all capitalize ${item.type === t ? "bg-[#D32F2F] text-white border-[#D32F2F]" : "text-[#616161] border-gray-200 hover:border-[#D32F2F] hover:text-[#D32F2F]"}`}
+                          className={`flex items-center gap-1.5 px-4 py-2 rounded-xl text-sm font-medium border transition-all capitalize ${item.type === t ? "bg-[#D32F2F] text-white border-[#D32F2F]" : "text-[#616161] dark:text-gray-400 border-gray-200 dark:border-white/10 hover:border-[#D32F2F] hover:text-[#D32F2F]"}`}
                         >
                           {t === "image" ? (
                             <Image size={14} />
@@ -415,7 +415,7 @@ export default function GallerySection() {
                   </div>
                   {/* Media upload */}
                   <div>
-                    <label className="block text-xs font-semibold text-[#616161] mb-1">
+                    <label className="block text-xs font-semibold text-[#616161] dark:text-gray-400 mb-1">
                       {item.type === "image" ? "Image" : "Video"}{" "}
                       <span className="text-red-500">*</span>
                     </label>
@@ -435,7 +435,7 @@ export default function GallerySection() {
 
                   {/* Title */}
                   <div>
-                    <label className="block text-xs font-semibold text-[#616161] mb-1">
+                    <label className="block text-xs font-semibold text-[#616161] dark:text-gray-400 mb-1">
                       Title <span className="text-red-500">*</span>
                     </label>
                     <input
@@ -444,7 +444,7 @@ export default function GallerySection() {
                         updateItem(item.localId, "title", e.target.value)
                       }
                       placeholder="Enter title"
-                      className={`w-full px-3 py-2 border rounded-xl text-sm focus:outline-none ${fieldErrors[item.localId]?.title ? "border-red-400 bg-red-50 focus:border-red-500" : "border-gray-200 focus:border-[#D32F2F]"}`}
+                      className={`w-full px-3 py-2 border rounded-xl text-sm focus:outline-none text-[#212121] dark:text-white placeholder:text-gray-400 dark:placeholder:text-gray-500 ${fieldErrors[item.localId]?.title ? "border-red-400 dark:border-red-500/60 bg-red-50 dark:bg-red-900/20 focus:border-red-500" : "border-gray-200 dark:border-white/10 bg-white dark:bg-white/5 focus:border-[#D32F2F]"}`}
                     />
                     {fieldErrors[item.localId]?.title && (
                       <p className="mt-1 text-xs text-red-500 flex items-center gap-1">
@@ -456,7 +456,7 @@ export default function GallerySection() {
 
                   {/* Category */}
                   <div>
-                    <label className="block text-xs font-semibold text-[#616161] mb-1">
+                    <label className="block text-xs font-semibold text-[#616161] dark:text-gray-400 mb-1">
                       Category
                     </label>
                     <select
@@ -468,7 +468,7 @@ export default function GallerySection() {
                           e.target.value as Category,
                         )
                       }
-                      className="w-full px-3 py-2 border border-gray-200 rounded-xl text-sm focus:outline-none focus:border-[#D32F2F] bg-white"
+                      className="w-full px-3 py-2 border border-gray-200 dark:border-white/10 rounded-xl text-sm focus:outline-none focus:border-[#D32F2F] bg-white dark:bg-white/5 text-[#212121] dark:text-white"
                     >
                       {CATEGORIES.map((c) => (
                         <option key={c.value} value={c.value}>
@@ -487,7 +487,7 @@ export default function GallerySection() {
           <button
             type="button"
             onClick={addItem}
-            className="w-full py-3 border-2 border-dashed border-[#D32F2F]/40 text-[#D32F2F] rounded-xl text-sm font-medium hover:border-[#D32F2F] hover:bg-red-50 transition-colors flex items-center justify-center gap-2"
+            className="w-full py-3 border-2 border-dashed border-[#D32F2F]/40 text-[#D32F2F] rounded-xl text-sm font-medium hover:border-[#D32F2F] hover:bg-red-50 dark:hover:bg-red-900/10 transition-colors flex items-center justify-center gap-2"
           >
             <Plus size={14} /> Add Gallery Item
           </button>
@@ -495,9 +495,9 @@ export default function GallerySection() {
       </div>
 
       {/* Save */}
-      <div className="flex items-center justify-end gap-3 pt-2 border-t border-gray-100">
+      <div className="flex items-center justify-end gap-3 pt-2 border-t border-gray-100 dark:border-white/10">
         {saved && (
-          <div className="flex items-center gap-1.5 text-green-600 text-sm font-medium">
+          <div className="flex items-center gap-1.5 text-green-600 dark:text-green-400 text-sm font-medium">
             <CheckCircle size={14} /> Saved successfully
           </div>
         )}

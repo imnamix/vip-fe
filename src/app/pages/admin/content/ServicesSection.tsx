@@ -74,20 +74,20 @@ function IconPicker({ value, onChange }: { value: string; onChange: (name: strin
       <button
         type="button"
         onClick={() => setOpen(o => !o)}
-        className="w-full flex items-center gap-2 px-3 py-2 border border-gray-200 rounded-xl text-sm hover:border-[#D32F2F] focus:outline-none focus:border-[#D32F2F] bg-white"
+        className="w-full flex items-center gap-2 px-3 py-2 border border-gray-200 dark:border-white/10 rounded-xl text-sm hover:border-[#D32F2F] focus:outline-none focus:border-[#D32F2F] bg-white dark:bg-white/5"
       >
         <span className="flex items-center justify-center w-5 h-5 text-[#D32F2F] flex-shrink-0">
-          {value ? renderSvcIcon(value, 16) : <span className="w-4 h-4 border border-dashed border-gray-300 rounded block" />}
+          {value ? renderSvcIcon(value, 16) : <span className="w-4 h-4 border border-dashed border-gray-300 dark:border-gray-600 rounded block" />}
         </span>
-        <span className={value ? 'text-[#212121]' : 'text-[#9E9E9E]'}>{value || 'Select icon'}</span>
-        <ChevronDown size={14} className="ml-auto text-[#616161]" />
+        <span className={value ? 'text-[#212121] dark:text-white' : 'text-[#9E9E9E] dark:text-gray-500'}>{value || 'Select icon'}</span>
+        <ChevronDown size={14} className="ml-auto text-[#616161] dark:text-gray-400" />
       </button>
       {open && (
-        <div className="absolute left-0 top-full mt-1 z-50 bg-white border border-gray-200 rounded-xl shadow-xl p-3 w-64">
+        <div className="absolute left-0 top-full mt-1 z-50 bg-white dark:bg-[#1e2133] border border-gray-200 dark:border-white/10 rounded-xl shadow-xl dark:shadow-black/50 p-3 w-64">
           <button
             type="button"
             onClick={() => { onChange(''); setOpen(false); }}
-            className={`w-full mb-2 px-3 py-1.5 rounded-lg text-xs font-medium border transition-colors ${!value ? 'bg-red-100 text-[#D32F2F] border-[#D32F2F]/30' : 'text-[#616161] border-gray-200 hover:bg-gray-50'}`}
+            className={`w-full mb-2 px-3 py-1.5 rounded-lg text-xs font-medium border transition-colors ${!value ? 'bg-red-100 dark:bg-red-900/20 text-[#D32F2F] border-[#D32F2F]/30' : 'text-[#616161] dark:text-gray-400 border-gray-200 dark:border-white/10 hover:bg-gray-50 dark:hover:bg-white/5'}`}
           >
             None
           </button>
@@ -97,7 +97,7 @@ function IconPicker({ value, onChange }: { value: string; onChange: (name: strin
                 <button
                   type="button"
                   onClick={() => { onChange(name); setOpen(false); }}
-                  className={`p-2 rounded-lg flex items-center justify-center hover:bg-red-50 transition-colors w-full ${value === name ? 'bg-red-100 text-[#D32F2F]' : 'text-[#616161]'}`}
+                  className={`p-2 rounded-lg flex items-center justify-center hover:bg-red-50 dark:hover:bg-red-900/20 transition-colors w-full ${value === name ? 'bg-red-100 dark:bg-red-900/20 text-[#D32F2F]' : 'text-[#616161] dark:text-gray-400'}`}
                 >
                   <Component size={18} />
                 </button>
@@ -137,7 +137,7 @@ function SingleImageUpload({ value, onChange, label, canDelete = true, hint }: {
 
   if (value) {
     return (
-      <div className="border border-gray-200 rounded-xl p-3">
+      <div className="border border-gray-200 dark:border-white/10 rounded-xl p-3">
         <div className="relative group cursor-pointer" onClick={() => setImgPreview(true)}>
           <img src={value} alt={label} className="w-full h-40 object-cover rounded-lg" />
           <div className="absolute inset-0 bg-black/30 opacity-0 group-hover:opacity-100 transition-opacity rounded-lg flex items-center justify-center">
@@ -148,7 +148,7 @@ function SingleImageUpload({ value, onChange, label, canDelete = true, hint }: {
           <button
             type="button"
             onClick={() => onChange('')}
-            className="mt-2 flex items-center gap-1 px-3 py-1.5 text-xs text-red-600 border border-red-200 rounded-lg hover:bg-red-50 transition-colors"
+            className="mt-2 flex items-center gap-1 px-3 py-1.5 text-xs text-red-600 dark:text-red-400 border border-red-200 dark:border-red-500/25 rounded-lg hover:bg-red-50 dark:hover:bg-red-900/20 transition-colors"
           >
             <Trash2 size={12} /> Remove
           </button>
@@ -159,10 +159,10 @@ function SingleImageUpload({ value, onChange, label, canDelete = true, hint }: {
   }
 
   return (
-    <label className={`flex flex-col items-center gap-2 py-8 border-2 border-dashed rounded-xl cursor-pointer transition-colors ${uploading ? 'opacity-60 pointer-events-none border-gray-200' : 'border-[#D32F2F]/40 hover:border-[#D32F2F] hover:bg-red-50'}`}>
+    <label className={`flex flex-col items-center gap-2 py-8 border-2 border-dashed rounded-xl cursor-pointer transition-colors ${uploading ? 'opacity-60 pointer-events-none border-gray-200 dark:border-white/10' : 'border-[#D32F2F]/40 hover:border-[#D32F2F] hover:bg-red-50 dark:hover:bg-red-900/10'}`}>
       {uploading ? <Loader2 size={20} className="animate-spin text-[#D32F2F]" /> : <Image size={20} className="text-[#D32F2F]" />}
       <span className="text-xs text-[#D32F2F] font-medium">{uploading ? 'Uploading…' : `Upload ${label}`}</span>
-      {hint && <span className="text-xs text-[#9E9E9E]">{hint}</span>}
+      {hint && <span className="text-xs text-[#9E9E9E] dark:text-gray-500">{hint}</span>}
       <input type="file" accept="image/*" className="hidden" onChange={handleUpload} disabled={uploading} />
     </label>
   );
@@ -367,7 +367,7 @@ export default function ServicesSection() {
 
   if (loading) {
     return (
-      <div className="flex items-center justify-center py-20 text-[#616161] text-sm gap-2">
+      <div className="flex items-center justify-center py-20 text-[#616161] dark:text-gray-400 text-sm gap-2">
         <Loader2 size={16} className="animate-spin" /> Loading services…
       </div>
     );
@@ -377,18 +377,18 @@ export default function ServicesSection() {
     <div className="space-y-8">
       {/* ── Banner Slides ── */}
       <div>
-        <h3 className="font-bold text-[#212121] mb-4 text-sm" style={{ fontFamily: 'Poppins, sans-serif' }}>
+        <h3 className="font-bold text-[#212121] dark:text-white mb-4 text-sm" style={{ fontFamily: 'Poppins, sans-serif' }}>
           Banner Slides
         </h3>
         {bannerError && (
-          <div className="flex items-center gap-2 px-4 py-3 mb-3 bg-red-50 border border-red-200 rounded-xl text-sm text-red-600">
+          <div className="flex items-center gap-2 px-4 py-3 mb-3 bg-red-50 dark:bg-red-900/15 border border-red-200 dark:border-red-500/25 rounded-xl text-sm text-red-600 dark:text-red-400">
             <AlertCircle size={14} /> {bannerError}
           </div>
         )}
         <SlideEditor slides={slides} setSlides={setSlides} label="Slide" showErrors={bannerSlideShowErrors} canWrite={canWrite} canDelete={canDelete} recommendedSize="2048 x 410 px" />
-        <div className="flex items-center justify-end gap-3 pt-3 mt-3 border-t border-gray-100">
+        <div className="flex items-center justify-end gap-3 pt-3 mt-3 border-t border-gray-100 dark:border-white/10">
           {savedBanner && (
-            <div className="flex items-center gap-1.5 text-green-600 text-sm font-medium">
+            <div className="flex items-center gap-1.5 text-green-600 dark:text-green-400 text-sm font-medium">
               <CheckCircle size={14} /> Saved successfully
             </div>
           )}
@@ -408,19 +408,19 @@ export default function ServicesSection() {
 
       {/* ── Service Items ── */}
       <div>
-        <h3 className="font-bold text-[#212121] mb-4 text-sm" style={{ fontFamily: 'Poppins, sans-serif' }}>
+        <h3 className="font-bold text-[#212121] dark:text-white mb-4 text-sm" style={{ fontFamily: 'Poppins, sans-serif' }}>
           Service Items
         </h3>
         {error && (
-          <div className="flex items-center gap-2 px-4 py-3 mb-3 bg-red-50 border border-red-200 rounded-xl text-sm text-red-600">
+          <div className="flex items-center gap-2 px-4 py-3 mb-3 bg-red-50 dark:bg-red-900/15 border border-red-200 dark:border-red-500/25 rounded-xl text-sm text-red-600 dark:text-red-400">
             <AlertCircle size={14} /> {error}
           </div>
         )}
       <div className="space-y-4">
         {items.map((svc, idx) => (
-          <div key={svc.localId} className="border border-gray-200 rounded-xl">
+          <div key={svc.localId} className="border border-gray-200 dark:border-white/10 rounded-xl">
             <div
-              className={`flex items-center justify-between bg-gray-50 px-4 py-2.5 ${expandedIds.has(svc.localId) ? 'rounded-t-xl' : 'rounded-xl'}`}
+              className={`flex items-center justify-between bg-gray-50 dark:bg-white/5 px-4 py-2.5 ${expandedIds.has(svc.localId) ? 'rounded-t-xl' : 'rounded-xl'}`}
             >
               <button
                 type="button"
@@ -429,12 +429,12 @@ export default function ServicesSection() {
               >
                 <ChevronDown
                   size={15}
-                  className={`text-[#616161] flex-shrink-0 transition-transform duration-200 ${expandedIds.has(svc.localId) ? 'rotate-180' : ''}`}
+                  className={`text-[#616161] dark:text-gray-400 flex-shrink-0 transition-transform duration-200 ${expandedIds.has(svc.localId) ? 'rotate-180' : ''}`}
                 />
                 <span className="flex-shrink-0 w-5 h-5 rounded-full bg-[#D32F2F] text-white text-[10px] font-bold flex items-center justify-center">
                   {idx + 1}
                 </span>
-                <span className="font-semibold text-[#212121] text-sm truncate">
+                <span className="font-semibold text-[#212121] dark:text-white text-sm truncate">
                   {svc.title || `Service ${idx + 1}`}
                 </span>
                 {(fieldErrors[svc.localId]?.title || fieldErrors[svc.localId]?.description || fieldErrors[svc.localId]?.image) && (
@@ -445,7 +445,7 @@ export default function ServicesSection() {
                 <button
                   type="button"
                   onClick={() => toggleExpand(svc.localId)}
-                  className="px-2.5 py-1 text-xs text-[#616161] border border-gray-200 rounded-lg hover:bg-white transition-colors"
+                  className="px-2.5 py-1 text-xs text-[#616161] dark:text-gray-400 border border-gray-200 dark:border-white/10 rounded-lg hover:bg-white dark:hover:bg-white/10 transition-colors"
                 >
                   {expandedIds.has(svc.localId) ? 'Collapse' : 'Expand'}
                 </button>
@@ -453,7 +453,7 @@ export default function ServicesSection() {
                   <button
                     type="button"
                     onClick={() => removeItem(svc.localId, svc.serverId)}
-                    className="p-1.5 text-[#D32F2F] hover:bg-red-50 rounded-lg transition-colors"
+                    className="p-1.5 text-[#D32F2F] hover:bg-red-50 dark:hover:bg-red-900/20 rounded-lg transition-colors"
                   >
                     <Trash2 size={13} />
                   </button>
@@ -464,7 +464,7 @@ export default function ServicesSection() {
             {expandedIds.has(svc.localId) && <div className="p-4 space-y-4">
               {/* Image */}
               <div>
-                <label className="block text-xs font-semibold text-[#616161] mb-1">Image <span className="text-red-500">*</span></label>
+                <label className="block text-xs font-semibold text-[#616161] dark:text-gray-400 mb-1">Image <span className="text-red-500">*</span></label>
                 <SingleImageUpload
                   value={svc.image}
                   onChange={url => updateItem(svc.localId, 'image', url)}
@@ -480,19 +480,19 @@ export default function ServicesSection() {
               {/* Title + Icon */}
               <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
                 <div>
-                  <label className="block text-xs font-semibold text-[#616161] mb-1">Title <span className="text-red-500">*</span></label>
+                  <label className="block text-xs font-semibold text-[#616161] dark:text-gray-400 mb-1">Title <span className="text-red-500">*</span></label>
                   <input
                     value={svc.title}
                     onChange={e => updateItem(svc.localId, 'title', e.target.value)}
                     placeholder="Service title"
-                    className={`w-full px-3 py-2 border rounded-xl text-sm focus:outline-none ${fieldErrors[svc.localId]?.title ? 'border-red-400 bg-red-50 focus:border-red-500' : 'border-gray-200 focus:border-[#D32F2F]'}`}
+                    className={`w-full px-3 py-2 border rounded-xl text-sm focus:outline-none text-[#212121] dark:text-white placeholder:text-gray-400 dark:placeholder:text-gray-500 ${fieldErrors[svc.localId]?.title ? 'border-red-400 dark:border-red-500/60 bg-red-50 dark:bg-red-900/20 focus:border-red-500' : 'border-gray-200 dark:border-white/10 bg-white dark:bg-white/5 focus:border-[#D32F2F]'}`}
                   />
                   {fieldErrors[svc.localId]?.title && (
                     <p className="mt-1 text-xs text-red-500 flex items-center gap-1"><AlertCircle size={11} />{fieldErrors[svc.localId].title}</p>
                   )}
                 </div>
                 <div>
-                  <label className="block text-xs font-semibold text-[#616161] mb-1">Icon</label>
+                  <label className="block text-xs font-semibold text-[#616161] dark:text-gray-400 mb-1">Icon</label>
                   <IconPicker
                     value={svc.icon}
                     onChange={val => updateItem(svc.localId, 'icon', val)}
@@ -502,8 +502,8 @@ export default function ServicesSection() {
 
               {/* Description (HTML) */}
               <div>
-                <label className="block text-xs font-semibold text-[#616161] mb-2">Description <span className="text-red-500">*</span></label>
-                <div className={`rounded-xl overflow-hidden border [&_.ql-toolbar]:rounded-t-xl [&_.ql-toolbar]:bg-gray-50 [&_.ql-toolbar]:border-gray-200 [&_.ql-container]:rounded-b-xl [&_.ql-editor]:min-h-[150px] [&_.ql-editor]:text-sm ${fieldErrors[svc.localId]?.description ? 'border-red-400 [&_.ql-container]:border-red-400' : 'border-gray-200 [&_.ql-container]:border-gray-200'}`}>
+                <label className="block text-xs font-semibold text-[#616161] dark:text-gray-400 mb-2">Description <span className="text-red-500">*</span></label>
+                <div className={`rounded-xl overflow-hidden border [&_.ql-toolbar]:rounded-t-xl [&_.ql-toolbar]:bg-gray-50 dark:[&_.ql-toolbar]:bg-white/5 [&_.ql-container]:rounded-b-xl [&_.ql-editor]:min-h-[150px] [&_.ql-editor]:text-sm dark:[&_.ql-editor]:bg-white/5 dark:[&_.ql-editor]:text-white dark:[&_.ql-editor.ql-blank::before]:text-gray-500 dark:[&_.ql-stroke]:stroke-gray-400 dark:[&_.ql-fill]:fill-gray-400 dark:[&_.ql-picker]:text-gray-400 ${fieldErrors[svc.localId]?.description ? 'border-red-400 [&_.ql-container]:border-red-400' : 'border-gray-200 dark:border-white/10 [&_.ql-container]:border-gray-200 dark:[&_.ql-container]:border-white/10 [&_.ql-toolbar]:border-gray-200 dark:[&_.ql-toolbar]:border-white/10'}`}>
                   <ReactQuill
                     theme="snow"
                     value={svc.description}
@@ -532,7 +532,7 @@ export default function ServicesSection() {
           <button
             type="button"
             onClick={addItem}
-            className="w-full py-3 border-2 border-dashed border-[#D32F2F]/40 text-[#D32F2F] rounded-xl text-sm font-medium hover:border-[#D32F2F] hover:bg-red-50 transition-colors flex items-center justify-center gap-2"
+            className="w-full py-3 border-2 border-dashed border-[#D32F2F]/40 text-[#D32F2F] rounded-xl text-sm font-medium hover:border-[#D32F2F] hover:bg-red-50 dark:hover:bg-red-900/10 transition-colors flex items-center justify-center gap-2"
           >
             <Plus size={14} /> Add Service
           </button>
@@ -540,9 +540,9 @@ export default function ServicesSection() {
       </div>
 
       {/* Save services */}
-      <div className="flex items-center justify-end gap-3 pt-2 border-t border-gray-100">
+      <div className="flex items-center justify-end gap-3 pt-2 border-t border-gray-100 dark:border-white/10">
         {saved && (
-          <div className="flex items-center gap-1.5 text-green-600 text-sm font-medium">
+          <div className="flex items-center gap-1.5 text-green-600 dark:text-green-400 text-sm font-medium">
             <CheckCircle size={14} /> Saved successfully
           </div>
         )}

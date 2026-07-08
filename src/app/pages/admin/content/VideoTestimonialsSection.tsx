@@ -46,12 +46,12 @@ function StarRating({ value, onChange }: { value: number; onChange: (v: number) 
           <Star
             size={22}
             className={`transition-colors ${
-              star <= (hovered || value) ? 'text-amber-400 fill-amber-400' : 'text-gray-300'
+              star <= (hovered || value) ? 'text-amber-400 fill-amber-400' : 'text-gray-300 dark:text-gray-600'
             }`}
           />
         </button>
       ))}
-      <span className="ml-1 text-xs text-[#616161]">{value}/5</span>
+      <span className="ml-1 text-xs text-[#616161] dark:text-gray-400">{value}/5</span>
     </div>
   );
 }
@@ -82,7 +82,7 @@ function SingleImageUpload({ value, onChange, label, canDelete = true, hint }: {
 
   if (value) {
     return (
-      <div className="border border-gray-200 rounded-xl p-3">
+      <div className="border border-gray-200 dark:border-white/10 rounded-xl p-3">
         <div className="relative group cursor-pointer" onClick={() => setImgPreview(true)}>
           <img src={value} alt={label} className="w-full h-40 object-cover rounded-lg" />
           <div className="absolute inset-0 bg-black/30 opacity-0 group-hover:opacity-100 transition-opacity rounded-lg flex items-center justify-center">
@@ -91,7 +91,7 @@ function SingleImageUpload({ value, onChange, label, canDelete = true, hint }: {
         </div>
         {canDelete && (
           <button type="button" onClick={() => onChange('')}
-            className="mt-2 flex items-center gap-1 px-3 py-1.5 text-xs text-red-600 border border-red-200 rounded-lg hover:bg-red-50 transition-colors">
+            className="mt-2 flex items-center gap-1 px-3 py-1.5 text-xs text-red-600 dark:text-red-400 border border-red-200 dark:border-red-500/25 rounded-lg hover:bg-red-50 dark:hover:bg-red-900/20 transition-colors">
             <Trash2 size={12} /> Remove
           </button>
         )}
@@ -101,10 +101,10 @@ function SingleImageUpload({ value, onChange, label, canDelete = true, hint }: {
   }
 
   return (
-    <label className={`flex flex-col items-center gap-2 py-8 border-2 border-dashed rounded-xl cursor-pointer transition-colors ${uploading ? 'opacity-60 pointer-events-none border-gray-200' : 'border-[#D32F2F]/40 hover:border-[#D32F2F] hover:bg-red-50'}`}>
+    <label className={`flex flex-col items-center gap-2 py-8 border-2 border-dashed rounded-xl cursor-pointer transition-colors ${uploading ? 'opacity-60 pointer-events-none border-gray-200 dark:border-white/10' : 'border-[#D32F2F]/40 hover:border-[#D32F2F] hover:bg-red-50 dark:hover:bg-red-900/10'}`}>
       {uploading ? <Loader2 size={20} className="animate-spin text-[#D32F2F]" /> : <Image size={20} className="text-[#D32F2F]" />}
       <span className="text-xs text-[#D32F2F] font-medium">{uploading ? 'Uploading…' : `Upload ${label}`}</span>
-      {hint && <span className="text-xs text-[#9E9E9E]">{hint}</span>}
+      {hint && <span className="text-xs text-[#9E9E9E] dark:text-gray-500">{hint}</span>}
       <input type="file" accept="image/*" className="hidden" onChange={handleUpload} disabled={uploading} />
     </label>
   );
@@ -136,7 +136,7 @@ function SingleVideoUpload({ value, onChange, canDelete = true }: { value: strin
 
   if (value) {
     return (
-      <div className="border border-gray-200 rounded-xl p-3">
+      <div className="border border-gray-200 dark:border-white/10 rounded-xl p-3">
         <div
           className="relative group cursor-pointer w-full h-40 bg-black rounded-lg overflow-hidden"
           onClick={() => setVideoPreview(true)}
@@ -153,7 +153,7 @@ function SingleVideoUpload({ value, onChange, canDelete = true }: { value: strin
         </div>
         {canDelete && (
           <button type="button" onClick={() => onChange('')}
-            className="mt-2 flex items-center gap-1 px-3 py-1.5 text-xs text-red-600 border border-red-200 rounded-lg hover:bg-red-50 transition-colors">
+            className="mt-2 flex items-center gap-1 px-3 py-1.5 text-xs text-red-600 dark:text-red-400 border border-red-200 dark:border-red-500/25 rounded-lg hover:bg-red-50 dark:hover:bg-red-900/20 transition-colors">
             <Trash2 size={12} /> Remove
           </button>
         )}
@@ -181,7 +181,7 @@ function SingleVideoUpload({ value, onChange, canDelete = true }: { value: strin
   }
 
   return (
-    <label className={`flex flex-col items-center gap-2 py-8 border-2 border-dashed rounded-xl cursor-pointer transition-colors ${uploading ? 'opacity-60 pointer-events-none border-gray-200' : 'border-[#D32F2F]/40 hover:border-[#D32F2F] hover:bg-red-50'}`}>
+    <label className={`flex flex-col items-center gap-2 py-8 border-2 border-dashed rounded-xl cursor-pointer transition-colors ${uploading ? 'opacity-60 pointer-events-none border-gray-200 dark:border-white/10' : 'border-[#D32F2F]/40 hover:border-[#D32F2F] hover:bg-red-50 dark:hover:bg-red-900/10'}`}>
       {uploading ? <Loader2 size={20} className="animate-spin text-[#D32F2F]" /> : <Video size={20} className="text-[#D32F2F]" />}
       <span className="text-xs text-[#D32F2F] font-medium">{uploading ? 'Uploading…' : 'Upload Customer Video'}</span>
       {/* <span className="text-xs text-[#9E9E9E]">MP4, MOV, WebM supported</span> */}
@@ -333,7 +333,7 @@ export default function VideoTestimonialsSection() {
 
   if (loading) {
     return (
-      <div className="flex items-center justify-center py-20 text-[#616161] text-sm gap-2">
+      <div className="flex items-center justify-center py-20 text-[#616161] dark:text-gray-400 text-sm gap-2">
         <Loader2 size={16} className="animate-spin" /> Loading video reviews…
       </div>
     );
@@ -342,16 +342,16 @@ export default function VideoTestimonialsSection() {
   return (
     <div className="space-y-6">
       {error && (
-        <div className="flex items-center gap-2 px-4 py-3 bg-red-50 border border-red-200 rounded-xl text-sm text-red-600">
+        <div className="flex items-center gap-2 px-4 py-3 bg-red-50 dark:bg-red-900/15 border border-red-200 dark:border-red-500/25 rounded-xl text-sm text-red-600 dark:text-red-400">
           <AlertCircle size={14} /> {error}
         </div>
       )}
 
       <div className="space-y-4">
         {items.map((item, idx) => (
-          <div key={item.localId} className="border border-gray-200 rounded-xl">
+          <div key={item.localId} className="border border-gray-200 dark:border-white/10 rounded-xl">
             {/* ── Header ── */}
-            <div className={`flex items-center justify-between bg-gray-50 px-4 py-2.5 ${expandedIds.has(item.localId) ? 'rounded-t-xl' : 'rounded-xl'}`}>
+            <div className={`flex items-center justify-between bg-gray-50 dark:bg-white/5 px-4 py-2.5 ${expandedIds.has(item.localId) ? 'rounded-t-xl' : 'rounded-xl'}`}>
               <button
                 type="button"
                 onClick={() => toggleExpand(item.localId)}
@@ -359,12 +359,12 @@ export default function VideoTestimonialsSection() {
               >
                 <ChevronDown
                   size={15}
-                  className={`text-[#616161] flex-shrink-0 transition-transform duration-200 ${expandedIds.has(item.localId) ? 'rotate-180' : ''}`}
+                  className={`text-[#616161] dark:text-gray-400 flex-shrink-0 transition-transform duration-200 ${expandedIds.has(item.localId) ? 'rotate-180' : ''}`}
                 />
                 <span className="flex-shrink-0 w-5 h-5 rounded-full bg-[#D32F2F] text-white text-[10px] font-bold flex items-center justify-center">
                   {idx + 1}
                 </span>
-                <span className="font-semibold text-[#212121] text-sm truncate">
+                <span className="font-semibold text-[#212121] dark:text-white text-sm truncate">
                   {item.name || `Video Review ${idx + 1}`}
                 </span>
                 {(fieldErrors[item.localId]?.name || fieldErrors[item.localId]?.review) && (
@@ -375,7 +375,7 @@ export default function VideoTestimonialsSection() {
                 <button
                   type="button"
                   onClick={() => toggleExpand(item.localId)}
-                  className="px-2.5 py-1 text-xs text-[#616161] border border-gray-200 rounded-lg hover:bg-white transition-colors"
+                  className="px-2.5 py-1 text-xs text-[#616161] dark:text-gray-400 border border-gray-200 dark:border-white/10 rounded-lg hover:bg-white dark:hover:bg-white/10 transition-colors"
                 >
                   {expandedIds.has(item.localId) ? 'Collapse' : 'Expand'}
                 </button>
@@ -383,7 +383,7 @@ export default function VideoTestimonialsSection() {
                   <button
                     type="button"
                     onClick={() => removeItem(item.localId, item.serverId)}
-                    className="p-1.5 text-[#D32F2F] hover:bg-red-50 rounded-lg transition-colors"
+                    className="p-1.5 text-[#D32F2F] hover:bg-red-50 dark:hover:bg-red-900/20 rounded-lg transition-colors"
                   >
                     <Trash2 size={13} />
                   </button>
@@ -397,7 +397,7 @@ export default function VideoTestimonialsSection() {
                 {/* Image + Video — side by side on larger screens */}
                 <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                   <div>
-                    <label className="block text-xs font-semibold text-[#616161] mb-1">Customer Photo</label>
+                    <label className="block text-xs font-semibold text-[#616161] dark:text-gray-400 mb-1">Customer Photo</label>
                     <SingleImageUpload
                       value={item.image}
                       onChange={url => updateItem(item.localId, 'image', url)}
@@ -407,7 +407,7 @@ export default function VideoTestimonialsSection() {
                     />
                   </div>
                   <div>
-                    <label className="block text-xs font-semibold text-[#616161] mb-1">Customer Video</label>
+                    <label className="block text-xs font-semibold text-[#616161] dark:text-gray-400 mb-1">Customer Video</label>
                     <SingleVideoUpload
                       value={item.videoUrl}
                       onChange={url => updateItem(item.localId, 'videoUrl', url)}
@@ -419,37 +419,37 @@ export default function VideoTestimonialsSection() {
                 {/* Name + Role */}
                 <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
                   <div>
-                    <label className="block text-xs font-semibold text-[#616161] mb-1">Name <span className="text-red-500">*</span></label>
+                    <label className="block text-xs font-semibold text-[#616161] dark:text-gray-400 mb-1">Name <span className="text-red-500">*</span></label>
                     <input
                       value={item.name}
                       onChange={e => updateItem(item.localId, 'name', e.target.value)}
                       placeholder="Customer name"
-                      className={`w-full px-3 py-2 border rounded-xl text-sm focus:outline-none ${fieldErrors[item.localId]?.name ? 'border-red-400 bg-red-50 focus:border-red-500' : 'border-gray-200 focus:border-[#D32F2F]'}`}
+                      className={`w-full px-3 py-2 border rounded-xl text-sm focus:outline-none text-[#212121] dark:text-white placeholder:text-gray-400 dark:placeholder:text-gray-500 ${fieldErrors[item.localId]?.name ? 'border-red-400 dark:border-red-500/60 bg-red-50 dark:bg-red-900/20 focus:border-red-500' : 'border-gray-200 dark:border-white/10 bg-white dark:bg-white/5 focus:border-[#D32F2F]'}`}
                     />
                     {fieldErrors[item.localId]?.name && (
                       <p className="mt-1 text-xs text-red-500 flex items-center gap-1"><AlertCircle size={11} />{fieldErrors[item.localId].name}</p>
                     )}
                   </div>
                   <div>
-                    <label className="block text-xs font-semibold text-[#616161] mb-1">Role / City</label>
+                    <label className="block text-xs font-semibold text-[#616161] dark:text-gray-400 mb-1">Role / City</label>
                     <input
                       value={item.role}
                       onChange={e => updateItem(item.localId, 'role', e.target.value)}
                       placeholder="e.g. Business Owner, Mumbai"
-                      className="w-full px-3 py-2 border border-gray-200 rounded-xl text-sm focus:outline-none focus:border-[#D32F2F]"
+                      className="w-full px-3 py-2 border border-gray-200 dark:border-white/10 rounded-xl text-sm focus:outline-none focus:border-[#D32F2F] bg-white dark:bg-white/5 text-[#212121] dark:text-white placeholder:text-gray-400 dark:placeholder:text-gray-500"
                     />
                   </div>
                 </div>
 
                 {/* Review */}
                 <div>
-                  <label className="block text-xs font-semibold text-[#616161] mb-1">Review <span className="text-red-500">*</span></label>
+                  <label className="block text-xs font-semibold text-[#616161] dark:text-gray-400 mb-1">Review <span className="text-red-500">*</span></label>
                   <textarea
                     value={item.review}
                     onChange={e => updateItem(item.localId, 'review', e.target.value)}
                     rows={3}
                     placeholder="What did the customer say?"
-                    className={`w-full px-3 py-2 border rounded-xl text-sm focus:outline-none resize-none ${fieldErrors[item.localId]?.review ? 'border-red-400 bg-red-50 focus:border-red-500' : 'border-gray-200 focus:border-[#D32F2F]'}`}
+                    className={`w-full px-3 py-2 border rounded-xl text-sm focus:outline-none resize-none text-[#212121] dark:text-white placeholder:text-gray-400 dark:placeholder:text-gray-500 ${fieldErrors[item.localId]?.review ? 'border-red-400 dark:border-red-500/60 bg-red-50 dark:bg-red-900/20 focus:border-red-500' : 'border-gray-200 dark:border-white/10 bg-white dark:bg-white/5 focus:border-[#D32F2F]'}`}
                   />
                   {fieldErrors[item.localId]?.review && (
                     <p className="mt-1 text-xs text-red-500 flex items-center gap-1"><AlertCircle size={11} />{fieldErrors[item.localId].review}</p>
@@ -458,7 +458,7 @@ export default function VideoTestimonialsSection() {
 
                 {/* Rating */}
                 <div>
-                  <label className="block text-xs font-semibold text-[#616161] mb-2">Rating</label>
+                  <label className="block text-xs font-semibold text-[#616161] dark:text-gray-400 mb-2">Rating</label>
                   <StarRating value={item.rating} onChange={v => updateItem(item.localId, 'rating', v)} />
                 </div>
               </div>
@@ -470,7 +470,7 @@ export default function VideoTestimonialsSection() {
           <button
             type="button"
             onClick={addItem}
-            className="w-full py-3 border-2 border-dashed border-[#D32F2F]/40 text-[#D32F2F] rounded-xl text-sm font-medium hover:border-[#D32F2F] hover:bg-red-50 transition-colors flex items-center justify-center gap-2"
+            className="w-full py-3 border-2 border-dashed border-[#D32F2F]/40 text-[#D32F2F] rounded-xl text-sm font-medium hover:border-[#D32F2F] hover:bg-red-50 dark:hover:bg-red-900/10 transition-colors flex items-center justify-center gap-2"
           >
             <Plus size={14} /> Add Video Review
           </button>
@@ -478,9 +478,9 @@ export default function VideoTestimonialsSection() {
       </div>
 
       {/* Save */}
-      <div className="flex items-center justify-end gap-3 pt-2 border-t border-gray-100">
+      <div className="flex items-center justify-end gap-3 pt-2 border-t border-gray-100 dark:border-white/10">
         {saved && (
-          <div className="flex items-center gap-1.5 text-green-600 text-sm font-medium">
+          <div className="flex items-center gap-1.5 text-green-600 dark:text-green-400 text-sm font-medium">
             <CheckCircle size={14} /> Saved successfully
           </div>
         )}
