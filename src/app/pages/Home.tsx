@@ -1,5 +1,6 @@
 import { useState, useEffect, useRef } from "react";
 import { useNavigate, useOutletContext } from "react-router";
+import Seo from "../components/Seo";
 import {
   ChevronLeft,
   ChevronRight,
@@ -636,6 +637,11 @@ export default function Home() {
 
   return (
     <div className="overflow-x-hidden">
+      <Seo
+        path="/"
+        title="India's Premier Numerology Consultancy"
+        description="Discover the power of numbers with VIP Numerology's expert consultations, VIP number booking, business numerology, and name correction services across India."
+      />
       {/* ─── Hero Slider ─────────────────────── */}
       {(!slidesLoaded || slides.length > 0) && (
         <section className="group relative h-[85vh] min-h-[520px] overflow-hidden bg-[#1a1a1a]">

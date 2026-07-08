@@ -1,5 +1,6 @@
 import { useSelector } from "react-redux";
 import BannerCarousel from "../components/BannerCarousel";
+import Seo from "../components/Seo";
 import type { RootState } from "../store/Store";
 
 const BANNER_SLIDES = [
@@ -62,6 +63,11 @@ export default function TermsAndConditions() {
 
   return (
     <div>
+      <Seo
+        path="/terms-and-conditions"
+        title="Terms & Conditions"
+        description="Read the terms and conditions governing the use of VIP Numerology's website and numerology consultation services."
+      />
       <BannerCarousel
         slides={BANNER_SLIDES}
         pageName="Terms & Conditions"

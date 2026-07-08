@@ -1,5 +1,5 @@
 import { useState, useEffect } from "react";
-import { useNavigate, useOutletContext } from "react-router";
+import { useNavigate, useOutletContext, useSearchParams } from "react-router";
 import {
   Calendar,
   MapPin,
@@ -15,6 +15,7 @@ import {
 } from "lucide-react";
 import Masonry, { ResponsiveMasonry } from "react-responsive-masonry";
 import BannerCarousel from "../components/BannerCarousel";
+import Seo from "../components/Seo";
 import { getAllEvents, getEventsByID } from "../services/EventsService";
 import { getAllGalleryItems } from "../services/GalleryService";
 import { registerForEvent } from "../services/EventRegistrationService";
@@ -107,6 +108,10 @@ function formatDate(d: string) {
   }
 }
 
+function stripHtml(html: string) {
+  return html.replace(/<[^>]*>/g, "").trim();
+}
+
 function formatTime(t: string) {
   if (!t) return "";
   try {
@@ -122,6 +127,7 @@ function formatTime(t: string) {
 export default function EventsGallery() {
   const { openBooking } = useOutletContext<OutletCtx>();
   const navigate = useNavigate();
+  const [searchParams, setSearchParams] = useSearchParams();
   const [mainTab, setMainTab] = useState<"Events" | "Gallery">("Events");
 
   // Events
@@ -164,15 +170,42 @@ export default function EventsGallery() {
     return item.category === "testimonials" || item.category === "others";
   });
 
-  const handleEventClick = async (listEvent: EventListItem) => {
-    setSelectedEvent(listEvent as EventDetail);
+  // URL is the source of truth for which event is open: /events-gallery?event=<id>.
+  // Gives each event its own shareable, crawlable, canonical-able URL.
+  useEffect(() => {
+    const eventId = searchParams.get("event");
+    if (!eventId) {
+      setSelectedEvent(null);
+      return;
+    }
+    const listMatch = events.find((e) => String(e.id) === eventId);
+    if (!listMatch) {
+      if (events.length > 0) setSelectedEvent(null);
+      return;
+    }
+    setSelectedEvent(listMatch as EventDetail);
     setDetailLoading(true);
-    try {
-      const res = await getEventsByID(listEvent.id);
-      if (res?.success && res?.data) setSelectedEvent(res.data);
-    } catch {}
-    setDetailLoading(false);
-  };
+    getEventsByID(listMatch.id)
+      .then((res) => {
+        if (res?.success && res?.data) setSelectedEvent(res.data);
+      })
+      .catch(() => {})
+      .finally(() => setDetailLoading(false));
+  }, [events, searchParams]);
+
+  function openEvent(id: number) {
+    setSearchParams((prev) => {
+      prev.set("event", String(id));
+      return prev;
+    });
+  }
+
+  function closeEvent() {
+    setSearchParams((prev) => {
+      prev.delete("event");
+      return prev;
+    });
+  }
 
   const handleRegister = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -222,6 +255,11 @@ export default function EventsGallery() {
 
   return (
     <div>
+      <Seo
+        path="/events-gallery"
+        title="Events & Gallery"
+        description="Browse photos and highlights from VIP Numerology's past events, workshops, and seminars, and register for upcoming events."
+      />
       <BannerCarousel
         slides={bannerSlides}
         pageName="Events & Gallery"
@@ -287,7 +325,7 @@ export default function EventsGallery() {
                     <div
                       key={event.id}
                       className="bg-white border border-gray-100 rounded-2xl overflow-hidden hover:shadow-xl transition-all group cursor-pointer"
-                      onClick={() => handleEventClick(event)}
+                      onClick={() => openEvent(event.id)}
                     >
                       <div className="relative h-52 overflow-hidden bg-gray-100">
                         {imgUrl ? (
@@ -370,11 +408,22 @@ export default function EventsGallery() {
         <section className="py-12 bg-white min-h-screen">
           <div className="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8">
             <button
-              onClick={() => setSelectedEvent(null)}
+              onClick={closeEvent}
               className="flex items-center gap-2 text-[#D32F2F] font-medium mb-6 hover:underline"
             >
               <ChevronLeft size={16} /> Back to Events
             </button>
+            {selectedEvent && (
+              <Seo
+                path={`/events-gallery?event=${selectedEvent.id}`}
+                title={selectedEvent.title}
+                description={
+                  (selectedEvent.description && stripHtml(selectedEvent.description)) ||
+                  `Details for ${selectedEvent.title} — an upcoming VIP Numerology event.`
+                }
+                image={selectedEvent.mainImage?.[0]?.media_url}
+              />
+            )}
 
             {detailLoading && (
               <div className="flex items-center justify-center py-10 gap-2 text-[#616161]">

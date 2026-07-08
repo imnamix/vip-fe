@@ -1,6 +1,7 @@
 import { useState, useEffect, useRef } from 'react';
 import { Outlet, Link, useLocation, useNavigate } from 'react-router';
 import { useDispatch, useSelector } from 'react-redux';
+import { Helmet } from 'react-helmet-async';
 import { AdminThemeContext } from '../context/AdminThemeContext';
 import { clearAuth } from '../store/slice/PermissionSlice';
 import { usePermission } from '../hooks/usePermission';
@@ -199,6 +200,9 @@ export default function AdminLayout() {
 
   return (
     <div className={`${isDark ? 'dark' : ''} min-h-screen`}>
+      <Helmet>
+        <meta name="robots" content="noindex, nofollow" />
+      </Helmet>
       <div className="min-h-screen flex bg-gray-50 dark:bg-[#0f1115] transition-colors duration-300">
 
         {/* ── Desktop Sidebar ── */}

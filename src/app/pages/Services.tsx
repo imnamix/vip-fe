@@ -1,5 +1,6 @@
 import { useState, useEffect } from "react";
 import { useNavigate, useOutletContext, useSearchParams } from "react-router";
+import Seo from "../components/Seo";
 import {
   X,
   Loader2,
@@ -169,20 +170,51 @@ export default function Services() {
     load();
   }, []);
 
-  // Deep-link support: /services?service=<id> opens that service's detail popup
+  // URL is the source of truth for which service is open: /services?service=<id>.
+  // Keeping the param (instead of stripping it) makes each service its own
+  // shareable, crawlable, canonical-able URL.
   useEffect(() => {
     const serviceId = searchParams.get("service");
-    if (!serviceId || services.length === 0) return;
+    if (!serviceId) {
+      setSelected(null);
+      return;
+    }
     const match = services.find((s) => String(s.id) === serviceId);
-    if (match) setSelected(match);
+    setSelected(match ?? null);
+  }, [services, searchParams]);
+
+  function openService(id: number) {
+    setSearchParams((prev) => {
+      prev.set("service", String(id));
+      return prev;
+    });
+  }
+
+  function closeService() {
     setSearchParams((prev) => {
       prev.delete("service");
       return prev;
-    }, { replace: true });
-  }, [services, searchParams, setSearchParams]);
+    });
+  }
 
   return (
     <div>
+      <Seo
+        path="/services"
+        title="Our Services"
+        description="Explore VIP Numerology's full range of services — VIP number booking, mobile & business numerology, name correction, and personal consultations."
+      />
+      {selected && (
+        <Seo
+          path={`/services?service=${selected.id}`}
+          title={selected.title}
+          description={
+            stripHtml(selected.description) ||
+            `Learn more about our ${selected.title} service at VIP Numerology.`
+          }
+          image={selected.image}
+        />
+      )}
       <BannerCarousel
         slides={bannerSlides}
         pageName="Services"
@@ -224,7 +256,7 @@ export default function Services() {
                   <div
                     key={s.id}
                     className="bg-white border border-gray-100 rounded-2xl overflow-hidden hover:shadow-xl transition-all group cursor-pointer"
-                    onClick={() => setSelected(s)}
+                    onClick={() => openService(s.id)}
                   >
                     <div className="relative h-40 overflow-hidden">
                       <img
@@ -266,7 +298,7 @@ export default function Services() {
       {selected && (
         <div
           className="fixed inset-0 bg-black/60 z-50 flex items-center justify-center p-4"
-          onClick={() => setSelected(null)}
+          onClick={closeService}
         >
           <div
             className="bg-white rounded-2xl max-w-2xl w-full max-h-[90vh] overflow-y-auto"
@@ -280,7 +312,7 @@ export default function Services() {
               />
               <div className="absolute inset-0 bg-gradient-to-t from-black/60 to-transparent" />
               <button
-                onClick={() => setSelected(null)}
+                onClick={closeService}
                 className="absolute top-4 right-4 w-8 h-8 bg-white/20 border border-white/30 text-white rounded-full flex items-center justify-center hover:bg-white/40"
               >
                 <X size={16} />
@@ -311,7 +343,7 @@ export default function Services() {
               <button
                 onClick={() => {
                   const svc = selected;
-                  setSelected(null);
+                  closeService();
                   setInquiryContext({
                     lookingFor: `Enquiry for ${svc!.title}`,
                     title: svc!.title,

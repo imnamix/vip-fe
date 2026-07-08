@@ -3,6 +3,7 @@ import { useOutletContext } from 'react-router';
 import { useSelector } from 'react-redux';
 import { Phone, Mail, MapPin, Clock, Send, CheckCircle } from 'lucide-react';
 import BannerCarousel from '../components/BannerCarousel';
+import Seo from '../components/Seo';
 import { createGeneralInquiry } from '../services/GeneralInquiryService';
 import type { RootState } from '../store/Store';
 import type { Address } from '../store/slice/ContactSlice';
@@ -118,6 +119,11 @@ export default function Contact() {
 
   return (
     <div>
+      <Seo
+        path="/contact"
+        title="Contact Us"
+        description="Get in touch with VIP Numerology for consultations, bookings, and inquiries. Find our office address, phone number, and contact form."
+      />
       <BannerCarousel slides={bannerSlides} pageName="Contact Us" breadcrumb="Contact Us" />
 
       {/* Contact Cards */}

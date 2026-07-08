@@ -1,5 +1,6 @@
 import { useState, useEffect, useRef } from "react";
 import { useOutletContext } from "react-router";
+import Seo from "../components/Seo";
 import {
   CheckCircle,
   Target,
@@ -486,6 +487,11 @@ export default function About() {
 
   return (
     <div>
+      <Seo
+        path="/about"
+        title="About Us"
+        description="Learn about VIP Numerology's mission, expert numerologists, and years of experience helping clients transform their lives through the power of numbers."
+      />
       <BannerCarousel
         slides={bannerSlides}
         pageName="About Us"

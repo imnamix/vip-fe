@@ -1,5 +1,6 @@
 import { useSelector } from "react-redux";
 import BannerCarousel from "../components/BannerCarousel";
+import Seo from "../components/Seo";
 import type { RootState } from "../store/Store";
 
 const BANNER_SLIDES = [
@@ -58,6 +59,11 @@ export default function PrivacyPolicy() {
 
   return (
     <div>
+      <Seo
+        path="/privacy-policy"
+        title="Privacy Policy"
+        description="Read VIP Numerology's privacy policy to understand how we collect, use, and protect your personal information."
+      />
       <BannerCarousel
         slides={BANNER_SLIDES}
         pageName="Privacy Policy"
