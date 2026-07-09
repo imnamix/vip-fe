@@ -1,6 +1,7 @@
 import { useState } from 'react';
 import { useNavigate, useParams } from 'react-router';
 import { ChevronLeft, Save, CheckCircle } from 'lucide-react';
+import { DatePicker } from '../../components/ui/date-picker';
 
 const STATUSES = ['Active', 'Pending', 'Inactive', 'Blocked'];
 const SOURCES = ['Website', 'WhatsApp', 'Referral', 'Event', 'Social Media'];
@@ -54,12 +55,20 @@ export default function CustomerForm() {
       <label className="block text-xs font-semibold text-[#616161] uppercase tracking-wider mb-1.5">
         {label}{required && <span className="text-[#D32F2F] ml-0.5">*</span>}
       </label>
-      <input
-        type={type}
-        value={form[fkey as keyof typeof form]}
-        onChange={e => set(fkey, e.target.value)}
-        className={`w-full px-3 py-2.5 border rounded-xl text-sm focus:outline-none focus:border-[#D32F2F] transition-colors ${errors[fkey] ? 'border-[#D32F2F] bg-red-50' : 'border-gray-200 bg-white'}`}
-      />
+      {type === 'date' ? (
+        <DatePicker
+          value={form[fkey as keyof typeof form]}
+          onChange={v => set(fkey, v)}
+          error={Boolean(errors[fkey])}
+        />
+      ) : (
+        <input
+          type={type}
+          value={form[fkey as keyof typeof form]}
+          onChange={e => set(fkey, e.target.value)}
+          className={`w-full px-3 py-2.5 border rounded-xl text-sm focus:outline-none focus:border-[#D32F2F] transition-colors ${errors[fkey] ? 'border-[#D32F2F] bg-red-50' : 'border-gray-200 bg-white'}`}
+        />
+      )}
       {errors[fkey] && <p className="text-xs text-[#D32F2F] mt-1">{errors[fkey]}</p>}
     </div>
   );

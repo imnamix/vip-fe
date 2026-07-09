@@ -10,6 +10,7 @@ import {
   ChevronLeft,
   Hash,
 } from "lucide-react";
+import { DatePicker } from "../components/ui/date-picker";
 
 type UserType = "customer" | "professional" | null;
 type Step = 1 | 2 | 3;
@@ -276,6 +277,14 @@ export default function Booking() {
                       }
                       placeholder={f.placeholder}
                       className="w-full px-4 py-3 border border-gray-200 rounded-xl text-sm focus:outline-none focus:border-[#D32F2F] bg-gray-50 focus:bg-white transition-colors resize-none"
+                    />
+                  ) : f.type === "date" ? (
+                    <DatePicker
+                      value={form[f.key] || ""}
+                      onChange={(v) =>
+                        setForm((p) => ({ ...p, [f.key]: v }))
+                      }
+                      className="py-3 bg-gray-50"
                     />
                   ) : (
                     <input

@@ -7,6 +7,7 @@ import { getAllEnquires, updateEnquiry, getStatusCounts } from '../../services/E
 import { usePermission } from '../../hooks/usePermission';
 import { useAdminTheme } from '../../context/AdminThemeContext';
 import type { RootState } from '../../store/Store';
+import { DatePicker } from '../../components/ui/date-picker';
 
 type DeliveryStatus = 'Dispatched' | 'Delivered' | 'Cancelled';
 const ALL_STATUS: DeliveryStatus[] = ['Dispatched', 'Delivered', 'Cancelled'];
@@ -269,8 +270,8 @@ function DeliveryEditPopup({ delivery, onClose, onSaved }: {
             <label className="block text-[10px] font-semibold text-[#616161] dark:text-gray-400 uppercase tracking-wider mb-1.5">
               Delivered Date {status === 'Delivered' && <span className="text-red-500">*</span>}
             </label>
-            <input type="date" value={deliveredDate} onChange={e => { setDeliveredDate(e.target.value); clearFieldError('deliveredDate'); }}
-              className={fieldCls(fieldErrors.deliveredDate)} />
+            <DatePicker value={deliveredDate} onChange={v => { setDeliveredDate(v); clearFieldError('deliveredDate'); }}
+              error={Boolean(fieldErrors.deliveredDate)} />
             {fieldErrors.deliveredDate && <p className="text-xs text-red-500 dark:text-red-400 mt-1">{fieldErrors.deliveredDate}</p>}
           </div>
 

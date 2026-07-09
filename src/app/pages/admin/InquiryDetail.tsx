@@ -10,6 +10,7 @@ import { useAdminTheme } from '../../context/AdminThemeContext';
 import { getEnquiryById, updateEnquiry } from '../../services/EnquiresService';
 import { uploadFiles } from '../../services/MediaService';
 import type { RootState } from '../../store/Store';
+import { DatePicker } from '../../components/ui/date-picker';
 
 type Status = 'Pending' | 'Number Suggested' | 'Number Confirmed' | 'Awaiting Payment' | 'Paid' | 'Dispatched' | 'Delivered' | 'Cancelled';
 
@@ -308,12 +309,11 @@ function DispatchPopup({ initialAddress, onClose, onSend }: { initialAddress: st
             <label className="text-[10px] font-semibold text-[#616161] uppercase tracking-wider mb-1 block">
               Expected Delivery Date <span className="text-red-500">*</span>
             </label>
-            <input
-              type="date"
+            <DatePicker
               value={expectedDeliveryDate}
               min={today}
-              onChange={(e) => { setExpectedDeliveryDate(e.target.value); clearError('expectedDeliveryDate'); }}
-              className={fieldCls(errors.expectedDeliveryDate)}
+              onChange={(v) => { setExpectedDeliveryDate(v); clearError('expectedDeliveryDate'); }}
+              error={Boolean(errors.expectedDeliveryDate)}
             />
             {errors.expectedDeliveryDate && <p className="text-xs text-red-500 mt-1">{errors.expectedDeliveryDate}</p>}
           </div>

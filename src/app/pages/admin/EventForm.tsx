@@ -20,6 +20,7 @@ import {
 } from "../../services/EventsService";
 import { uploadFiles } from "../../services/MediaService";
 import ImagePreviewPopup from "../../components/ImagePreviewPopup";
+import { DatePicker } from "../../components/ui/date-picker";
 
 interface ScheduleItem {
   time: string;
@@ -390,11 +391,10 @@ export default function EventForm() {
                   <label className={labelCls}>
                     Date <span className="text-[#D32F2F]">*</span>
                   </label>
-                  <input
-                    type="date"
+                  <DatePicker
                     value={form.date}
-                    onChange={(e) => setField("date", e.target.value)}
-                    className={errors.date ? errorInputCls : inputCls}
+                    onChange={(v) => setField("date", v)}
+                    error={Boolean(errors.date)}
                   />
                   {errors.date && (
                     <p className="mt-1 text-xs text-red-500 dark:text-red-400 flex items-center gap-1">

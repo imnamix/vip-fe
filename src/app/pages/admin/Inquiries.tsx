@@ -7,6 +7,7 @@ import { getAllEnquires, createInquiry, updateEnquiry, getStatusCounts } from '.
 import { usePermission } from '../../hooks/usePermission';
 import { useAdminTheme } from '../../context/AdminThemeContext';
 import type { RootState } from '../../store/Store';
+import { DatePicker } from '../../components/ui/date-picker';
 
 type Status = 'Pending' | 'Number Suggested' | 'Number Confirmed' | 'Awaiting Payment' | 'Paid' | 'Dispatched' | 'Delivered';
 
@@ -924,22 +925,20 @@ export default function Inquiries() {
                 <div className="mt-1 pt-2 border-t border-gray-100 dark:border-white/10 space-y-2 px-1">
                   <div>
                     <label className="block text-[10px] font-semibold text-[#9E9E9E] dark:text-gray-500 mb-1">Start date</label>
-                    <input
-                      type="date"
+                    <DatePicker
                       value={customStart}
                       max={customEnd || undefined}
-                      onChange={(e) => handleCustomDateChange("start", e.target.value)}
-                      className="w-full px-2.5 py-1.5 border border-gray-200 dark:border-white/10 rounded-lg text-xs focus:outline-none focus:border-[#D32F2F] bg-white dark:bg-[#13151e] text-[#212121] dark:text-white"
+                      onChange={(v) => handleCustomDateChange("start", v)}
+                      className="px-2.5 py-1.5 rounded-lg text-xs dark:bg-[#13151e]"
                     />
                   </div>
                   <div>
                     <label className="block text-[10px] font-semibold text-[#9E9E9E] dark:text-gray-500 mb-1">End date</label>
-                    <input
-                      type="date"
+                    <DatePicker
                       value={customEnd}
                       min={customStart || undefined}
-                      onChange={(e) => handleCustomDateChange("end", e.target.value)}
-                      className="w-full px-2.5 py-1.5 border border-gray-200 dark:border-white/10 rounded-lg text-xs focus:outline-none focus:border-[#D32F2F] bg-white dark:bg-[#13151e] text-[#212121] dark:text-white"
+                      onChange={(v) => handleCustomDateChange("end", v)}
+                      className="px-2.5 py-1.5 rounded-lg text-xs dark:bg-[#13151e]"
                     />
                   </div>
                 </div>
